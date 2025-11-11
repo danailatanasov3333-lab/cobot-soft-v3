@@ -14,7 +14,7 @@ from src.robot_application.interfaces.robot_application_interface import RobotAp
 from src.backend.system.vision.VisionService import _VisionService
 from src.backend.system.settings.SettingsService import SettingsService
 from modules.shared.shared.workpiece.WorkpieceService import WorkpieceService
-from src.backend.system.robot.robotService.RobotService import RobotService
+from modules.robot.robotService.RobotService import RobotService
 from src.robot_application.glue_dispensing_application.GlueDispensingApplication import GlueSprayingApplication
 from src.robot_application.example_painting_application.application import PaintingApplication
 logger = logging.getLogger(__name__)

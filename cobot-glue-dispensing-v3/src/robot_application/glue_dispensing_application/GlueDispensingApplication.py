@@ -33,8 +33,8 @@ from src.robot_application.interfaces.application_settings_interface import sett
 from src.robot_application.interfaces.robot_application_interface import (
     RobotApplicationInterface, OperationMode, CalibrationStatus
 )
-from src.backend.system.robot.robotService.RobotService import RobotService
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.robotService.RobotService import RobotService
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 from src.backend.system.settings.SettingsService import SettingsService
 from src.backend.system.vision.VisionService import _VisionService
 

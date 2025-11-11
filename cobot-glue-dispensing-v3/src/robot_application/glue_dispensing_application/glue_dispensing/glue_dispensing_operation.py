@@ -7,7 +7,7 @@ from src.robot_application.glue_dispensing_application.settings.enums.GlueSettin
 from src.robot_application.glue_dispensing_application.glue_dispensing.ExecutionContext import ExecutionContext
 from modules.glueSprayService.GlueSprayService import GlueSprayService
 
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 
 from src.backend.system.utils.custom_logging import log_debug_message, log_info_message, log_error_message, \
     log_calls_with_timestamp_decorator, setup_logger, LoggerContext

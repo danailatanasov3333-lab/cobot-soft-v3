@@ -5,9 +5,9 @@ import time
 
 from modules.shared.MessageBroker import MessageBroker
 from modules.shared.v1.topics import RobotTopics
-from src.backend.system.robot.RobotUtils import calculate_velocity, calculate_acceleration
-from src.backend.system.robot.FairinoRobot import FairinoRobot
-from src.backend.system.robot.robotService.enums.RobotState import RobotState
+from modules.robot.RobotUtils import calculate_velocity, calculate_acceleration
+from modules.robot.FairinoRobot import FairinoRobot
+from modules.robot.robotService.enums.RobotState import RobotState
 
 
 class RobotMonitor:

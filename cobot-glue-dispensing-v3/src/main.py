@@ -13,8 +13,8 @@ from src.robot_application.application_factory import create_application_factory
 from src.robot_application.base_robot_application import ApplicationType
 from src.backend.system.SensorPublisher import SensorPublisher
 
-from src.backend.system.robot.RobotController import RobotController
-from src.backend.system.robot.robotService.RobotService import RobotService
+from modules.robot import RobotController
+from modules.robot.robotService.RobotService import RobotService
 # IMPORT CONTROLLERS
 from src.backend.system.settings.SettingsController import SettingsController
 # from src.backend.system.RequestHandler import RequestHandler
@@ -66,10 +66,10 @@ if __name__ == "__main__":
     robot_config = settingsService.load_robot_config()
 
     if testRobot:
-        from src.backend.system.robot.FairinoRobot import TestRobotWrapper
+        from modules.robot import TestRobotWrapper
         robot = TestRobotWrapper()
     else:
-        from src.backend.system.robot.FairinoRobot import FairinoRobot
+        from modules.robot import FairinoRobot
         robot = FairinoRobot(robot_config.robot_ip)
 
     cameraService = VisionServiceSingleton().get_instance()

@@ -1,6 +1,6 @@
 from src.backend.system.SystemStatePublisherThread import SystemStatePublisherThread
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
-from src.backend.system.robot.robotService.enums.RobotState import RobotState
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.robotService.enums.RobotState import RobotState
 
 
 class RobotServiceStateManager:

@@ -1,7 +1,7 @@
 from modules.shared.v1 import Constants
 from modules.shared.v1.Response import Response
-from src.backend.system.robot.robotService.RobotService import RobotService
-from src.backend.system.robot.FairinoRobot import Direction, Axis
+from modules.robot.robotService.RobotService import RobotService
+from modules.robot.FairinoRobot import Direction, Axis
 import modules.shared.v1.endpoints.robot_endpoints as robot_endpoints
 
 

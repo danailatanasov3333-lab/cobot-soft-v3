@@ -1,7 +1,7 @@
 from typing import Dict, Set, Callable
 
 from modules.shared.MessageBroker import MessageBroker
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 from src.backend.system.utils.custom_logging import log_if_enabled, LoggingLevel, \
     log_calls_with_timestamp_decorator, setup_logger
 

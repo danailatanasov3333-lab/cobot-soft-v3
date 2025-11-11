@@ -1,6 +1,6 @@
 import threading
 
-from src.backend.system.robot.calibration.newRobotCalibUsingTopLeftCornersOfArucoMarkers import CalibrationPipeline
+from modules.robot.calibration.newRobotCalibUsingTopLeftCornersOfArucoMarkers import CalibrationPipeline
 
 def calibrate_robot(application):
         # required_ids = [0,8,15,66,74,81,132,140,147,198,206,213,264,272,279]

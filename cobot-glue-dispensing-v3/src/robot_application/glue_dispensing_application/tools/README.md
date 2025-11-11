@@ -684,7 +684,7 @@ See [VisionSystem/heightMeasuring/README.md](../../VisionSystem/heightMeasuring/
 ## Related Documentation
 
 - [GlueDispensingApplication README](../../../backend/system/README.md)
-- [Robot Subsystem](../../../backend/system/robot/README.md)
+- [Robot Subsystem](../../../../modules/robot/README.md)
 - [VisionSystem/HeightMeasuring](../../VisionSystem/heightMeasuring/README.md)
 - [Main System README](../../docs/README.md)
 

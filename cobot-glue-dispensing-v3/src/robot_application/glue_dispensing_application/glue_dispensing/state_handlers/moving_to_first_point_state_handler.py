@@ -1,6 +1,6 @@
 from collections import namedtuple
 from modules.shared.shared.settings.conreateSettings.enums.GlueSettingKey import GlueSettingKey
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 
 MovingResult = namedtuple(
     "MovingResult",

@@ -2,8 +2,8 @@ import threading
 import time
 
 from modules.shared.shared.settings.conreateSettings.enums.GlueSettingKey import GlueSettingKey
-from src.backend.system.robot.RobotUtils import calculate_distance_between_points
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.RobotUtils import calculate_distance_between_points
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 from src.backend.system.utils.custom_logging import log_debug_message
 from src.backend.system.utils.files import write_to_debug_file
 

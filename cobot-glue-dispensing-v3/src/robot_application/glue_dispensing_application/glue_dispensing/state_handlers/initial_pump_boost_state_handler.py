@@ -1,6 +1,6 @@
 from collections import namedtuple
 from src.robot_application.glue_dispensing_application.glue_dispensing.glue_dispensing_operation import glue_dispensing_logger_context
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 from src.backend.system.utils.custom_logging import log_debug_message, log_error_message
 
 # Shared result type for all state handlers

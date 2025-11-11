@@ -1,4 +1,4 @@
-from src.backend.system.robot.robotService.RobotService import RobotService
+from modules.robot.robotService.RobotService import RobotService
 
 def clean_nozzle(robot_service:RobotService):
     pos1, pos2 = robot_service.robot_config.getNozzleCleanPointsParsed()

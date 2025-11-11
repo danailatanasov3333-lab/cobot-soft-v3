@@ -620,9 +620,9 @@ robotService.setSpeed(50)
 
 ## Related Documentation
 
-- [GlueDispensingApplication README](../README.md)
+- [GlueDispensingApplication README](../../src/backend/system/README.md)
 - [Main System README](../../docs/README.md)
-- [Tools Documentation](../../../robot_application/glue_dispensing_application/tools/README.md)
+- [Tools Documentation](../../src/robot_application/glue_dispensing_application/tools/README.md)
 - [Calibration Documentation](./calibration/README.md)
 
 ---

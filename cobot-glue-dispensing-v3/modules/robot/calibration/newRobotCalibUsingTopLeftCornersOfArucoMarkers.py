@@ -5,9 +5,8 @@ import numpy as np
 import time
 from itertools import combinations
 from modules.VisionSystem.VisionSystem import VisionSystem
-from src.backend.system.robot.FairinoRobot import FairinoRobot
-from src.backend.system.robot.robotService.RobotService import RobotService
-from src.backend.system.robot.robotService.RobotService import RobotService
+from modules.robot.FairinoRobot import FairinoRobot
+from modules.robot.robotService.RobotService import RobotService
 from src.backend.system.settings.SettingsService import SettingsService
 from src.backend.system.utils.custom_logging import LoggingLevel, log_if_enabled, \
     setup_logger

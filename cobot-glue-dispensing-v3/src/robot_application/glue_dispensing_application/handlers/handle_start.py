@@ -4,7 +4,7 @@ from src.robot_application.glue_dispensing_application.GlueDispensingApplication
 from src.robot_application.glue_dispensing_application.handlers.modes_handlers import \
     contour_matching_mode_handler, direct_trace_mode_handler
 
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 
 
 def start(application, contourMatching=True,nesting= False, debug=False):

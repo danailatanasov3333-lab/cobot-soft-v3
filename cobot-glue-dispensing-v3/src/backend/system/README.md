@@ -188,7 +188,7 @@ Each handler is documented in its own file:
 
 ## Robot Integration
 
-**Documentation**: [robot/README.md](./robot/README.md)
+**Documentation**: [robot/README.md](../../../modules/robot/README.md)
 
 ### Supported Robots
 

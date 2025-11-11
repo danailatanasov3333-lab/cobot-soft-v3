@@ -1,6 +1,6 @@
 import cv2
 
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 from modules.VisionSystem.VisionSystem import VisionSystemState
 
 class CreateWorkpieceHandler:

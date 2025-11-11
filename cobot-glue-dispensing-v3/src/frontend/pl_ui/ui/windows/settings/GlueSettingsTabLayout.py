@@ -1094,8 +1094,8 @@ class GlueSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
 
 if __name__ == "__main__":
     from src.backend.system.settings.SettingsService import SettingsService
-    from src.backend.system.robot.FairinoRobot import FairinoRobot
-    from src.backend.system.robot.robotService.RobotService import RobotService
+    from modules.robot import FairinoRobot
+    from modules.robot.robotService.RobotService import RobotService
     settingsService = SettingsService()
     # Get glue settings through the new registry system
     try:

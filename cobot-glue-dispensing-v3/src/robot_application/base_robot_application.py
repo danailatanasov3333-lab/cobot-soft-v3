@@ -9,12 +9,12 @@ should inherit from this base class and implement the required abstract methods.
 import threading
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any, List
 
 from modules.shared.MessageBroker import MessageBroker
 from modules.shared.shared.workpiece.WorkpieceService import WorkpieceService
 from modules.shared.v1.topics import SystemTopics
-from src.backend.system.robot.robotService.RobotService import RobotService
+from modules.robot.robotService.RobotService import RobotService
 from src.backend.system.vision.VisionService import _VisionService
 from src.backend.system.settings.SettingsService import SettingsService
 from src.backend.system.SystemStatePublisherThread import SystemStatePublisherThread

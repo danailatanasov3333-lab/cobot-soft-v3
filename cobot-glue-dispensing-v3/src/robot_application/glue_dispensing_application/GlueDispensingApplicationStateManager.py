@@ -1,6 +1,6 @@
 from modules.VisionSystem.VisionSystem import VisionSystemState
 from src.robot_application.base_robot_application import ApplicationState
-from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 
 
 class GlueDispensingApplicationStateManager:
