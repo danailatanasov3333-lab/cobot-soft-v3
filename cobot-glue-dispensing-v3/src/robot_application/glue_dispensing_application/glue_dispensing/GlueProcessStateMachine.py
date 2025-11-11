@@ -11,7 +11,7 @@ if ENABLE_ROBOT_SERVICE_STATE_MACHINE_LOGGING:
 else:
     robot_service_state_machine_logger = None
 
-class RobotStateMachine:
+class GlueProcessStateMachine:
     """State machine for managing robot service states and transitions"""
 
     def __init__(self, initial_state: RobotServiceState, robot_service):

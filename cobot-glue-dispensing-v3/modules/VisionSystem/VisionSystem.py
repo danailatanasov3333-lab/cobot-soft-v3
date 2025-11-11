@@ -137,6 +137,32 @@ class VisionSystem:
     def cameraToRobotMatrix(self):
         return self.data_manager.cameraToRobotMatrix
 
+    @cameraToRobotMatrix.setter
+    def cameraToRobotMatrix(self, value):
+        """
+        Setter for the cameraToRobotMatrix property. Updates the underlying DataManager
+        value is expected to be a numpy.ndarray (homography 3x3) or None.
+        """
+        try:
+            # store the matrix in data_manager
+            self.data_manager.cameraToRobotMatrix = value
+            # update calibration state: if we have cameraData and a matrix, mark calibrated
+            if value is not None and getattr(self.data_manager, 'cameraData', None) is not None:
+                self.isSystemCalibrated = True
+            else:
+                # If matrix removed, reflect that system is not calibrated
+                if value is None:
+                    self.isSystemCalibrated = False
+            # optional logging
+            try:
+                from src.backend.system.utils.custom_logging import log_info_message, LoggerContext, setup_logger
+                log_info_message(LoggerContext(ENABLE_LOGGING, vision_system_logger), message=f"cameraToRobotMatrix updated via setter")
+            except Exception:
+                pass
+        except Exception as e:
+            # Fail silently but print to help debugging
+            print(f"Failed to set cameraToRobotMatrix: {e}")
+
     @property
     def perspectiveMatrix(self):
         return self.data_manager.perspectiveMatrix

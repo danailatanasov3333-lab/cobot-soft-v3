@@ -4,10 +4,13 @@ import cv2
 import numpy as np
 import time
 from itertools import combinations
+from modules.VisionSystem.data_loading import CAMERA_TO_ROBOT_MATRIX_PATH
+
 from modules.VisionSystem.VisionSystem import VisionSystem
 from modules.robot.FairinoRobot import FairinoRobot
 from modules.robot.robotService.RobotService import RobotService
 from src.backend.system.settings.SettingsService import SettingsService
+from src.backend.system.utils import PathResolver
 from src.backend.system.utils.custom_logging import LoggingLevel, log_if_enabled, \
     setup_logger
 from modules.shared.MessageBroker import MessageBroker
@@ -101,14 +104,21 @@ class CalibrationPipeline:
 
         self.system.camera_settings.set_draw_contours(False)
 
+        camera_settings_path = PathResolver.get_settings_file_path("camera_settings.json")
+        robot_settings_path = PathResolver.get_settings_file_path("robot_settings.json")
+        settings_file_paths = {
+            "camera": camera_settings_path,
+            "robot_settings": robot_settings_path,
+            "robot_config": PathResolver.get_settings_file_path("robot_config.json"),
+        }
         # --- Settings Service ---
-        settingsService = SettingsService()
+        settingsService = SettingsService(settings_file_paths)
         robot_config = settingsService.load_robot_config()
 
         # --- Robot ---
         if robot_service == None:
             self.robot = FairinoRobot(robot_config.robot_ip)
-            self.settings_service = SettingsService()
+            self.settings_service = SettingsService(settings_file_paths)
             self.robot_service = RobotService(self.robot, self.settings_service, None)
         else:
             self.robot_service = robot_service
@@ -662,9 +672,21 @@ class CalibrationPipeline:
             #                broadcast_to_ui=LOG_BROADCAST_TO_UI, topic=BROADCAST_TOPIC)
 
     def run(self):
-        self.broker.publish(ROBOT_CALIBRATION_STARTED_TOPIC,"")
-        # Start total calibration timer
-        self.total_calibration_start_time = time.time()
+        try:
+            print(f"=== STARTING CALIBRATION RUN METHOD ===")
+            print(f"in run method of {self.__class__.__name__}")
+            print(f"Required IDs: {self.required_ids}")
+            print(f"Vision system: {self.system}")
+            print(f"Robot service: {self.robot_service}")
+            
+            self.broker.publish(ROBOT_CALIBRATION_STARTED_TOPIC,"")
+            # Start total calibration timer
+            self.total_calibration_start_time = time.time()
+        except Exception as e:
+            print(f"ERROR in run method initialization: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
         log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
                        "🚀 Starting calibration pipeline with timing analysis...",
                        broadcast_to_ui=LOG_BROADCAST_TO_UI, topic=BROADCAST_TOPIC)
@@ -1241,7 +1263,6 @@ class CalibrationPipeline:
             log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
                            "H_robot_tcp test passed with acceptable error.",
                            broadcast_to_ui=LOG_BROADCAST_TO_UI, topic=BROADCAST_TOPIC)
-            from VisionSystem.VisionSystem import CAMERA_TO_ROBOT_MATRIX_PATH
             # np.save(CAMERA_TO_ROBOT_MATRIX_PATH, H_robot_tcp)
             np.save(CAMERA_TO_ROBOT_MATRIX_PATH,H_camera_center)
             # update the in memory matrix as well

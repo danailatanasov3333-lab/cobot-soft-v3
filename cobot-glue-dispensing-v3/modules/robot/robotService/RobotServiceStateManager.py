@@ -44,16 +44,10 @@ class RobotServiceStateManager:
         robotState = state['state']
 
         # Transition to IDLE when robot becomes stationary and ready
-        if (self.robot_service.state_machine.state == RobotServiceState.INITIALIZING and
-                robotState == RobotState.STATIONARY):
+        if self.state == RobotServiceState.INITIALIZING and robotState == RobotState.STATIONARY:
             # Update manager internal state and publish
             self.update_state(RobotServiceState.IDLE)
-            # Explicitly transition the authoritative state machine to IDLE
-            try:
-                self.robot_service.state_machine.transition(RobotServiceState.IDLE)
-            except Exception:
-                # Don't crash on transition errors; just log if available
-                print("RobotServiceStateManager: Failed to transition state machine to IDLE")
+            print("RobotServiceStateManager: Transitioned to IDLE state")
 
     def on_glue_process_state_update(self,state):
         print(f"Glue process state update received: {state}")

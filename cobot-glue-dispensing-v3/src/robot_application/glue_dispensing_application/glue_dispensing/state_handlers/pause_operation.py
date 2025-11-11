@@ -6,7 +6,7 @@ from src.backend.system.utils.custom_logging import log_debug_message
 def pause_operation(glue_dispencing_operation,context):
     """Pause current operation or resume if already paused with debouncing"""
 
-    current_state = glue_dispencing_operation.robot_service.state_machine.state
+    current_state = context.state_machine.state
 
     if current_state == RobotServiceState.PAUSED:
         log_debug_message(glue_dispensing_logger_context, message=f"Already paused, resuming operation")
@@ -14,7 +14,7 @@ def pause_operation(glue_dispencing_operation,context):
 
     log_debug_message(glue_dispensing_logger_context, message=f"Pausing operation")
 
-    if glue_dispencing_operation.robot_service.state_machine.transition(RobotServiceState.PAUSED):
+    if context.state_machine.transition(RobotServiceState.PAUSED):
         context.paused_from_state = current_state
         
         # If there's an active pump thread, capture its progress before pausing

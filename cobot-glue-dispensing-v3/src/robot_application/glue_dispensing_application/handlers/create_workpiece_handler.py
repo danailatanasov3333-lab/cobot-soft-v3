@@ -9,7 +9,7 @@ class CreateWorkpieceHandler:
 
     def create_workpiece_step_1(self):
         # if robot service is not in idle state, return error
-        if self.application.robotService.state_machine.state != RobotServiceState.IDLE:
+        if self.application.glue_process_state_machine.state != RobotServiceState.IDLE:
             print("Robot service not in IDLE state, cannot create workpiece")
             return False, "Robot service not in IDLE state"
 

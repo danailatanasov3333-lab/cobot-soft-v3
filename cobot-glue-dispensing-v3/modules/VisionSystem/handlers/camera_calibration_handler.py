@@ -12,7 +12,7 @@ def capture_calibration_image(vision_system,log_enabled,logger):
         return False, "No rawImage image captured for calibration"
 
     vision_system.calibrationImages.append(vision_system.rawImage)
-    vision_system.message_publisher.publishLatestImage(vision_system.rawImage)
+    vision_system.message_publisher.publish_latest_image(vision_system.rawImage)
     log_if_enabled(enabled=log_enabled,
                    logger=logger,
                    level=LoggingLevel.INFO,

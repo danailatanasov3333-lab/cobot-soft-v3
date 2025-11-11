@@ -3,6 +3,7 @@ import logging
 import os
 
 from src.frontend.pl_ui.localization import setup_localization
+
 setup_localization()
 
 
@@ -13,7 +14,7 @@ from src.robot_application.application_factory import create_application_factory
 from src.robot_application.base_robot_application import ApplicationType
 from src.backend.system.SensorPublisher import SensorPublisher
 
-from modules.robot import RobotController
+from modules.robot.RobotController import RobotController
 from modules.robot.robotService.RobotService import RobotService
 # IMPORT CONTROLLERS
 from src.backend.system.settings.SettingsController import SettingsController
@@ -66,10 +67,10 @@ if __name__ == "__main__":
     robot_config = settingsService.load_robot_config()
 
     if testRobot:
-        from modules.robot import TestRobotWrapper
+        from modules.robot.FairinoRobot import TestRobotWrapper
         robot = TestRobotWrapper()
     else:
-        from modules.robot import FairinoRobot
+        from modules.robot.FairinoRobot import FairinoRobot
         robot = FairinoRobot(robot_config.robot_ip)
 
     cameraService = VisionServiceSingleton().get_instance()
@@ -77,6 +78,7 @@ if __name__ == "__main__":
     workpieceService = WorkpieceService()
 
     robotService = RobotService(robot, settingsService)
+
 
 
     # INIT CONTROLLERS

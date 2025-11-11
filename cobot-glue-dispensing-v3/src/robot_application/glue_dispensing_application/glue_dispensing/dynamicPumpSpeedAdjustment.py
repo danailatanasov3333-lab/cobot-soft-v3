@@ -13,12 +13,15 @@ def is_point_reached(currentPos, targetPoint, threshold):
     distance_to_target = calculate_distance_between_points(currentPos, targetPoint)
     return distance_to_target < threshold
 
-def check_robot_state(robotService, start_point_index, furthest_checkpoint_passed):
+def check_robot_state(state_machine, robotService, start_point_index, furthest_checkpoint_passed):
     """
     Check if robot is paused/stopped and return appropriate status.
     Returns: (should_exit, next_target_point)
     """
-    current_state = robotService.state_machine.state
+    if state_machine is None:
+        return False, 0  # No state machine, continue normally
+        
+    current_state = state_machine.state
     if current_state in [RobotServiceState.PAUSED, RobotServiceState.STOPPED]:
         # Return progress - furthest_checkpoint_passed indicates the last completed point
         # Resume should be from the NEXT point after the last completed one
@@ -187,7 +190,7 @@ def adjustPumpSpeedDynamically(
     # Main processing loop
     while True:
         # Check if robot is paused or stopped
-        should_exit, next_target_point = check_robot_state(robotService, start_point_index, furthest_checkpoint_passed)
+        should_exit, next_target_point = check_robot_state(execution_context.state_machine if execution_context else None, robotService, start_point_index, furthest_checkpoint_passed)
         if should_exit:
             return False, next_target_point
 

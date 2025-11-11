@@ -1,16 +1,18 @@
 """
-New RobotService implementation with proper State Machine pattern
-for robust pause/resume functionality and clean state management.
+Decoupled RobotService implementation with cancellation token support
+for robust pause/resume functionality and clean operation control.
+No longer dependent on external state machines.
 """
 
 import threading
 import time
+from typing import Optional
 
 from modules.shared.MessageBroker import MessageBroker
 from modules.shared.shared.settings.robotConfig.robotConfigModel import RobotConfig
 from modules.robot.FairinoRobot import Axis, Direction
 from modules.robot.RobotUtils import calculate_distance_between_points
-from src.robot_application.glue_dispensing_application.glue_dispensing.RobotStateMachine import RobotStateMachine
+from src.robot_application.glue_dispensing_application.glue_dispensing.GlueProcessStateMachine import GlueProcessStateMachine
 from modules.robot.robotService.RobotServiceMessagePublisher import RobotServiceMessagePublisher
 from modules.robot.robotService.RobotServiceStateManager import RobotServiceStateManager
 from modules.robot.robotService.RobotServiceSubscriptionManager import RobotServiceSubscriptionManager
@@ -29,10 +31,48 @@ if ENABLE_ROBOT_SERVICE_LOGGING:
 else:
     robot_service_logger = None
 
+
+class CancellationToken:
+    """
+    Cancellation token for controlling robot operations.
+    
+    This provides a clean way to cancel robot operations without
+    directly coupling to state machines.
+    """
+    
+    def __init__(self):
+        self._cancelled = threading.Event()
+        self._reason = None
+        self._timestamp = None
+    
+    def cancel(self, reason: str = "cancelled"):
+        """Cancel the operation."""
+        self._cancelled.set()
+        self._reason = reason
+        self._timestamp = time.time()
+    
+    def is_cancelled(self) -> bool:
+        """Check if the operation has been cancelled."""
+        return self._cancelled.is_set()
+    
+    def reset(self):
+        """Reset the cancellation token."""
+        self._cancelled.clear()
+        self._reason = None
+        self._timestamp = None
+    
+    def get_cancellation_reason(self) -> Optional[str]:
+        """Get the reason for cancellation."""
+        return self._reason
+    
+    def get_cancellation_timestamp(self) -> Optional[float]:
+        """Get the timestamp when cancellation occurred."""
+        return self._timestamp
+
 class RobotService:
     """
-    New RobotService implementation with proper state machine pattern
-    for robust pause/resume functionality and clean state management.
+    RobotService implementation with cancellation token support
+    for decoupled pause/resume functionality and clean operation control.
     """
     
     RX_VALUE = 180
@@ -40,11 +80,9 @@ class RobotService:
     RZ_VALUE = 0
     
     def __init__(self, robot, settingsService):
-        """Initialize the new robot service"""
+        """Initialize the robot service"""
         self.robot_service_logger_context = LoggerContext(enabled=ENABLE_ROBOT_SERVICE_LOGGING,
                                             logger=robot_service_logger)
-        # Initialize state machine
-        self.state_machine = RobotStateMachine(RobotServiceState.INITIALIZING, self)
 
         # Robot and settings
         self.robot = robot
@@ -103,17 +141,16 @@ class RobotService:
                     else:
                         raise
     
-    def _waitForRobotToReachPosition(self, endPoint, threshold,delay, timeout=1):
+    def _waitForRobotToReachPosition(self, endPoint, threshold,delay, timeout=1,cancellation_token = None):
         """Wait for robot to reach target position with state awareness"""
         start_time = time.time()
         log_info_message(self.robot_service_logger_context,message=f"_waitForRobotToReachPosition CALLED WITH  endPoint={endPoint},threshold={threshold},delay = {delay},timeout = {timeout}")
 
 
         while True:
-            # Check for pause/stop states first
-            current_state = self.state_machine.state
-            if current_state in [RobotServiceState.PAUSED, RobotServiceState.STOPPED]:
-                log_debug_message(self.robot_service_logger_context,message=f"Robot state changed to {current_state}, exiting wait loop")
+            # Check cancellation token (replaces state machine dependency)
+            if cancellation_token is not None and cancellation_token.is_cancelled():
+                log_debug_message(self.robot_service_logger_context,message=f"Operation cancelled via cancellation token: {cancellation_token.get_cancellation_reason()}")
                 return False
             
             # Check timeout

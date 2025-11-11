@@ -292,7 +292,7 @@ class Controller:
         self.requestSender.sendRequest(request)
 
     def handleCalibrateRobot(self):
-        request = robot_endpoints.CALIBRATE_ROBOT
+        request = robot_endpoints.ROBOT_CALIBRATE
         response = self.requestSender.sendRequest(request)
         response = Response.from_dict(response)
         print("Robot calibration response:", response)

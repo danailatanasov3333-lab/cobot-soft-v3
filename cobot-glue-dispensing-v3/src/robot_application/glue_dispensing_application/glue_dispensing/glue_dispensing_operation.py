@@ -111,7 +111,8 @@ class GlueDispensingOperation:
         self.execution_context.spray_on = spray_on
         self.execution_context.service = self.glue_service
         self.execution_context.robot_service = self.robot_service
-        self.execution_context.state_machine = self.robot_service.state_machine
+        # Use the application's glue process state machine instead of robot service state machine
+        self.execution_context.state_machine = getattr(self.glue_application, 'glue_process_state_machine', None)
         self.execution_context.glue_type = self.glue_service.glueA_addresses
         self.execution_context.current_path_index = 0
         self.execution_context.current_point_index = 0
@@ -170,7 +171,7 @@ class GlueDispensingOperation:
                     ctx.current_path = result.next_path
                     ctx.current_settings = result.next_settings
                     # Apply the state transition explicitly
-                    ctx.robot_service.state_machine.transition(result.next_state)
+                    ctx.state_machine.transition(result.next_state)
                     # Write debug context
                     self._write_context_debug("STARTING")
                     # Log cleanly
@@ -336,7 +337,7 @@ class GlueDispensingOperation:
             self.traceContours(paths, spray_on, resume=True)
         except Exception as e:
             log_debug_message(glue_dispensing_logger_context, message=f"Error during resume execution: {e}")
-            self.robot_service.state_machine.transition(RobotServiceState.ERROR)
+            self.state_machine.transition(RobotServiceState.ERROR)
 
     def _handle_starting_state(self,context):
         from src.robot_application.glue_dispensing_application.glue_dispensing.state_handlers.start_state_handler import handle_starting_state

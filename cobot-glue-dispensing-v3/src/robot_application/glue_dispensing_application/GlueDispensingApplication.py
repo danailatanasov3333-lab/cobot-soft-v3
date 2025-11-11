@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from typing import Dict, Any, List
 
 from modules.VisionSystem.VisionSystem import VisionSystemState
@@ -87,6 +87,11 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         self.preselected_workpiece = None
         self.workpiece_to_spray_paths_generator = WorkpieceToSprayPathsGenerator(self)
         self.create_workpiece_handler = CreateWorkpieceHandler(self)
+        
+        # Initialize glue process state machine for operation control
+        from src.robot_application.glue_dispensing_application.glue_dispensing.GlueProcessStateMachine import GlueProcessStateMachine
+        from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+        self.glue_process_state_machine = GlueProcessStateMachine(RobotServiceState.INITIALIZING, None)
         self.workpiece_matcher = WorkpieceMatcher(self)
         
         # Initialize glue dispensing operation with proper settings access

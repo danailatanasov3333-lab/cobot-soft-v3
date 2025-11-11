@@ -19,7 +19,7 @@ def start(application, contourMatching=True,nesting= False, debug=False):
         result,message = direct_trace_mode_handler.handle_direct_tracing_mode(application)
 
     # Only move to calibration position if robot service is not stopped/paused
-    if application.robotService.state_machine.state not in [RobotServiceState.STOPPED, RobotServiceState.PAUSED,
+    if application.glue_process_state_machine.state not in [RobotServiceState.STOPPED, RobotServiceState.PAUSED,
                                                      RobotServiceState.ERROR]:
         application.move_to_spray_capture_position()
     application.state = GlueSprayApplicationState.IDLE
