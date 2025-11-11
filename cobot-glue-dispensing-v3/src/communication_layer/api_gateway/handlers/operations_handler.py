@@ -410,7 +410,7 @@ class OperationsHandler:
             ).to_dict()
         
         try:
-            from src.backend.robot_application.base_robot_application import ApplicationType
+            from src.robot_application.base_robot_application import ApplicationType
             
             app_type_str = data.get('application_type') if isinstance(data, dict) else str(data)
             

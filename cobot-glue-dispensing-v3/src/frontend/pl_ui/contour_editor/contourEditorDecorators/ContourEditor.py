@@ -3,7 +3,7 @@ from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QFrame
 
 from modules.shared.shared.contour_editor.BezierSegmentManager import BezierSegmentManager
-from src.backend.robot_application.glue_dispensing_application.workpiece import Workpiece
+from src.robot_application.glue_dispensing_application.workpiece.Workpiece import Workpiece
 from src.frontend.pl_ui.contour_editor import constants
 from src.frontend.pl_ui.contour_editor.controllers.SegmentActionController import SegmentActionController
 from src.frontend.pl_ui.contour_editor.controllers.viewport_controller import ViewportController

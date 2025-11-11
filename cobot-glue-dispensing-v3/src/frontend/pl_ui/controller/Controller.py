@@ -2,7 +2,7 @@ from PyQt6.QtCore import QThread
 from modules.shared.v1.Response import Response
 from modules.shared.v1 import Constants
 from modules.shared.shared.settings.conreateSettings.CameraSettings import CameraSettings
-from src.backend.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
+from src.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from modules.shared.shared.settings.conreateSettings.RobotSettings import RobotSettings
 
 from .RequestWorker import RequestWorker
@@ -18,12 +18,12 @@ from modules.shared.v1.endpoints import (
     settings_endpoints
 )
 # Import glue application constants
-from src.backend.robot_application.glue_dispensing_application.settings.GlueConstants import (
+from src.robot_application.glue_dispensing_application.settings.GlueConstants import (
     REQUEST_RESOURCE_GLUE,
     SETTINGS_GLUE_GET,
     SETTINGS_GLUE_SET
 )
-from src.backend.robot_application.glue_dispensing_application.workpiece import Workpiece
+from src.robot_application.glue_dispensing_application.workpiece import Workpiece
 
 from src.frontend.pl_ui.ui.windows.settings.CameraSettingsTabLayout import CameraSettingsTabLayout
 from src.frontend.pl_ui.ui.windows.settings.ContourSettingsTabLayout import ContourSettingsTabLayout

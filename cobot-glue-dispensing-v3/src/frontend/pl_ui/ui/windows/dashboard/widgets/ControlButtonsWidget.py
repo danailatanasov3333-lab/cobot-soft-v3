@@ -5,7 +5,7 @@ from modules.shared.MessageBroker import MessageBroker
 from modules.shared.v1.topics import SystemTopics, RobotTopics
 from src.frontend.pl_ui.ui.widgets.MaterialButton import MaterialButton
 from src.frontend.pl_ui.localization import TranslationKeys, TranslatableWidget
-from src.backend.robot_application.base_robot_application import ApplicationState
+from src.robot_application.base_robot_application import ApplicationState
 from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
 
 

@@ -15,11 +15,6 @@ DEBUG_SIMILARITY = False
 DEBUG_CALCULATE_DIFFERENCES = False
 DEBUG_ALIGN_CONTOURS = False
 
-
-# def _isValid(contour):
-#     """Check if the contour is valid."""
-#     return contour is not None and len(contour) > 0
-
 def _isValid(sprayPatternList):
     """
   Check if the given spray pattern list is valid.

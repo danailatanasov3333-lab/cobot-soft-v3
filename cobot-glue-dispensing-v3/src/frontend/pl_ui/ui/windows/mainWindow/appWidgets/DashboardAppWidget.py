@@ -145,7 +145,7 @@ class DashboardAppWidget(AppWidget):
 
     def on_glue_type_changed(self, index,glue_type):
         print(f"Glue type of {index} changed to: {glue_type} ")
-        from src.backend.robot_application.glue_dispensing_application.tools.GlueCell import GlueCellsManagerSingleton
+        from src.robot_application import GlueCellsManagerSingleton
         manager = GlueCellsManagerSingleton.get_instance()
         manager.updateGlueTypeById(index,glue_type)
 

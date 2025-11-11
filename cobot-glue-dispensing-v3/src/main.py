@@ -9,8 +9,8 @@ setup_localization()
 from modules.shared.MessageBroker import MessageBroker
 from modules.shared.shared.workpiece.WorkpieceService import WorkpieceService
 from modules.shared.v1.DomesticRequestSender import DomesticRequestSender
-from src.backend.robot_application.application_factory import create_application_factory
-from src.backend.robot_application.base_robot_application import ApplicationType
+from src.robot_application.application_factory import create_application_factory
+from src.robot_application.base_robot_application import ApplicationType
 from src.backend.system.SensorPublisher import SensorPublisher
 
 from src.backend.system.robot.RobotController import RobotController
@@ -20,12 +20,12 @@ from src.backend.system.settings.SettingsController import SettingsController
 # from src.backend.system.RequestHandler import RequestHandler
 # IMPORT SERVICES
 from src.backend.system.settings.SettingsService import SettingsService
-from src.backend.robot_application.glue_dispensing_application.tools.GlueCell import GlueDataFetcher
+from src.robot_application.glue_dispensing_application.tools.GlueCell import GlueDataFetcher
 
 
 from src.backend.system.vision.CameraSystemController import CameraSystemController
 from src.backend.system.vision.VisionService import VisionServiceSingleton
-from src.backend.robot_application.glue_dispensing_application.workpiece.WorkpieceController import WorkpieceController
+from src.robot_application.glue_dispensing_application.workpiece.WorkpieceController import WorkpieceController
 from src.backend.system.utils import PathResolver
 
 

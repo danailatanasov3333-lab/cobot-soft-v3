@@ -7,8 +7,9 @@ from modules.shared.shared.settings.robotConfig.robotConfigModel import RobotCon
 from modules.shared.v1 import Constants
 from modules.shared.shared.settings.conreateSettings.enums.CameraSettingKey import CameraSettingKey
 from modules.shared.shared.settings.conreateSettings.enums.RobotSettingKey import RobotSettingKey
-from src.backend.robot_application.interfaces.application_settings_interface import settings_registry
 import logging
+
+from src.robot_application.interfaces.application_settings_interface import settings_registry
 
 
 class SettingsService:

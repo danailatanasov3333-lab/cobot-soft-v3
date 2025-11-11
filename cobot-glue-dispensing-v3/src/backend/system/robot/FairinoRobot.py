@@ -170,6 +170,19 @@ class FairinoRobot:
               Returns:
                   list: Result from robot move command.
               """
+        # print position elements type
+
+        names = ["x", "y", "z", "rx", "ry", "rz"]
+        if position is None:
+            print("position is None")
+        else:
+            try:
+                for i, name in enumerate(names):
+                    val = position[i] if i < len(position) else None
+                    print(f"{name}: value={val}, type={type(val).__name__}")
+            except Exception as e:
+                print(f"Error inspecting position: {e}")
+
         result = self.robot.MoveCart(position, tool, user, vel=vel, acc=acc)
         log_debug_message(self.logger_context, f"MoveCart to {position} with tool {tool}, user {user}, vel {vel}, acc {acc} -> result: {result}")
         return result

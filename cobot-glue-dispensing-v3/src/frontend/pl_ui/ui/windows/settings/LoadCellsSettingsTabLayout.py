@@ -11,7 +11,7 @@ from src.frontend.pl_ui.localization import get_app_translator
 from src.frontend.pl_ui.ui.widgets.SwitchButton import QToggle
 from src.frontend.pl_ui.ui.widgets.ToastWidget import ToastWidget
 from src.frontend.pl_ui.ui.windows.settings.BaseSettingsTabLayout import BaseSettingsTabLayout
-from src.backend.robot_application.glue_dispensing_application.tools.GlueCell import GlueCellsManagerSingleton, GlueDataFetcher
+from src.robot_application import GlueCellsManagerSingleton, GlueDataFetcher
 import random
 import json
 from pathlib import Path
@@ -816,7 +816,7 @@ class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         """)
 
     def fetch_calibration_config(self, load_cell_id: int):
-        from src.backend.robot_application.glue_dispensing_application.tools.GlueCell import GET_CONFIG_ENDPOINT
+        from src.robot_application import GET_CONFIG_ENDPOINT
         """Fetch calibration settings (offset and scale) for the given load cell."""
         import requests
 

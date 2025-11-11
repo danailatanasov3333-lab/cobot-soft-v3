@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QVBoxLayout, QLabel, QWidget, QApplication, QHBoxLa
                              QScrollArea, QGroupBox, QGridLayout)
 from src.frontend.pl_ui.ui.widgets.MaterialButton import MaterialButton
 from src.frontend.pl_ui.localization import TranslationKeys, get_app_translator
-from src.backend.robot_application.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
+from src.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettingKey
 from modules.glueSprayService.GlueSprayService import GlueSprayService
 from src.frontend.pl_ui.ui.widgets.SwitchButton import QToggle
 from src.frontend.pl_ui.ui.widgets.ToastWidget import ToastWidget
@@ -1099,9 +1099,9 @@ if __name__ == "__main__":
     settingsService = SettingsService()
     # Get glue settings through the new registry system
     try:
-        from src.backend.robot_application.interfaces.application_settings_interface import settings_registry
-        from src.backend.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
-        from src.backend.robot_application.glue_dispensing_application.settings.GlueSettingsHandler import GlueSettingsHandler
+        from src.robot_application import settings_registry
+        from src.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
+        from src.robot_application import GlueSettingsHandler
         
         # Register glue settings for testing
         glue_settings_obj = GlueSettings()
@@ -1112,7 +1112,7 @@ if __name__ == "__main__":
         glueSettings = glue_handler.get_settings_object()
     except Exception as e:
         print(f"Failed to get glue settings: {e}")
-        from src.backend.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
+        from src.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
         glueSettings = GlueSettings()
 
     robot_config = settingsService.robot_config

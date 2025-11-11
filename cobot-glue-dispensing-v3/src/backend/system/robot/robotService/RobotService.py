@@ -10,15 +10,15 @@ from modules.shared.MessageBroker import MessageBroker
 from modules.shared.shared.settings.robotConfig.robotConfigModel import RobotConfig
 from src.backend.system.robot.FairinoRobot import Axis, Direction
 from src.backend.system.robot.RobotUtils import calculate_distance_between_points
-from src.backend.robot_application.glue_dispensing_application.glue_dispensing.RobotStateMachine import RobotStateMachine
+from src.robot_application.glue_dispensing_application.glue_dispensing.RobotStateMachine import RobotStateMachine
 from src.backend.system.robot.robotService.RobotServiceMessagePublisher import RobotServiceMessagePublisher
 from src.backend.system.robot.robotService.RobotServiceStateManager import RobotServiceStateManager
 from src.backend.system.robot.robotService.RobotServiceSubscriptionManager import RobotServiceSubscriptionManager
 from src.backend.system.robot.robotService.RobotStateManager import RobotStateManager
 from src.backend.system.robot.robotService.enums.RobotServiceState import RobotServiceState
-from src.backend.robot_application.glue_dispensing_application.tools.Laser import Laser
-from src.backend.robot_application.glue_dispensing_application.tools.ToolChanger import ToolChanger
-from src.backend.robot_application.glue_dispensing_application.tools.VacuumPump import VacuumPump
+from src.robot_application.glue_dispensing_application.tools.Laser import Laser
+from src.robot_application.glue_dispensing_application.tools.ToolChanger import ToolChanger
+from src.robot_application.glue_dispensing_application.tools.VacuumPump import VacuumPump
 from src.backend.system.utils.custom_logging import setup_logger, \
     LoggerContext, log_info_message, log_debug_message
 
