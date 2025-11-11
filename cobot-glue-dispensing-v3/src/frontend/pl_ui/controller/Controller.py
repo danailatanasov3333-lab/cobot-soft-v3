@@ -471,7 +471,7 @@ class Controller:
         return response.status
 
     def handleMoveToCalibrationPos(self):
-        request = robot_endpoints.GO_TO_CALIBRATION_POS
+        request = robot_endpoints.ROBOT_MOVE_TO_CALIB_POS
         self.requestSender.sendRequest(request)
 
     def homeRobot(self, asyncParam=True):

@@ -9,9 +9,10 @@ import cv2.aruco as aruco
 
 
 class CameraCalibrationService:
-    STORAGE_PATH = "VisionSystem/calibration/cameraCalibration/storage/calibration_result"
-    PERSPECTIVE_MATRIX_PATH = STORAGE_PATH + "/perspectiveTransform.npy"
-    CAMERA_TO_ROBOT_MATRIX_PATH = STORAGE_PATH + "/cameraToRobotMatrix.npy"
+    # Default storage path: folder next to this module under 'storage/calibration_result'
+    STORAGE_PATH = os.path.join(os.path.dirname(__file__), 'storage', 'calibration_result')
+    PERSPECTIVE_MATRIX_PATH = os.path.join(STORAGE_PATH, 'perspectiveTransform.npy')
+    CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(STORAGE_PATH, 'cameraToRobotMatrix.npy')
 
     def __init__(self, chessboardWidth, chessboardHeight, squareSizeMM, skipFrames,message_publisher,onDetectionFailed=None, storagePath=None):
         if storagePath is not None:
