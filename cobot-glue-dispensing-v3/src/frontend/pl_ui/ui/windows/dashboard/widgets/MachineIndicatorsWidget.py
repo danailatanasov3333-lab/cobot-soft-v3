@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 
 from modules.shared.MessageBroker import MessageBroker
 from src.frontend.pl_ui.ui.widgets.LanguageSelectorWidget import LanguageSelectorWidget
-
+from modules.shared.v1.topics import VisionTopics
 
 class MachineState(Enum):
     STOPPED = "STOPPED"
@@ -127,7 +127,7 @@ class MachineToolbar(QWidget):
 
         # Subscribe to broker - weak references will handle cleanup automatically
         broker = MessageBroker()
-        broker.subscribe("vision/state", self.update_info_label_threadsafe)
+        broker.subscribe(VisionTopics.SERVICE_STATE, self.update_info_label_threadsafe)
 
     def setup_ui(self):
         self.setStyleSheet("""
@@ -320,7 +320,7 @@ class MachineToolbar(QWidget):
 
     def clean_up(self):
         """Clean up resources when the widget is closed"""
-        self.broker.unsubscribe("vision/state", self.update_info_label_threadsafe)
+        self.broker.unsubscribe(VisionTopics.SERVICE_STATE, self.update_info_label_threadsafe)
 
     def closeEvent(self, event):
         """Clean up when widget is closed"""

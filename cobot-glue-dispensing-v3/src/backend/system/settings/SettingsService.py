@@ -3,62 +3,58 @@ import os
 
 from modules.shared.shared.settings.conreateSettings.RobotSettings import RobotSettings
 from modules.shared.shared.settings.conreateSettings.CameraSettings import CameraSettings
-from modules.shared.shared.settings.conreateSettings.GlueSettings import GlueSettings
 from modules.shared.shared.settings.robotConfig.robotConfigModel import RobotConfig,get_default_config
 from modules.shared.v1 import Constants
 from modules.shared.shared.settings.conreateSettings.enums.CameraSettingKey import CameraSettingKey
 from modules.shared.shared.settings.conreateSettings.enums.RobotSettingKey import RobotSettingKey
-from modules.shared.shared.settings.conreateSettings.enums.GlueSettingKey import GlueSettingKey
-from src.backend.system.tools.GlueCell import GlueType
+from src.backend.robot_application.interfaces.application_settings_interface import settings_registry
 import logging
 
 
 class SettingsService:
     """
-      Service responsible for managing application settings related to the robot and camera components.
+      Service responsible for managing core system settings (camera and robot).
+      
+      Application-specific settings are now managed by their respective applications
+      through the ApplicationSettingsInterface and are accessible via the settings registry.
 
       This class handles:
-      - Loading and saving settings to JSON files
+      - Loading and saving core settings (camera and robot) to JSON files
       - Providing settings objects for external access
-      - Updating settings based on external input (e.g., from HTTP requests)
-      - Returning settings in dictionary format for serialization
+      - Updating core settings based on external input
+      - Routing application-specific settings to registered handlers
 
       Attributes:
           settings_dir (str): The root directory where settings JSON files are stored.
-          settings_file_paths (dict): File paths for individual settings files.
-          settings_objects (dict): Dictionary storing all current settings objects.
+          settings_file_paths (dict): File paths for core settings files.
+          settings_objects (dict): Dictionary storing core settings objects.
       """
-    settings_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "storage", "settings")
-    settings_dir = os.path.normpath(settings_dir)  # Normalize path to avoid issues
 
-    settings_file_paths = {
-        "camera": os.path.join(settings_dir, "camera_settings.json"),
-        "robot_settings": os.path.join(settings_dir, "robot_settings.json"),
-        "glue_settings": os.path.join(settings_dir, "glue_settings.json"),
-    }
 
-    ROBOT_CONFIG_FILE = os.path.join(settings_dir, "robot_config.json")
-
-    def __init__(self):
+    def __init__(self,settings_file_paths):
         """
-               Initialize the SettingsService by creating and loading camera and robot settings.
+               Initialize the SettingsService by creating and loading core settings (camera and robot).
+               Application-specific settings are managed by their respective applications.
                """
+
+        self.settings_file_paths = settings_file_paths
+        self.robot_config_file_path = settings_file_paths.get("robot_config")
         self.logger = logging.getLogger(self.__class__.__name__)
-        # Initialize a dictionary to store settings objects
+        # Initialize a dictionary to store core settings objects
         self.settings_objects = {}
 
-        # Initialize and load settings for each component
+        # Initialize and load core settings only
         self.camera_settings = CameraSettings()
         self.robot_settings = RobotSettings()
-        self.glue_settings = GlueSettings()
 
-        # Store them in the settings dictionary
+        # Store core settings in the settings dictionary
         self.settings_objects["camera"] = self.camera_settings
         self.settings_objects["robot_settings"] = self.robot_settings
-        self.settings_objects["glue_settings"] = self.glue_settings
+        
+        # Load robot configuration
         self.robot_config = self.load_robot_config()
 
-        # Load settings from JSON files, or use default values if files do not exist
+        # Load core settings from JSON files, or use default values if files do not exist
         self.load_all_settings()
 
     def set_camera_index(self, index):
@@ -88,11 +84,12 @@ class SettingsService:
         Retrieve settings data based on the key provided.
 
         Args:
-            key (str): The key corresponding to the settings type ("camera" or "robot").
+            key (str): The key corresponding to the settings type ("camera", "robot", or application type).
 
         Returns:
             dict: The settings data as a dictionary.
         """
+        # Handle core settings
         if key == Constants.REQUEST_RESOURCE_CAMERA:
             # For camera settings, return the nested JSON structure
             data = self.camera_settings.to_nested_json()
@@ -100,8 +97,27 @@ class SettingsService:
             return data
         elif key == Constants.REQUEST_RESOURCE_ROBOT:
             return self.robot_settings.toDict()
-        elif key == Constants.REQUEST_RESOURCE_GLUE:
-            return self.glue_settings.toDict()
+        
+        # Handle application-specific settings through registry
+        # Convert resource names to lowercase for registry lookup
+        resource_map = {
+            "Glue": "glue",
+            "Paint": "paint", 
+            "Weld": "weld"
+        }
+        
+        settings_type = resource_map.get(key, key.lower())
+        
+        if settings_registry.is_type_registered(settings_type):
+            try:
+                handler = settings_registry.get_handler(settings_type)
+                return handler.handle_get_settings()
+            except KeyError:
+                self.logger.warning(f"Settings handler not found for type: {settings_type}")
+                return {}
+        else:
+            self.logger.warning(f"Unknown settings key: {key}")
+            return {}
 
     def save_all_settings(self):
         """Save all settings to their respective files."""
@@ -114,8 +130,8 @@ class SettingsService:
         """Load configuration from JSON file"""
 
         try:
-            if os.path.exists(self.ROBOT_CONFIG_FILE):
-                with open(self.ROBOT_CONFIG_FILE, 'r') as f:
+            if os.path.exists(self.robot_config_file_path):
+                with open(self.robot_config_file_path, 'r') as f:
                     data = json.load(f)
                     config = RobotConfig.from_dict(data)
             else:
@@ -123,6 +139,7 @@ class SettingsService:
                 self.save_robot_config_to_file(config.to_dict())
 
         except Exception as e:
+            raise ValueError(f"Error loading robot configuration: {e}")
             config = get_default_config()
 
         return config
@@ -130,7 +147,7 @@ class SettingsService:
     def save_robot_config_to_file(self, config: dict):
         """Save configuration to JSON file and send ROBOT_UPDATE_CONFIG request"""
         try:
-            with open(self.ROBOT_CONFIG_FILE, 'w') as f:
+            with open(self.robot_config_file_path, 'w') as f:
                 json.dump(config, f, indent=4)
         except Exception as e:
             import traceback
@@ -155,7 +172,7 @@ class SettingsService:
 
     def load_settings_from_json(self, json_file, settings_obj):
         """
-        Load settings from a JSON file into the given settings object.
+        Load core settings from a JSON file into the given settings object.
 
         Args:
             json_file (str): Path to the JSON file.
@@ -178,41 +195,17 @@ class SettingsService:
                 settings_obj.set_robot_tool(settings_data.get(RobotSettingKey.TOOL.value, 0))
                 settings_obj.set_robot_user(settings_data.get(RobotSettingKey.USER.value, 0))
 
-            elif isinstance(settings_obj, GlueSettings):
-                settings_obj.set_spray_width(settings_data.get(GlueSettingKey.SPRAY_WIDTH.value, 10))
-                settings_obj.set_spraying_height(settings_data.get(GlueSettingKey.SPRAYING_HEIGHT.value, 5))
-                settings_obj.set_fan_speed(settings_data.get(GlueSettingKey.FAN_SPEED.value, 100))
-                settings_obj.set_time_between_generator_and_glue(
-                    settings_data.get(GlueSettingKey.TIME_BETWEEN_GENERATOR_AND_GLUE.value, 0.5))
-                settings_obj.set_motor_speed(settings_data.get(GlueSettingKey.MOTOR_SPEED.value, 50))
-                settings_obj.set_steps_reverse(settings_data.get(GlueSettingKey.REVERSE_DURATION.value, 100))
-                settings_obj.set_speed_reverse(settings_data.get(GlueSettingKey.SPEED_REVERSE.value, 20))
-                settings_obj.set_rz_angle(settings_data.get(GlueSettingKey.RZ_ANGLE.value, 0))
-                settings_obj.set_glue_type(settings_data.get(GlueSettingKey.GLUE_TYPE.value, GlueType.TypeA.value))
-                settings_obj.set_generator_timeout(settings_data.get(GlueSettingKey.GENERATOR_TIMEOUT.value, 5))
-                settings_obj.set_time_before_motion(settings_data.get(GlueSettingKey.TIME_BEFORE_MOTION.value, 1))
-                settings_obj.set_reach_position_threshold(
-                    settings_data.get(GlueSettingKey.REACH_START_THRESHOLD.value, 1))
-                settings_obj.set_time_before_stop(settings_data.get(GlueSettingKey.TIME_BEFORE_STOP.value, 1))
-                settings_obj.set_reach_end_threshold(settings_data.get(GlueSettingKey.REACH_END_THRESHOLD.value, 1))
-                settings_obj.set_initial_ramp_speed(settings_data.get(GlueSettingKey.INITIAL_RAMP_SPEED.value, 10))
-                settings_obj.set_forward_ramp_steps(settings_data.get(GlueSettingKey.FORWARD_RAMP_STEPS.value, 10))
-                settings_obj.set_reverse_ramp_steps(settings_data.get(GlueSettingKey.REVERSE_RAMP_STEPS.value, 10))
-                settings_obj.set_initial_ramp_speed_duration(settings_data.get(GlueSettingKey.INITIAL_RAMP_SPEED_DURATION.value, 1.0))
-                settings_obj.set_spray_on(settings_data.get(GlueSettingKey.SPRAY_ON.value, True))
-
-
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.logger.error(f"Error loading settings from {json_file}: {e}")
             self.logger.info(f"Using default values for {type(settings_obj).__name__}.")
 
     def save_settings_to_json(self, json_file, settings_obj):
         """
-              Save the provided settings object to a JSON file.
+              Save the provided core settings object to a JSON file.
 
               Args:
                   json_file (str): Path to the output JSON file.
-                  settings_obj (CameraSettings or RobotSettings or GlueSettings): The object to serialize.
+                  settings_obj (CameraSettings or RobotSettings): The object to serialize.
               """
         try:
             # Create the settings directory if it doesn't exist
@@ -230,28 +223,6 @@ class SettingsService:
                     RobotSettingKey.ACCELERATION.value: settings_obj.get_robot_acceleration(),
                     RobotSettingKey.TOOL.value: settings_obj.get_robot_tool(),
                     RobotSettingKey.USER.value: settings_obj.get_robot_user()
-                }
-
-            elif isinstance(settings_obj, GlueSettings):
-                settings_data = {
-                    GlueSettingKey.SPRAY_WIDTH.value: settings_obj.get_spray_width(),
-                    GlueSettingKey.SPRAYING_HEIGHT.value: settings_obj.get_spraying_height(),
-                    GlueSettingKey.FAN_SPEED.value: settings_obj.get_fan_speed(),
-                    GlueSettingKey.TIME_BETWEEN_GENERATOR_AND_GLUE.value: settings_obj.get_time_between_generator_and_glue(),
-                    GlueSettingKey.MOTOR_SPEED.value: settings_obj.get_motor_speed(),
-                    GlueSettingKey.REVERSE_DURATION.value: settings_obj.get_steps_reverse(),
-                    GlueSettingKey.SPEED_REVERSE.value: settings_obj.get_speed_reverse(),
-                    GlueSettingKey.RZ_ANGLE.value: settings_obj.get_rz_angle(),
-                    GlueSettingKey.GENERATOR_TIMEOUT.value: settings_obj.get_generator_timeout(),
-                    GlueSettingKey.TIME_BEFORE_MOTION.value: settings_obj.get_time_before_motion(),
-                    GlueSettingKey.REACH_START_THRESHOLD.value: settings_obj.get_reach_position_threshold(),
-                    GlueSettingKey.TIME_BEFORE_STOP.value: settings_obj.get_time_before_stop(),
-                    GlueSettingKey.REACH_END_THRESHOLD.value: settings_obj.get_reach_end_threshold(),
-                    GlueSettingKey.REVERSE_RAMP_STEPS.value: settings_obj.get_reverse_ramp_steps(),
-                    GlueSettingKey.FORWARD_RAMP_STEPS.value: settings_obj.get_forward_ramp_steps(),
-                    GlueSettingKey.INITIAL_RAMP_SPEED.value: settings_obj.get_initial_ramp_speed(),
-                    GlueSettingKey.INITIAL_RAMP_SPEED_DURATION.value:settings_obj.get_initial_ramp_speed_duration(),
-                    GlueSettingKey.SPRAY_ON.value: settings_obj.get_spray_on()
                 }
 
             with open(json_file, 'w') as f:
@@ -274,66 +245,33 @@ class SettingsService:
                """
         header = settings['header']
 
+        # Handle core settings
         if header == Constants.REQUEST_RESOURCE_ROBOT:
             self.updateRobotSettings(settings)
         elif header == Constants.REQUEST_RESOURCE_CAMERA:
             self.updateCameraSettings(settings)
-        elif header == Constants.REQUEST_RESOURCE_GLUE:
-            self.updateGlueSettings(settings)
+        
+        # Handle application-specific settings through registry
+        # Convert resource names to lowercase for registry lookup
+        resource_map = {
+            "Glue": "glue",
+            "Paint": "paint",
+            "Weld": "weld"
+        }
+        
+        settings_type = resource_map.get(header, header.lower())
+        
+        if settings_registry.is_type_registered(settings_type):
+            try:
+                handler = settings_registry.get_handler(settings_type)
+                success, message = handler.handle_set_settings(settings)
+                if not success:
+                    raise ValueError(f"Failed to update {header} settings: {message}")
+            except KeyError:
+                raise ValueError(f"Settings handler not found for type: {settings_type}")
         else:
-            raise ValueError("Invalid header")
+            raise ValueError(f"Invalid or unsupported settings header: {header}")
 
-    def updateGlueSettings(self, settings: dict):
-        self.logger.info(f"Updating Glue Settings: {settings}")
-        """
-             Update glue-specific settings and persist them to file.
-
-             Args:
-                 settings (dict): Dictionary containing glue settings data.
-             """
-        print(settings)
-        if GlueSettingKey.SPRAY_WIDTH.value in settings:
-            self.glue_settings.set_spray_width(settings.get(GlueSettingKey.SPRAY_WIDTH.value))
-        if GlueSettingKey.SPRAYING_HEIGHT.value in settings:
-            self.glue_settings.set_spraying_height(settings.get(GlueSettingKey.SPRAYING_HEIGHT.value))
-        if GlueSettingKey.FAN_SPEED.value in settings:
-            self.glue_settings.set_fan_speed(settings.get(GlueSettingKey.FAN_SPEED.value))
-        if GlueSettingKey.TIME_BETWEEN_GENERATOR_AND_GLUE.value in settings:
-            self.glue_settings.set_time_between_generator_and_glue(
-                settings.get(GlueSettingKey.TIME_BETWEEN_GENERATOR_AND_GLUE.value))
-        if GlueSettingKey.MOTOR_SPEED.value in settings:
-            self.glue_settings.set_motor_speed(settings.get(GlueSettingKey.MOTOR_SPEED.value))
-        if GlueSettingKey.REVERSE_DURATION.value in settings:
-            self.glue_settings.set_steps_reverse(settings.get(GlueSettingKey.REVERSE_DURATION.value))
-        if GlueSettingKey.SPEED_REVERSE.value in settings:
-            self.glue_settings.set_speed_reverse(settings.get(GlueSettingKey.SPEED_REVERSE.value))
-        if GlueSettingKey.RZ_ANGLE.value in settings:
-            self.glue_settings.set_rz_angle(settings.get(GlueSettingKey.RZ_ANGLE.value))
-        if GlueSettingKey.GLUE_TYPE.value in settings:
-            self.glue_settings.set_glue_type(settings.get(GlueSettingKey.GLUE_TYPE.value))
-        if GlueSettingKey.GENERATOR_TIMEOUT.value in settings:
-            self.glue_settings.set_generator_timeout(settings.get(GlueSettingKey.GENERATOR_TIMEOUT.value))
-        if GlueSettingKey.TIME_BEFORE_MOTION.value in settings:
-            self.glue_settings.set_time_before_motion(settings.get(GlueSettingKey.TIME_BEFORE_MOTION.value))
-        if GlueSettingKey.REACH_START_THRESHOLD.value in settings:
-            self.glue_settings.set_reach_position_threshold(settings.get(GlueSettingKey.REACH_START_THRESHOLD.value))
-        if GlueSettingKey.TIME_BEFORE_STOP.value in settings:
-            self.glue_settings.set_time_before_stop(settings.get(GlueSettingKey.TIME_BEFORE_STOP.value))
-        if GlueSettingKey.REACH_END_THRESHOLD.value in settings:
-            self.glue_settings.set_reach_end_threshold(settings.get(GlueSettingKey.REACH_END_THRESHOLD.value))
-
-        if GlueSettingKey.INITIAL_RAMP_SPEED.value in settings:
-            self.glue_settings.set_initial_ramp_speed(settings.get(GlueSettingKey.INITIAL_RAMP_SPEED.value))
-        if GlueSettingKey.FORWARD_RAMP_STEPS.value in settings:
-            self.glue_settings.set_forward_ramp_steps(settings.get(GlueSettingKey.FORWARD_RAMP_STEPS.value))
-        if GlueSettingKey.REVERSE_RAMP_STEPS.value in settings:
-            self.glue_settings.set_reverse_ramp_steps(settings.get(GlueSettingKey.REVERSE_RAMP_STEPS.value))
-        if GlueSettingKey.INITIAL_RAMP_SPEED_DURATION.value in settings:
-            self.glue_settings.set_initial_ramp_speed_duration(settings.get(GlueSettingKey.INITIAL_RAMP_SPEED_DURATION.value))
-        if GlueSettingKey.SPRAY_ON.value in settings:
-            self.glue_settings.set_spray_on(settings.get(GlueSettingKey.SPRAY_ON.value))
-
-        self.save_settings_to_json(self.settings_file_paths.get("glue_settings"), self.glue_settings)
 
     def updateRobotSettings(self, settings: dict):
         self.logger.info(f"Updating Robot Settings: {settings}")

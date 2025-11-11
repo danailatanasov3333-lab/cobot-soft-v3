@@ -16,7 +16,7 @@ from modules.shared.MessageBroker import MessageBroker
 from src.frontend.pl_ui.ui.widgets.robotManualControl.RobotJogWidget import RobotJogWidget
 from src.frontend.pl_ui.ui.windows.settings.BaseSettingsTabLayout import BaseSettingsTabLayout
 from src.frontend.pl_ui.ui.widgets.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox
-
+from modules.shared.v1.topics import VisionTopics , RobotTopics
 
 
 
@@ -112,11 +112,11 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         self.selected_corner_index = None
 
         broker = MessageBroker()
-        broker.subscribe("vision-system/calibration-feedback", self.addLog)
-        broker.subscribe("vision-system/calibration_image_captured", self.addLog)
-        broker.subscribe("robot-calibration-log", self.addLog)
-        broker.subscribe("robot-calibration-start", self.onRobotCalibrationStart)
-        broker.subscribe("robot-calibration-stop", self.onRobotCalibrationStop)
+        broker.subscribe(VisionTopics.CALIBRATION_FEEDBACK, self.addLog)
+        broker.subscribe(VisionTopics.CALIBRATION_IMAGE_CAPTURED, self.addLog)
+        broker.subscribe(RobotTopics.ROBOT_CALIBRATION_LOG, self.addLog)
+        broker.subscribe(RobotTopics.ROBOT_CALIBRATION_START, self.onRobotCalibrationStart)
+        broker.subscribe(RobotTopics.ROBOT_CALIBRATION_STOP, self.onRobotCalibrationStop)
 
         # Load saved work area points for both pickup and spray areas
         self.load_all_saved_work_areas()
@@ -135,11 +135,11 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         print("Camera feed timer paused for robot calibration")
         
         broker = MessageBroker()
-        broker.subscribe("robot-calibration-image", self.onRbotCalibrationImage)
+        broker.subscribe(RobotTopics.ROBOT_CALIBRATION_IMAGE, self.onRbotCalibrationImage)
 
     def onRobotCalibrationStop(self,message):
         broker = MessageBroker()
-        broker.unsubscribe("robot-calibration-image", self.onRbotCalibrationImage)
+        broker.unsubscribe(RobotTopics.ROBOT_CALIBRATION_IMAGE, self.onRbotCalibrationImage)
         
         # Resume the camera feed timer
         self.timer.start(self.updateFrequency)

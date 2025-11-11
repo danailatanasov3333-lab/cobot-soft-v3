@@ -26,8 +26,9 @@ class AppTranslator(QObject):
         
         # Subscribe to language changes from the underlying system
         from modules.shared.MessageBroker import MessageBroker
+        from modules.shared.v1.topics import UITopics
         broker = MessageBroker()
-        broker.subscribe("Language", self._on_language_changed)
+        broker.subscribe(UITopics.LANGUAGE_CHANGED, self._on_language_changed)
     
     def get(self, key: Union[str, Message], **params) -> str:
         """

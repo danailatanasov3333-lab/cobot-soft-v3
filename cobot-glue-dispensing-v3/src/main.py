@@ -2,6 +2,7 @@
 import logging
 import os
 
+from src.backend.system.utils.PathResolver import PathResolver, PathType
 from src.frontend.pl_ui.localization import setup_localization
 setup_localization()
 
@@ -26,6 +27,7 @@ from src.backend.system.tools.GlueCell import GlueDataFetcher
 from src.backend.system.vision.CameraSystemController import CameraSystemController
 from src.backend.system.vision.VisionService import VisionServiceSingleton
 from src.backend.system.workpiece.WorkpieceController import WorkpieceController
+from src.backend.system.utils import PathResolver
 
 
 if os.environ.get("WAYLAND_DISPLAY"):
@@ -53,7 +55,15 @@ else:
 if __name__ == "__main__":
     messageBroker = MessageBroker()
     # INIT SERVICES
-    settingsService = SettingsService()
+    camera_settings_path = PathResolver.get_settings_file_path("camera_settings.json")
+    robot_settings_path = PathResolver.get_settings_file_path("robot_settings.json")
+    settings_file_paths = {
+        "camera":camera_settings_path,
+        "robot_settings": robot_settings_path,
+        "robot_config": PathResolver.get_settings_file_path("robot_config.json"),
+    }
+
+    settingsService = SettingsService(settings_file_paths=settings_file_paths)
     robot_config = settingsService.load_robot_config()
 
     if testRobot:

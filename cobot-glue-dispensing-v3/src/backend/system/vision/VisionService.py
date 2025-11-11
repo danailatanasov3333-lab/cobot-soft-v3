@@ -18,9 +18,9 @@ CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), '..', 'storage', 'set
 
 
 
-
+from modules.shared.v1.topics import VisionTopics
 # PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = '/home/ilv/Cobot-Glue-Nozzle/VisionSystem/calibration/cameraCalibration/storage/calibration_result/pickupCamToRobotMatrix.npy'
-PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__),'..', '..', 'VisionSystem', 'calibration', 'cameraCalibration', 'storage', 'calibration_result', 'pickupCamToRobotMatrix.npy')
+PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__),'..','..', '..', 'VisionSystem', 'calibration', 'cameraCalibration', 'storage', 'calibration_result', 'pickupCamToRobotMatrix.npy')
 
 class _VisionService(VisionSystem):
     """
@@ -62,7 +62,7 @@ class _VisionService(VisionSystem):
         self.filteredContours = None
         self.pickupCamToRobotMatrix = self._loadPickupCamToRobotMatrix()
         broker = MessageBroker()
-        broker.subscribe("vision/transformToCamera",self.transformRobotPointToCamera)
+        broker.subscribe(VisionTopics.TRANSFORM_TO_CAMERA_POINT,self.transformRobotPointToCamera)
 
     def _loadPickupCamToRobotMatrix(self):
         """

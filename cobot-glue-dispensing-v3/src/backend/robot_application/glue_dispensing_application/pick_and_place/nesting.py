@@ -3,12 +3,12 @@ import math
 import os
 from datetime import datetime
 from src.backend.system.tools.Laser import Laser
-from VisionSystem.heightMeasuring.LaserTracker import LaserTrackService
+from modules.VisionSystem.heightMeasuring.LaserTracker import LaserTrackService
 from src.backend.system.tools.enums.Gripper import Gripper
 from src.backend.system.utils.custom_logging import LoggingLevel, log_if_enabled, \
     setup_logger
 from src.backend.system.utils.contours import is_contour_inside_polygon
-
+from modules.shared.v1.topics import VisionTopics
 import time
 # import logging
 import cv2
@@ -295,7 +295,7 @@ def start_nesting(visionService, robotService,preselected_workpiece,z_offset_for
 
 
         broker = MessageBroker()
-        broker.publish("vision-system/threshold", {"region": "pickup"})
+        broker.publish(VisionTopics.THRESHOLD_REGION, {"region": "pickup"})
 
         time.sleep(DELAY_BETWEEN_CAPTURING_NEW_IMAGE)
 

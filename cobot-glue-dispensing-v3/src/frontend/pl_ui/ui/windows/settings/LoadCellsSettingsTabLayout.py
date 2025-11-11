@@ -17,6 +17,7 @@ import random
 import json
 from pathlib import Path
 from modules.shared.MessageBroker import MessageBroker
+from modules.shared.v1.topics import GlueTopics
 
 class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
     def __init__(self, parent_widget=None):
@@ -38,9 +39,9 @@ class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
             
             # Initialize message broker and subscribe to weight topics
             self.broker = MessageBroker()
-            self.broker.subscribe("GlueMeter_1/VALUE", self._on_weight1_updated)
-            self.broker.subscribe("GlueMeter_2/VALUE", self._on_weight2_updated)
-            self.broker.subscribe("GlueMeter_3/VALUE", self._on_weight3_updated)
+            self.broker.subscribe(GlueTopics.GLUE_METER_1_VALUE, self._on_weight1_updated)
+            self.broker.subscribe(GlueTopics.GLUE_METER_2_VALUE, self._on_weight2_updated)
+            self.broker.subscribe(GlueTopics.GLUE_METER_3_VALUE, self._on_weight3_updated)
             print("Subscribed to GlueMeter weight topics")
             
         except Exception as e:
@@ -72,9 +73,9 @@ class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         """Unsubscribe from message broker topics to prevent errors after widget destruction"""
         try:
             if hasattr(self, 'broker') and self.broker:
-                self.broker.unsubscribe("GlueMeter_1/VALUE", self._on_weight1_updated)
-                self.broker.unsubscribe("GlueMeter_2/VALUE", self._on_weight2_updated)
-                self.broker.unsubscribe("GlueMeter_3/VALUE", self._on_weight3_updated)
+                self.broker.unsubscribe(GlueTopics.GLUE_METER_1_VALUE, self._on_weight1_updated)
+                self.broker.unsubscribe(GlueTopics.GLUE_METER_2_VALUE, self._on_weight2_updated)
+                self.broker.unsubscribe(GlueTopics.GLUE_METER_3_VALUE, self._on_weight3_updated)
                 print("Unsubscribed from GlueMeter weight topics")
         except Exception as e:
             print(f"Error during message broker cleanup: {e}")

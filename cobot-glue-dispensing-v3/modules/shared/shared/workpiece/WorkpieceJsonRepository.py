@@ -33,7 +33,7 @@ class WorkpieceJsonRepository:
     FOLDER_NAME = "workpieces"
     WORKPIECE_FILE_SUFFIX = "_workpiece.json"  # Ensure the files have this suffix
 
-    def __init__(self, baseDir, fields, dataClass):
+    def __init__(self, directory, fields, dataClass):
         """
               Initializes the repository and attempts to load existing data.
 
@@ -51,7 +51,7 @@ class WorkpieceJsonRepository:
 
 
 
-        self.directory = os.path.join(baseDir, self.FOLDER_NAME)
+        self.directory = directory
         self.dataClass = dataClass
         self.fields = fields
         # check if dataClass is JsonSerializable

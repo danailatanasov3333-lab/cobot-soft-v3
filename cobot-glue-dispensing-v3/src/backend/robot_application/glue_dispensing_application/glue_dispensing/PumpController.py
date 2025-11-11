@@ -1,14 +1,15 @@
-from modules.shared.shared.settings.conreateSettings.enums.GlueSettingKey import GlueSettingKey
+from src.backend.robot_application.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
 from src.backend.system.utils.custom_logging import log_debug_message, log_error_message, LoggerContext
 
 
 class PumpController:
-    def __init__(self, use_segment_settings: bool, logger_context: LoggerContext = None):
+    def __init__(self, use_segment_settings: bool, logger_context: LoggerContext = None, glue_settings=None):
         """
         Handles motor (pump) control logic for glue dispensing operations.
         """
         self.use_segment_settings = use_segment_settings
         self.logger_context = logger_context
+        self.glue_settings = glue_settings
 
     def pump_on(self, service, robot_service, glue_type, settings=None):
         """
@@ -46,14 +47,14 @@ class PumpController:
                 # Using global settings
                 result = service.motorOn(
                     motorAddress=glue_type,
-                    speed=robot_service.settingsService.glue_settings.get_motor_speed(),
-                    ramp_steps=robot_service.settingsService.glue_settings.get_forward_ramp_steps(),
-                    initial_ramp_speed=robot_service.settingsService.glue_settings.get_initial_ramp_speed(),
-                    initial_ramp_speed_duration=robot_service.settingsService.glue_settings.get_initial_ramp_speed_duration(),
+                    speed=self.glue_settings.get_motor_speed() if self.glue_settings else 10000,
+                    ramp_steps=self.glue_settings.get_forward_ramp_steps() if self.glue_settings else 1,
+                    initial_ramp_speed=self.glue_settings.get_initial_ramp_speed() if self.glue_settings else 5000,
+                    initial_ramp_speed_duration=self.glue_settings.get_initial_ramp_speed_duration() if self.glue_settings else 1,
                 )
                 log_debug_message(
                     self.logger_context,
-                    message=f"Pump ON (global): speed={robot_service.settingsService.glue_settings.get_motor_speed()}",
+                    message=f"Pump ON (global): speed={self.glue_settings.get_motor_speed() if self.glue_settings else 10000}",
                 )
             else:
                 # Using segment settings
@@ -88,9 +89,9 @@ class PumpController:
                 # Using global settings
                 service.motorOff(
                     motorAddress=glue_type,
-                    speedReverse=robot_service.settingsService.glue_settings.get_speed_reverse(),
-                    reverse_time=robot_service.settingsService.glue_settings.get_steps_reverse(),
-                    ramp_steps=robot_service.settingsService.glue_settings.get_reverse_ramp_steps(),
+                    speedReverse=self.glue_settings.get_speed_reverse() if self.glue_settings else 1000,
+                    reverse_time=self.glue_settings.get_steps_reverse() if self.glue_settings else 1,
+                    ramp_steps=self.glue_settings.get_reverse_ramp_steps() if self.glue_settings else 1,
                 )
                 log_debug_message(
                     self.logger_context,

@@ -17,6 +17,7 @@ import cv2
 from src.frontend.pl_ui.localization import TranslationKeys, get_app_translator
 from PyQt6.QtWidgets import QSpinBox, QDoubleSpinBox
 from modules.shared.MessageBroker import MessageBroker
+from modules.shared.v1.topics import VisionTopics
 
 class CameraSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
     update_camera_feed_signal = QtCore.pyqtSignal()
@@ -59,9 +60,9 @@ class CameraSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
             self.parent_widget.resizeEvent = self.on_parent_resize
 
         broker = MessageBroker()
-        broker.subscribe(topic="vision-system/state",
+        broker.subscribe(topic=VisionTopics.SERVICE_STATE,
                          callback=self.onVisionSystemStateUpdate)
-        broker.subscribe(topic="vision-system/thresh_image",
+        broker.subscribe(topic=VisionTopics.THRESHOLD_IMAGE,
                           callback= self.update_threshold_preview_from_cv2)
 
     """CAMERA PREVIEW METHODS"""
@@ -327,15 +328,15 @@ class CameraSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         """Clean up MessageBroker subscriptions if widget is destroyed"""
         try:
             broker = MessageBroker()
-            broker.unsubscribe("vision-system/state", self.onVisionSystemStateUpdate)
-            broker.unsubscribe("vision-system/thresh_image", self.update_threshold_preview_from_cv2)
+            broker.unsubscribe(VisionTopics.SERVICE_STATE, self.onVisionSystemStateUpdate)
+            broker.unsubscribe(VisionTopics.THRESHOLD_IMAGE, self.update_threshold_preview_from_cv2)
         except Exception as e:
             print(f"Error during cleanup: {e}")
 
     def clean_up(self):
         broker = MessageBroker()
-        broker.unsubscribe("vision-system/state", self.onVisionSystemStateUpdate)
-        broker.unsubscribe("vision-system/thresh_image", self.update_threshold_preview_from_cv2)
+        broker.unsubscribe(VisionTopics.SERVICE_STATE, self.onVisionSystemStateUpdate)
+        broker.unsubscribe(VisionTopics.THRESHOLD_IMAGE, self.update_threshold_preview_from_cv2)
 
     def clear_layout(self):
         """Clear all widgets from the layout"""

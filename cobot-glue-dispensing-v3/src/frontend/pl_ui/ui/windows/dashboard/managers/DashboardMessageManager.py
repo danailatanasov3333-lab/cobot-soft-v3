@@ -1,6 +1,6 @@
 from modules.shared.MessageBroker import MessageBroker
 from typing import List, Tuple, Callable
-
+from modules.shared.v1.topics import RobotTopics,VisionTopics,GlueTopics
 
 class DashboardMessageManager:
     def __init__(self):
@@ -33,20 +33,20 @@ class DashboardMessageManager:
 
         disable_drawing_subscription = lambda message: self.on_disable_drawing(disable_drawing_callback,image_callback)
         enable_drawing_subscription = lambda message: self.on_enable_drawing(enable_drawing_callback,image_callback)
-        self.broker.subscribe("robot/trajectory/updateImage", image_callback)
-        self.broker.subscribe("vision-system/latest_image", image_callback)
-        self.broker.subscribe("robot/trajectory/point", point_callback)
-        self.broker.subscribe("robot/trajectory/break", break_callback)
-        self.broker.subscribe("robot/trajectory/stop", disable_drawing_subscription)
-        self.broker.subscribe("robot/trajectory/start",enable_drawing_subscription)
+        self.broker.subscribe(RobotTopics.TRAJECTORY_UPDATE_IMAGE, image_callback)
+        self.broker.subscribe(VisionTopics.LATEST_IMAGE, image_callback)
+        self.broker.subscribe(RobotTopics.TRAJECTORY_POINT, point_callback)
+        self.broker.subscribe(RobotTopics.TRAJECTORY_BREAK, break_callback)
+        self.broker.subscribe(RobotTopics.TRAJECTORY_STOP, disable_drawing_subscription)
+        self.broker.subscribe(RobotTopics.TRAJECTORY_START,enable_drawing_subscription)
 
         self.subscriptions.extend([
-            ("robot/trajectory/updateImage", image_callback),
-            ("robot/trajectory/point", point_callback),
-            ("robot/trajectory/break", break_callback),
-            ("robot/trajectory/stop", disable_drawing_subscription),
-            ("robot/trajectory/start", enable_drawing_subscription),
-            ("vision-system/latest_image", image_callback)
+            (RobotTopics.TRAJECTORY_UPDATE_IMAGE, image_callback),
+            (RobotTopics.TRAJECTORY_POINT, point_callback),
+            (RobotTopics.TRAJECTORY_BREAK, break_callback),
+            (RobotTopics.TRAJECTORY_STOP, disable_drawing_subscription),
+            (RobotTopics.TRAJECTORY_START, enable_drawing_subscription),
+            (VisionTopics.LATEST_IMAGE, image_callback)
         ])
 
 
@@ -54,10 +54,10 @@ class DashboardMessageManager:
     def on_enable_drawing(self,enable_drawing_callback,vision_update_callback):
         print("Enabling drawing and unsubscribing from vision updates")
          # Unsubscribe from vision updates to prevent interference
-        if ("vision-system/latest_image", vision_update_callback) in self.subscriptions:
-            self.broker.unsubscribe("vision-system/latest_image", vision_update_callback)
+        if (VisionTopics.LATEST_IMAGE, vision_update_callback) in self.subscriptions:
+            self.broker.unsubscribe(VisionTopics.LATEST_IMAGE, vision_update_callback)
             print("Unsubscribed from vision-system/latest_image")
-            self.subscriptions.remove(("vision-system/latest_image", vision_update_callback))
+            self.subscriptions.remove((VisionTopics.LATEST_IMAGE, vision_update_callback))
         else:
             print("No existing subscription to vision-system/latest_image found")
 
@@ -65,9 +65,9 @@ class DashboardMessageManager:
 
 
     def on_disable_drawing(self,disable_drawing_callback,vision_update_callback):
-        if ("vision-system/latest_image", vision_update_callback) not in self.subscriptions:
-            self.broker.subscribe("vision-system/latest_image", vision_update_callback)
-            self.subscriptions.append(("vision-system/latest_image", vision_update_callback))
+        if (VisionTopics.LATEST_IMAGE, vision_update_callback) not in self.subscriptions:
+            self.broker.subscribe(VisionTopics.LATEST_IMAGE, vision_update_callback)
+            self.subscriptions.append((VisionTopics.LATEST_IMAGE, vision_update_callback))
         else:
             print("Already subscribed to vision-system/latest_image")
 
@@ -75,7 +75,7 @@ class DashboardMessageManager:
 
     def publish_mode_change(self,mode):
         """Publish mode change to the broker"""
-        self.broker.publish("glue-spray-app/mode", mode)
+        self.broker.publish(GlueTopics.MODE_CHANGE, mode)
 
     def subscribe_card_container(self, card_container) -> None:
         """Subscribe card container to glue type changes"""

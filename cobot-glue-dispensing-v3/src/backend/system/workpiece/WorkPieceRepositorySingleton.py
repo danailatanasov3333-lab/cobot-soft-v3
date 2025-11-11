@@ -1,8 +1,10 @@
 # from shared.shared.database.repositories.WorkPieceRepository import WorkPieceRepository
 from modules.shared.shared.workpiece.WorkpieceJsonRepository import WorkpieceJsonRepository
 from modules.shared.shared.workpiece.Workpiece import  WorkpieceField
+from src.backend.system.utils.PathResolver import PathType
 from src.backend.system.workpiece.Workpiece import Workpiece
 import os
+from src.backend.system.utils import PathResolver
 class WorkPieceRepositorySingleton:
     """
        Singleton class responsible for managing a single instance of the Workpiece repository.
@@ -48,7 +50,7 @@ class WorkPieceRepositorySingleton:
                 """
         if cls._instance is None:
             # Compute an absolute path to the storage directory relative to this file
-            storage_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..', 'robot_application', 'glue_dispensing_application' ,'storage'))
+            storage_dir = PathResolver.get_path(PathType.WORKPIECE_STORAGE)
             fields = [WorkpieceField.WORKPIECE_ID, WorkpieceField.NAME, WorkpieceField.DESCRIPTION,
                       WorkpieceField.TOOL_ID,WorkpieceField.GRIPPER_ID,
                       WorkpieceField.GLUE_TYPE, WorkpieceField.PROGRAM, WorkpieceField.MATERIAL, WorkpieceField.CONTOUR,

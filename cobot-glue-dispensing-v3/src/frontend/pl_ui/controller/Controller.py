@@ -2,7 +2,7 @@ from PyQt6.QtCore import QThread
 from modules.shared.v1.Response import Response
 from modules.shared.v1 import Constants
 from modules.shared.shared.settings.conreateSettings.CameraSettings import CameraSettings
-from modules.shared.shared.settings.conreateSettings.GlueSettings import GlueSettings
+from src.backend.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from modules.shared.shared.settings.conreateSettings.RobotSettings import RobotSettings
 
 from .RequestWorker import RequestWorker
@@ -16,6 +16,12 @@ from modules.shared.v1.endpoints import (
     camera_endpoints,
     workpiece_endpoints,
     settings_endpoints
+)
+# Import glue application constants
+from src.backend.robot_application.glue_dispensing_application.settings.GlueConstants import (
+    REQUEST_RESOURCE_GLUE,
+    SETTINGS_GLUE_GET,
+    SETTINGS_GLUE_SET
 )
 from src.backend.system.workpiece.Workpiece import Workpiece
 
@@ -232,7 +238,7 @@ class Controller:
     def handleGetSettings(self):
         robotSettingsRequest = settings_endpoints.SETTINGS_ROBOT_GET
         cameraSettingsRequest = settings_endpoints.SETTINGS_CAMERA_GET
-        glueSettingsRequest = settings_endpoints.SETTINGS_GLUE_GET
+        glueSettingsRequest = SETTINGS_GLUE_GET
 
         robotSettingsResponseDict = self.requestSender.sendRequest(robotSettingsRequest)
         robotSettingsResponse = Response.from_dict(robotSettingsResponseDict)
@@ -418,8 +424,8 @@ class Controller:
             request = settings_endpoints.SETTINGS_ROBOT_SET
         elif className == GlueSettingsTabLayout.__name__:
             print("Updating Settings Glue", key, value)
-            resource = Constants.REQUEST_RESOURCE_GLUE
-            request = settings_endpoints.SETTINGS_GLUE_SET
+            resource = REQUEST_RESOURCE_GLUE
+            request = SETTINGS_GLUE_SET
         else:
             self.logger.error(f"{self.logTag}] Updating Unknown Settings {className} : {key} {value}")
             return

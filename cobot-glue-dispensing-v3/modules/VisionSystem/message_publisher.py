@@ -1,13 +1,13 @@
 from modules.shared.MessageBroker import MessageBroker
-
+from modules.shared.v1.topics import VisionTopics
 class MessagePublisher:
     def __init__(self):
         self.broker= MessageBroker()
-        self.latest_image_topic = "vision-system/latest_image"
-        self.calibration_image_captured_topic = "vision-system/calibration_image_captured"
-        self.thresh_image_topic = "vision-system/thresh_image"
-        self.stateTopic = "vision-system/state"
-        self.topic = "vision-system/calibration-feedback"
+        self.latest_image_topic = VisionTopics.LATEST_IMAGE
+        self.calibration_image_captured_topic = VisionTopics.CALIBRATION_IMAGE_CAPTURED
+        self.thresh_image_topic = VisionTopics.THRESHOLD_IMAGE
+        self.stateTopic = VisionTopics.SERVICE_STATE
+        self.topic = VisionTopics.CALIBRATION_FEEDBACK
 
     def publish_latest_image(self,image):
         self.broker.publish(self.latest_image_topic, {"image": image})

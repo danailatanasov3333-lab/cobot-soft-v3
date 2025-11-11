@@ -6,6 +6,7 @@ import modules.shared.v1.endpoints.settings_endpoints as settings_endpoints
 
 from src.backend.system.settings.SettingsService import SettingsService
 from src.backend.system.vision.VisionService import VisionServiceSingleton
+from src.backend.robot_application.interfaces.application_settings_interface import settings_registry
 
 
 class SettingsController:
@@ -13,10 +14,10 @@ class SettingsController:
     Controller for managing system settings via API requests.
 
     Supports:
-        - Robot settings
-        - Camera settings
-        - Glue settings
-        - Generic settings
+        - Core settings (robot and camera)
+        - Application-specific settings through registry
+        - Generic settings routing
+        - Dynamic endpoint handling
     """
 
     def __init__(self, settingsService: SettingsService):
@@ -35,7 +36,7 @@ class SettingsController:
             dict: Response dictionary
         """
         try:
-            # === GET OPERATIONS ===
+            # === CORE SETTINGS - GET OPERATIONS ===
             if request in [
                 settings_endpoints.SETTINGS_ROBOT_GET,
                 settings_endpoints.SETTINGS_ROBOT_GET_LEGACY,
@@ -50,18 +51,12 @@ class SettingsController:
                 return self._handleGet("camera")
 
             elif request in [
-                settings_endpoints.SETTINGS_GLUE_GET,
-                settings_endpoints.SETTINGS_GLUE_GET_LEGACY
-            ]:
-                return self._handleGet("glue")
-
-            elif request in [
                 settings_endpoints.SETTINGS_GET,
                 settings_endpoints.GET_SETTINGS,
             ]:
                 return self._handleGet("general")
 
-            # === SET / UPDATE OPERATIONS ===
+            # === CORE SETTINGS - SET / UPDATE OPERATIONS ===
             elif request in [
                 settings_endpoints.SETTINGS_ROBOT_SET,
                 settings_endpoints.SETTINGS_ROBOT_SET_LEGACY,
@@ -76,22 +71,17 @@ class SettingsController:
                 return self._handleSet("camera", data)
 
             elif request in [
-                settings_endpoints.SETTINGS_GLUE_SET,
-                settings_endpoints.SETTINGS_GLUE_SET_LEGACY
-            ]:
-                return self._handleSet("glue", data)
-
-            elif request in [
                 settings_endpoints.SETTINGS_UPDATE,
                 settings_endpoints.UPDATE_SETTINGS
             ]:
                 return self._handleSet("general", data)
 
+            # === APPLICATION-SPECIFIC SETTINGS ===
+            # Check if this is an application-specific settings endpoint
             else:
-                raise ValueError(f"Unknown settings endpoint: {request}")
+                return self._handle_application_settings(request, data)
 
         except Exception as e:
-            raise ValueError(f"Unknown request: {request}")
             traceback.print_exc()
             return Response(
                 Constants.RESPONSE_STATUS_ERROR,
@@ -102,12 +92,82 @@ class SettingsController:
     # INTERNAL HELPERS
     # =========================
 
+    def _handle_application_settings(self, request, data=None):
+        """
+        Handle application-specific settings requests using the registry.
+        
+        Args:
+            request: The request endpoint
+            data: Optional data for SET requests
+            
+        Returns:
+            dict: Response dictionary
+        """
+        try:
+            # Get mapping of endpoints to settings types
+            endpoint_mapping = settings_registry.get_all_endpoints()
+            
+            if request not in endpoint_mapping:
+                return Response(
+                    Constants.RESPONSE_STATUS_ERROR,
+                    message=f"Unknown settings endpoint: {request}"
+                ).to_dict()
+            
+            settings_type = endpoint_mapping[request]
+            
+            try:
+                handler = settings_registry.get_handler(settings_type)
+            except KeyError:
+                return Response(
+                    Constants.RESPONSE_STATUS_ERROR,
+                    message=f"Settings handler not found for type: {settings_type}"
+                ).to_dict()
+            
+            # Determine if this is a GET or SET operation based on data presence
+            if data is None:
+                # GET operation
+                result_data = handler.handle_get_settings()
+                return Response(
+                    Constants.RESPONSE_STATUS_SUCCESS,
+                    message="Success",
+                    data=result_data
+                ).to_dict()
+            else:
+                # SET operation
+                success, message = handler.handle_set_settings(data)
+                if success:
+                    return Response(
+                        Constants.RESPONSE_STATUS_SUCCESS,
+                        message=message
+                    ).to_dict()
+                else:
+                    return Response(
+                        Constants.RESPONSE_STATUS_ERROR,
+                        message=message
+                    ).to_dict()
+                    
+        except Exception as e:
+            traceback.print_exc()
+            return Response(
+                Constants.RESPONSE_STATUS_ERROR,
+                message=f"Error handling application settings: {e}"
+            ).to_dict()
+
     def _handleGet(self, resource):
         """
         Get settings for a given domain.
         """
         try:
-            data = self.settingsService.getSettings(resource)
+            # Map lowercase resource names to proper constants
+            resource_map = {
+                "robot": Constants.REQUEST_RESOURCE_ROBOT,
+                "camera": Constants.REQUEST_RESOURCE_CAMERA
+            }
+            
+            # Use mapped resource if available, otherwise use as-is (for application settings)
+            actual_resource = resource_map.get(resource, resource)
+            
+            data = self.settingsService.getSettings(actual_resource)
             if data is not None:
                 return Response(Constants.RESPONSE_STATUS_SUCCESS, message="Success", data=data).to_dict()
             return Response(Constants.RESPONSE_STATUS_ERROR, message=f"Error getting {resource} settings").to_dict()

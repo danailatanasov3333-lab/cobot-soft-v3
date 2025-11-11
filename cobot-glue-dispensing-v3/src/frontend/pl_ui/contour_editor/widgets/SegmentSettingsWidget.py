@@ -288,7 +288,7 @@ class SegmentSettingsWidget(QWidget):
 
 
 # Settings file path
-SETTINGS_FILE_PATH = os.path.join(os.path.dirname(__file__), "global_segment_settings.json")
+SETTINGS_FILE_PATH = os.path.join(os.path.dirname(__file__), "..","global_segment_settings.json")
 
 def save_settings_to_file(settings: dict):
     """Save settings to a JSON file"""

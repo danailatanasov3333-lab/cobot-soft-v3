@@ -31,6 +31,9 @@ from src.backend.system.robot.robotService.enums.RobotServiceState import RobotS
 from src.backend.system.settings.SettingsService import SettingsService
 from src.backend.system.tools.GlueCell import GlueCellsManagerSingleton
 from src.backend.system.vision.VisionService import _VisionService
+from src.backend.robot_application.interfaces.application_settings_interface import settings_registry
+from src.backend.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
+from src.backend.robot_application.glue_dispensing_application.settings.GlueSettingsHandler import GlueSettingsHandler
 
 """
 ENDPOINTS
@@ -61,8 +64,15 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                  workpiece_service: WorkpieceService,
                  robot_service: RobotService):
 
+        # Initialize logger first (before base class to avoid issues)
+        import logging
+        self.logger = logging.getLogger(self.__class__.__name__)
+        
         # Initialize the base class
         super().__init__(vision_service, settings_manager, workpiece_service, robot_service)
+
+        # Register application-specific settings after initialization
+        self._register_settings()
 
         # Override the base managers with glue dispensing specific extensions
         self.message_publisher = GlueDispensingMessagePublisher(self.message_publisher)
@@ -77,7 +87,9 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         self.workpiece_to_spray_paths_generator = WorkpieceToSprayPathsGenerator(self)
         self.create_workpiece_handler = CreateWorkpieceHandler(self)
         self.workpiece_matcher = WorkpieceMatcher(self)
-        self.glue_dispensing_operation = GlueDispensingOperation(self.robotService)
+        
+        # Initialize glue dispensing operation with proper settings access
+        self.glue_dispensing_operation = GlueDispensingOperation(self.robotService, self)
 
         self.NESTING = True
         self.CONTOUR_MATCHING = True
@@ -797,3 +809,34 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         # Keep only last 1000 entries
         if len(self._error_log) > 1000:
             self._error_log = self._error_log[-1000:]
+    
+    def _register_settings(self):
+        """Register glue application settings with the global settings registry"""
+        try:
+            # Create glue settings instance
+            glue_settings = GlueSettings()
+            
+            # Create glue settings handler  
+            glue_handler = GlueSettingsHandler()
+            
+            # Register both with the global registry
+            settings_registry.register_settings_type(glue_settings)
+            settings_registry.register_handler(glue_handler)
+            
+            self.logger.info("Glue application settings registered successfully")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to register glue application settings: {e}")
+            self._add_error_log(f"Settings registration failed: {e}")
+    
+    def get_glue_settings(self):
+        """Get glue settings object for this application"""
+        try:
+            from src.backend.robot_application.interfaces.application_settings_interface import settings_registry
+            handler = settings_registry.get_handler("glue")
+            return handler.get_settings_object()
+        except Exception as e:
+            self.logger.error(f"Failed to get glue settings: {e}")
+            # Fallback to default settings
+            from src.backend.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
+            return GlueSettings()

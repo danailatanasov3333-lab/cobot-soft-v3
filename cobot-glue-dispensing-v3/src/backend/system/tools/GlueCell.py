@@ -7,8 +7,11 @@ import json
 import threading
 from src.backend.system.SensorPublisher import Sensor
 from modules.shared.MessageBroker import MessageBroker
+from modules.shared.v1.topics import GlueTopics
+from src.backend.system.utils.PathResolver import PathResolver
 from src.backend.system.utils.custom_logging import ColoredFormatter, LoggingLevel
 from pathlib import Path
+from src.backend.system.utils import PathResolver
 import time
 import logging
 import inspect
@@ -21,7 +24,7 @@ import inspect
        TypeC (str): Represents Glue Type C.
    """
 
-STORAGE_PATH = Path(__file__).parent.parent / "storage"
+STORAGE_PATH = Path(__file__).parent.parent / ".."/"robot_application"/"glue_dispensing_application"/"storage"
 print(f"Storage path: {STORAGE_PATH}")
 
 TARE_ENDPOINT = "/tare?loadCellId={current_cell}"
@@ -36,8 +39,7 @@ UPDATE_CONFIG_ENDPOINT = "/update-config?loadCellId={current_cell}&offset={offse
 
 
 # Full path to config inside storage
-config_path = STORAGE_PATH / "glueCells" / "glue_cell_config.json"
-
+config_path = Path(PathResolver.get_settings_file_path('glue_cell_config.json'))
 # Global logger variable
 ENABLE_LOGGING = False  # Enable or disable logging
 
@@ -223,9 +225,9 @@ class GlueDataFetcher:
             log_if_enabled(LoggingLevel.INFO, f"  ├─ Weight 2: {self.weight2:.2f}g") 
             log_if_enabled(LoggingLevel.INFO, f"  └─ Weight 3: {self.weight3:.2f}g")
 
-            self.broker.publish("GlueMeter_1/VALUE", self.weight1)
-            self.broker.publish("GlueMeter_2/VALUE", self.weight2)
-            self.broker.publish("GlueMeter_3/VALUE", self.weight3)
+            self.broker.publish(GlueTopics.GLUE_METER_1_VALUE, self.weight1)
+            self.broker.publish(GlueTopics.GLUE_METER_2_VALUE, self.weight2)
+            self.broker.publish(GlueTopics.GLUE_METER_3_VALUE, self.weight3)
             log_if_enabled(LoggingLevel.DEBUG, "Published weights to message broker")
             
         except requests.exceptions.ConnectionError:
@@ -657,10 +659,8 @@ class GlueCellsManager:
 
 class GlueCellsManagerSingleton:
     _manager_instance = None
-    STORAGE_PATH = Path(
-        "/home/plp/cobot-soft-v3/cobot-soft-v3/cobot-glue-dispensing-v3/src/backend/robot_application/glue_dispensing_application/storage")
-    CONFIG_PATH = STORAGE_PATH / "glueCells" / "glue_cell_config.json"
 
+    CONFIG_PATH  = Path(PathResolver.get_settings_file_path('glue_cell_config.json'))
     @staticmethod
     def get_instance():
         if GlueCellsManagerSingleton._manager_instance is None:

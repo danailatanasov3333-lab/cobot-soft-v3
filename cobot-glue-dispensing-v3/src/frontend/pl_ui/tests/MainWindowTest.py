@@ -4,7 +4,7 @@ import sys
 from PyQt6.QtWidgets import QApplication
 
 from modules.shared.shared.settings.conreateSettings.CameraSettings import CameraSettings
-from modules.shared.shared.settings.conreateSettings.GlueSettings import GlueSettings
+from src.backend.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from modules.shared.shared.settings.conreateSettings.RobotSettings import RobotSettings
 from modules.shared.shared.user import User
 from modules.shared.shared.user.CSVUsersRepository import CSVUsersRepository

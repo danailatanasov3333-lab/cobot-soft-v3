@@ -30,10 +30,8 @@ RESPONSE_STATUS_WARNING = "warning"               # Operation succeeded with a w
 # === REQUEST RESOURCES ===
 REQUEST_RESOURCE_ROBOT = "Robot"                  # Robot resource group
 REQUEST_RESOURCE_CAMERA = "Camera"
-REQUEST_RESOURCE_GLUE = "Glue"                    # Glue dispensing system resource
 REQUEST_RESOURCE_SETTINGS = "Settings"
 REQUEST_RESOURCE_WORKPIECE = "workpieces"
-REQUEST_RESOURCE_GLUE_NOZZLE = "GlueNozzle"
 
 
 LOGIN = "login"
@@ -93,9 +91,6 @@ CAMERA_ACTION_SAVE_WORK_AREA_POINTS = "camera/saveWorkAreaPoints"  # Save work a
 
 SETTINGS_ROBOT_GET = "settings/robot/get"
 SETTINGS_ROBOT_SET = "settings/robot/set"
-
-SETTINGS_GLUE_GET = "settings/glue/get"
-SETTINGS_GLUE_SET = "settings/glue/set"
 
 SETTINGS_CAMERA_GET = "settings/camera/get"
 SETTINGS_CAMERA_SET = "settings/camera/set"

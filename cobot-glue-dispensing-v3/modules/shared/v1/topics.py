@@ -52,10 +52,17 @@ class RobotTopics(TopicCategory):
     TRAJECTORY_STOP = "robot/trajectory/stop" 
     TRAJECTORY_BREAK = "robot/trajectory/break"
     TRAJECTORY_UPDATE_IMAGE = "robot/trajectory/updateImage"
+    TRAJECTORY_POINT = "robot/trajectory/point"
     
     # Robot status and monitoring
     ROBOT_POSITION = "robot/position"
     ROBOT_STATUS = "robot/status"
+
+    # Robot calibration
+    ROBOT_CALIBRATION_LOG = "robot/calibration/log"
+    ROBOT_CALIBRATION_START = "robot/calibration/start"
+    ROBOT_CALIBRATION_STOP = "robot/calibration/stop"
+    ROBOT_CALIBRATION_IMAGE = "robot/calibration/image"
 
 
 class VisionTopics(TopicCategory):
@@ -63,12 +70,18 @@ class VisionTopics(TopicCategory):
     
     # Vision service state
     SERVICE_STATE = "vision-service/state"
-    
+    LATEST_IMAGE = "vision-system/latest-image"
+    CALIBRATION_IMAGE_CAPTURED = "vision-system/calibration-image-captured"
     # Camera and image processing
     BRIGHTNESS_REGION = "vision-system/brightness-region"
     THRESHOLD_REGION = "vision-system/threshold"
     CAMERA_FEED = "vision-system/camera-feed"
-    
+    CALIBRATION_FEEDBACK = "vision-system/calibration-feedback"
+    THRESHOLD_IMAGE = "vision-system/threshold-image"
+    AUTO_BRIGHTNESS = "vision-system/auto-brightness"
+    AUTO_BRIGHTNESS_START = "vison-auto-brightness"
+    AUTO_BRIGHTNESS_STOP = "vison-auto-brightness"
+    TRANSFORM_TO_CAMERA_POINT = "vision-system/transform-to-camera-point"
     # Image processing results
     CONTOUR_DETECTION = "vision-system/contour-detection"
     ARUCO_DETECTION = "vision-system/aruco-detection"
@@ -85,6 +98,11 @@ class GlueTopics(TopicCategory):
     GLUE_LEVEL = "glue-app/level"
     GLUE_PRESSURE = "glue-app/pressure"
     GLUE_TEMPERATURE = "glue-app/temperature"
+    
+    # Glue meter values
+    GLUE_METER_1_VALUE = "GlueMeter_1/VALUE"
+    GLUE_METER_2_VALUE = "GlueMeter_2/VALUE" 
+    GLUE_METER_3_VALUE = "GlueMeter_3/VALUE"
 
 
 class WorkpieceTopics(TopicCategory):
@@ -123,6 +141,9 @@ class UITopics(TopicCategory):
     # User interactions
     USER_ACTION = "ui/user-action"
     BUTTON_CLICKED = "ui/button-clicked"
+    
+    # Language and localization
+    LANGUAGE_CHANGED = "Language"
     
     # Notifications
     TOAST_MESSAGE = "ui/toast"

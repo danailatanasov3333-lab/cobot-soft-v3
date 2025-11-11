@@ -4,6 +4,7 @@ import threading
 import time
 
 from modules.shared.MessageBroker import MessageBroker
+from modules.shared.v1.topics import RobotTopics
 from src.backend.system.robot.RobotUtils import calculate_velocity, calculate_acceleration
 from src.backend.system.robot.FairinoRobot import FairinoRobot
 from src.backend.system.robot.robotService.enums.RobotState import RobotState
@@ -131,7 +132,7 @@ class RobotStateManager:
         transformed = self.broker.request("vision/transformToCamera", {"x": x, "y": y})
         t_x, t_y = transformed[0], transformed[1]
 
-        self.broker.publish("robot/trajectory/point", {
+        self.broker.publish(RobotTopics.TRAJECTORY_POINT, {
             "x": int(t_x * 0.625),
             "y": int(t_y * 0.625)
         })

@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QVBoxLayout, QLabel, QWidget, QApplication, QHBoxLa
                              QScrollArea, QGroupBox, QGridLayout)
 from src.frontend.pl_ui.ui.widgets.MaterialButton import MaterialButton
 from src.frontend.pl_ui.localization import TranslationKeys, get_app_translator
-from modules.shared.shared.settings.conreateSettings.enums.GlueSettingKey import GlueSettingKey
+from src.backend.robot_application.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
 from modules.glueSprayService.GlueSprayService import GlueSprayService
 from src.frontend.pl_ui.ui.widgets.SwitchButton import QToggle
 from src.frontend.pl_ui.ui.widgets.ToastWidget import ToastWidget
@@ -1097,7 +1097,23 @@ if __name__ == "__main__":
     from src.backend.system.robot.FairinoRobot import FairinoRobot
     from src.backend.system.robot.robotService.RobotService import RobotService
     settingsService = SettingsService()
-    glueSettings = settingsService.glue_settings
+    # Get glue settings through the new registry system
+    try:
+        from src.backend.robot_application.interfaces.application_settings_interface import settings_registry
+        from src.backend.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
+        from src.backend.robot_application.glue_dispensing_application.settings.GlueSettingsHandler import GlueSettingsHandler
+        
+        # Register glue settings for testing
+        glue_settings_obj = GlueSettings()
+        glue_handler = GlueSettingsHandler()
+        settings_registry.register_settings_type(glue_settings_obj)
+        settings_registry.register_handler(glue_handler)
+        
+        glueSettings = glue_handler.get_settings_object()
+    except Exception as e:
+        print(f"Failed to get glue settings: {e}")
+        from src.backend.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
+        glueSettings = GlueSettings()
 
     robot_config = settingsService.robot_config
     robot = FairinoRobot(robot_config.robot_ip)

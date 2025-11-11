@@ -10,6 +10,7 @@ from src.frontend.pl_ui.utils.styles.ComboBoxStyle import ComboBoxStyle
 from src.frontend.pl_ui.utils.IconLoader import ACCOUNT_BUTTON_SQUARE
 
 from modules.shared.MessageBroker import MessageBroker
+from modules.shared.v1.topics import UITopics
 from src.frontend.pl_ui.ui.widgets.LanguageSelectorWidget import LanguageSelectorWidget
 
 # Resource paths
@@ -122,7 +123,7 @@ class Header(QFrame):
         super().resizeEvent(event)
 
     def handle_language_change(self, message: str) -> None:
-        self.broker.publish("Language", "Change")
+        self.broker.publish(UITopics.LANGUAGE_CHANGED, "Change")
         # print("Language changed")
 
 
