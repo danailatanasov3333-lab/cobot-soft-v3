@@ -1,6 +1,6 @@
 from collections import namedtuple
 import time
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 from src.backend.system.utils.custom_logging import log_debug_message, log_error_message
 from src.robot_application.glue_dispensing_application.glue_dispensing.glue_dispensing_operation import glue_dispensing_logger_context
 
@@ -33,7 +33,7 @@ def handle_wait_for_path_completion(context):
 
     if pump_thread is None:
         log_error_message(glue_dispensing_logger_context, message="[WAIT] No pump thread found in context.")
-        return HandlerResult(False, False, RobotServiceState.ERROR, path_index, 0, path, settings)
+        return HandlerResult(False, False, GlueProcessState.ERROR, path_index, 0, path, settings)
 
     try:
         # Wait indefinitely for the pump thread to finish.
@@ -41,7 +41,7 @@ def handle_wait_for_path_completion(context):
         while pump_thread.is_alive():
             state = context.state_machine.state
 
-            if state == RobotServiceState.PAUSED:
+            if state == GlueProcessState.PAUSED:
                 log_debug_message(glue_dispensing_logger_context, message="[WAIT] Paused while waiting for pump thread - waiting for thread to finish and capture progress")
                 # When paused, wait for pump thread to finish so we can capture its progress
                 pump_thread.join(timeout=2.0)  # Give thread a moment to detect pause and finish
@@ -58,17 +58,17 @@ def handle_wait_for_path_completion(context):
                         log_debug_message(glue_dispensing_logger_context, 
                             message=f"[WAIT] Error capturing pump thread progress: {e}")
                 
-                return HandlerResult(True, True, RobotServiceState.PAUSED, path_index, paused_point_index, path, settings)
+                return HandlerResult(True, True, GlueProcessState.PAUSED, path_index, paused_point_index, path, settings)
 
-            if state == RobotServiceState.STOPPED:
+            if state == GlueProcessState.STOPPED:
                 log_debug_message(glue_dispensing_logger_context, message="[WAIT] Stopped while waiting for pump thread")
-                return HandlerResult(True, False, RobotServiceState.STOPPED, path_index, context.current_point_index, path, settings)
+                return HandlerResult(True, False, GlueProcessState.STOPPED, path_index, context.current_point_index, path, settings)
 
             time.sleep(0.1)
 
         # Get the pump thread result to capture final progress
         final_point_index = len(path) - 1  # Default to last point
-        next_state = RobotServiceState.TRANSITION_BETWEEN_PATHS  # Default next state
+        next_state = GlueProcessState.TRANSITION_BETWEEN_PATHS  # Default next state
         
         try:
             if hasattr(pump_thread, 'result') and pump_thread.result is not None:
@@ -87,7 +87,7 @@ def handle_wait_for_path_completion(context):
                     log_debug_message(glue_dispensing_logger_context, 
                         message=f"[WAIT] Progress {final_point_index} beyond path length {len(path)}, path complete")
                     final_point_index = len(path) - 1  # Set to last valid point
-                    next_state = RobotServiceState.TRANSITION_BETWEEN_PATHS
+                    next_state = GlueProcessState.TRANSITION_BETWEEN_PATHS
             else:
                 log_debug_message(glue_dispensing_logger_context, message=f"[WAIT] Pump thread completed — path {path_index} done (no result captured).")
         except Exception as result_error:
@@ -95,7 +95,7 @@ def handle_wait_for_path_completion(context):
 
     except Exception as e:
         log_error_message(glue_dispensing_logger_context, message=f"[WAIT] Error waiting for pump thread: {e}")
-        return HandlerResult(False, False, RobotServiceState.ERROR, path_index, context.current_point_index, path, settings)
+        return HandlerResult(False, False, GlueProcessState.ERROR, path_index, context.current_point_index, path, settings)
     finally:
         context.pump_thread = None
 

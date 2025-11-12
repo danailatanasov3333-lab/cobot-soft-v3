@@ -102,7 +102,6 @@ if __name__ == "__main__":
     # current_application = application_factory.switch_application(ApplicationType.PAINT_APPLICATION)
     current_application = application_factory.switch_application(ApplicationType.GLUE_DISPENSING)
 
-    print(f"Initialized application: {current_application.get_application_name()} v{current_application.get_application_version()}")
     # INIT REQUEST HANDLER
     if API_VERSION == 1:
 

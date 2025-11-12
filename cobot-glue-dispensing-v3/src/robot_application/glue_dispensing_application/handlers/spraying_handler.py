@@ -26,7 +26,7 @@ def publish_robot_trajectory(application):
 def start_path_execution(application,paths):
     print(f"In spraying handler, paths to spray: {len(paths)}")
     print(f"Spray on: {application.get_glue_settings().get_spray_on()}")
-    application.glue_dispensing_operation.traceContours(paths,
-                                                        spray_on=application.get_glue_settings().get_spray_on())
+    application.glue_dispensing_operation.start(paths,
+                                                spray_on=application.get_glue_settings().get_spray_on())
                                            # spray_on=application.settingsManager.glue_settings.get_spray_on())
 

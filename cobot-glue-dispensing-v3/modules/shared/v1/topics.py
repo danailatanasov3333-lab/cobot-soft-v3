@@ -32,13 +32,8 @@ class SystemTopics(TopicCategory):
     """System-level topics for application state and coordination"""
     
     # Application state management
-    APPLICATION_STATE = "system/state"
-    APPLICATION_INFO = "system/application"
-    
-    # System health and monitoring
-    SYSTEM_HEALTH = "system/health"
-    SYSTEM_METRICS = "system/metrics"
-    SYSTEM_ERRORS = "system/errors"
+    SYSTEM_STATE = "system/state"
+    SYSTEM_MODE_CHANGE = "system/mode-change"
 
 
 class RobotTopics(TopicCategory):
@@ -53,10 +48,6 @@ class RobotTopics(TopicCategory):
     TRAJECTORY_BREAK = "robot/trajectory/break"
     TRAJECTORY_UPDATE_IMAGE = "robot/trajectory/updateImage"
     TRAJECTORY_POINT = "robot/trajectory/point"
-    
-    # Robot status and monitoring
-    ROBOT_POSITION = "robot/position"
-    ROBOT_STATUS = "robot/status"
 
     # Robot calibration
     ROBOT_CALIBRATION_LOG = "robot/calibration/log"
@@ -75,79 +66,30 @@ class VisionTopics(TopicCategory):
     # Camera and image processing
     BRIGHTNESS_REGION = "vision-system/brightness-region"
     THRESHOLD_REGION = "vision-system/threshold"
-    CAMERA_FEED = "vision-system/camera-feed"
     CALIBRATION_FEEDBACK = "vision-system/calibration-feedback"
     THRESHOLD_IMAGE = "vision-system/threshold-image"
     AUTO_BRIGHTNESS = "vision-system/auto-brightness"
     AUTO_BRIGHTNESS_START = "vison-auto-brightness"
     AUTO_BRIGHTNESS_STOP = "vison-auto-brightness"
     TRANSFORM_TO_CAMERA_POINT = "vision-system/transform-to-camera-point"
-    # Image processing results
-    CONTOUR_DETECTION = "vision-system/contour-detection"
-    ARUCO_DETECTION = "vision-system/aruco-detection"
+
 
 
 class GlueTopics(TopicCategory):
     """Glue dispensing specific topics"""
-    
-    # Glue application control
-    MODE_CHANGE = "glue-spray-app/mode"
-    NOZZLE_CONTROL = "glue-app/nozzle"
-    
-    # Glue process monitoring
-    GLUE_LEVEL = "glue-app/level"
-    GLUE_PRESSURE = "glue-app/pressure"
-    GLUE_TEMPERATURE = "glue-app/temperature"
-    
+
+    # Glue process state
+    PROCESS_STATE = "glue-process/state"
     # Glue meter values
     GLUE_METER_1_VALUE = "GlueMeter_1/VALUE"
     GLUE_METER_2_VALUE = "GlueMeter_2/VALUE" 
     GLUE_METER_3_VALUE = "GlueMeter_3/VALUE"
 
-
-class WorkpieceTopics(TopicCategory):
-    """Workpiece management topics"""
-    
-    # Workpiece operations
-    WORKPIECE_LOADED = "workpiece/loaded"
-    WORKPIECE_PROCESSED = "workpiece/processed"
-    WORKPIECE_VALIDATION = "workpiece/validation"
-    
-    # Workpiece data updates
-    WORKPIECE_CREATED = "workpiece/created"
-    WORKPIECE_UPDATED = "workpiece/updated"
-    WORKPIECE_DELETED = "workpiece/deleted"
-
-
-class SettingsTopics(TopicCategory):
-    """Settings and configuration topics"""
-    
-    # Settings updates
-    ROBOT_SETTINGS = "settings/robot"
-    CAMERA_SETTINGS = "settings/camera" 
-    GLUE_SETTINGS = "settings/glue"
-    
-    # Configuration changes
-    CONFIG_UPDATED = "settings/config-updated"
-    CONFIG_VALIDATED = "settings/config-validated"
-
-
 class UITopics(TopicCategory):
     """User interface specific topics"""
-    
-    # Dashboard updates
-    DASHBOARD_UPDATE = "ui/dashboard/update"
-    
-    # User interactions
-    USER_ACTION = "ui/user-action"
-    BUTTON_CLICKED = "ui/button-clicked"
-    
     # Language and localization
     LANGUAGE_CHANGED = "Language"
-    
-    # Notifications
-    TOAST_MESSAGE = "ui/toast"
-    ERROR_DIALOG = "ui/error-dialog"
+
 
 
 # ========== Topic Registry ==========
@@ -161,8 +103,6 @@ class TopicRegistry:
         'robot': RobotTopics, 
         'vision': VisionTopics,
         'glue': GlueTopics,
-        'workpiece': WorkpieceTopics,
-        'settings': SettingsTopics,
         'ui': UITopics
     }
     
@@ -194,31 +134,6 @@ class TopicRegistry:
         
         return [topic for topic in all_topics if pattern.lower() in topic.lower()]
 
-
-# ========== Backwards Compatibility ==========
-
-class LegacyTopics:
-    """Mapping of old topic names to new standardized names"""
-    
-    LEGACY_MAPPING = {
-        # Old -> New mappings for migration
-        "system/state": SystemTopics.APPLICATION_STATE,
-        "robot-service/state": RobotTopics.SERVICE_STATE,
-        "vision-system/brightness-region": VisionTopics.BRIGHTNESS_REGION,
-        "robot/trajectory/updateImage": RobotTopics.TRAJECTORY_UPDATE_IMAGE,
-    }
-    
-    @classmethod
-    def migrate_topic(cls, old_topic: str) -> str:
-        """Get the new topic name for a legacy topic"""
-        return cls.LEGACY_MAPPING.get(old_topic, old_topic)
-    
-    @classmethod
-    def is_legacy_topic(cls, topic: str) -> bool:
-        """Check if a topic is a legacy topic that should be migrated"""
-        return topic in cls.LEGACY_MAPPING
-
-
 # ========== Utility Functions ==========
 
 def get_topic_info(topic_name: str) -> dict[str, str]:
@@ -230,15 +145,12 @@ def get_topic_info(topic_name: str) -> dict[str, str]:
             "topic": topic_name,
             "category": category,
             "class": class_name,
-            "is_legacy": LegacyTopics.is_legacy_topic(topic_name)
         }
     else:
         return {
             "topic": topic_name,
             "category": "unknown",
-            "class": "unknown", 
-            "is_legacy": LegacyTopics.is_legacy_topic(topic_name),
-            "suggested_migration": LegacyTopics.migrate_topic(topic_name)
+            "class": "unknown",
         }
 
 
@@ -251,8 +163,7 @@ def print_all_topics():
         print(f"\n📁 {category.upper()} TOPICS:")
         for topic in topics:
             info = get_topic_info(topic)
-            legacy_note = " (Legacy)" if info["is_legacy"] else ""
-            print(f"  • {topic}{legacy_note}")
+            print(f"  • {info['topic']}  (Class: {info['class']})")
 
 
 # ========== Example Usage ==========
@@ -262,7 +173,7 @@ if __name__ == "__main__":
     
     # Example validation
     print(f"\nTopic validation:")
-    print(f"  ✅ Valid: {TopicRegistry.validate_topic(SystemTopics.APPLICATION_STATE)}")
+    print(f"  ✅ Valid: {TopicRegistry.validate_topic(SystemTopics.SYSTEM_STATE)}")
     print(f"  ❌ Invalid: {TopicRegistry.validate_topic('invalid/topic')}")
     
     # Example search

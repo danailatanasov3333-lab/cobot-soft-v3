@@ -3,7 +3,7 @@ import time
 
 from modules.shared.shared.settings.conreateSettings.enums.GlueSettingKey import GlueSettingKey
 from modules.robot.RobotUtils import calculate_distance_between_points
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 from src.backend.system.utils.custom_logging import log_debug_message
 from src.backend.system.utils.files import write_to_debug_file
 
@@ -22,7 +22,7 @@ def check_robot_state(state_machine, robotService, start_point_index, furthest_c
         return False, 0  # No state machine, continue normally
         
     current_state = state_machine.state
-    if current_state in [RobotServiceState.PAUSED, RobotServiceState.STOPPED]:
+    if current_state in [GlueProcessState.PAUSED, GlueProcessState.STOPPED]:
         # Return progress - furthest_checkpoint_passed indicates the last completed point
         # Resume should be from the NEXT point after the last completed one
         last_completed_point = start_point_index + furthest_checkpoint_passed - 1 if furthest_checkpoint_passed > 0 else start_point_index

@@ -1,5 +1,5 @@
 import time
-from src.backend.system import CompareContours
+from src.backend.system.contour_matching import CompareContours
 from src.backend.system.utils.contours import close_contours_if_open
 class WorkpieceMatcher:
     def __init__(self, application):

@@ -2,7 +2,10 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 from modules.VisionSystem.VisionSystem import VisionSystemState
+from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 from modules.shared.shared.workpiece.WorkpieceService import WorkpieceService
+from modules.shared.v1.topics import GlueTopics
+from modules.shared.MessageBroker import MessageBroker
 # Import base classes
 from src.robot_application.base_robot_application import BaseRobotApplication, ApplicationType, ApplicationState
 from src.robot_application.glue_dispensing_application.GlueDispensingApplicationStateManager import \
@@ -34,10 +37,10 @@ from src.robot_application.interfaces.robot_application_interface import (
     RobotApplicationInterface, OperationMode, CalibrationStatus
 )
 from modules.robot.robotService.RobotService import RobotService
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 from src.backend.system.settings.SettingsService import SettingsService
 from src.backend.system.vision.VisionService import _VisionService
-
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessStateMachine import GlueProcessStateMachine
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 """
 ENDPOINTS
 - start
@@ -89,36 +92,21 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         self.create_workpiece_handler = CreateWorkpieceHandler(self)
         
         # Initialize glue process state machine for operation control
-        from src.robot_application.glue_dispensing_application.glue_dispensing.GlueProcessStateMachine import GlueProcessStateMachine
-        from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
-        self.glue_process_state_machine = GlueProcessStateMachine(RobotServiceState.INITIALIZING, None)
+
+        self.glue_process_state_machine = GlueProcessStateMachine(GlueProcessState.INITIALIZING)
+
         self.workpiece_matcher = WorkpieceMatcher(self)
-        
+
         # Initialize glue dispensing operation with proper settings access
         self.glue_dispensing_operation = GlueDispensingOperation(self.robotService, self)
 
         self.NESTING = True
         self.CONTOUR_MATCHING = True
-        
-        # Application-specific error log
-        self._error_log = []
-        
-        # Application-specific calibration status
-        self._calibration_status = {
-            "robot": CalibrationStatus.NOT_CALIBRATED,
-            "camera": CalibrationStatus.NOT_CALIBRATED,
-            "nozzle": CalibrationStatus.NOT_CALIBRATED
-        }
+
+
+        self.current_operation = None
 
     # ========== BaseRobotApplication Abstract Methods Implementation ==========
-    
-    def get_application_type(self) -> ApplicationType:
-        """Return the type of this application"""
-        return ApplicationType.GLUE_DISPENSING
-    
-    def get_application_name(self) -> str:
-        """Return the human-readable name of this application"""
-        return "Glue Dispensing Application"
     
     def get_initial_state(self) -> ApplicationState:
         """Return the initial state for this application"""
@@ -130,7 +118,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         """Start the robot application operation"""
         try:
             result = start(self, self.CONTOUR_MATCHING, self.NESTING, debug)
-            self.state_manager.update_state(ApplicationState.RUNNING)
+            # self.state_manager.update_state(ApplicationState.RUNNING)
             return {
                 "success": True,
                 "message": "Glue dispensing operation started",
@@ -138,8 +126,9 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 "data": result
             }
         except Exception as e:
-            self._add_error_log(f"Failed to start operation: {e}")
-            self.state_manager.update_state(ApplicationState.ERROR)
+            import traceback
+            traceback.print_exc()
+            # self.state_manager.update_state(ApplicationState.ERROR)
             return {
                 "success": False,
                 "message": f"Failed to start operation: {e}",
@@ -147,9 +136,11 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
             }
 
     def start_nesting(self, debug=True):
+        self.current_operation = "Nesting"
         return nesting_handler.start_nesting(self, self.get_workpieces())
 
     def start_spraying(self,workpieces, debug=True):
+        self.current_operation = "Spraying"
         return spraying_handler.start_spraying(self, workpieces, debug)
 
     def move_to_nesting_capture_position(self):
@@ -185,13 +176,11 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                     "message": f"Tool {tool_id} not supported for cleaning"
                 }
         except Exception as e:
-            self._add_error_log(f"Failed to clean tool {tool_id}: {e}")
             return {
                 "success": False,
                 "message": f"Failed to clean tool: {e}",
                 "error": str(e)
             }
-
     
     def home_robot(self) -> Dict[str, Any]:
         """Move robot to home position"""
@@ -204,16 +193,11 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 "data": result
             }
         except Exception as e:
-            self._add_error_log(f"Failed to home robot: {e}")
             return {
                 "success": False,
                 "message": f"Failed to home robot: {e}",
                 "error": str(e)
             }
-    
-    def clean_nozzle(self):
-        """Legacy method for backward compatibility"""
-        return clean_nozzle(self.robotService)
 
     def stop(self, emergency: bool = False) -> Dict[str, Any]:
         """Stop the robot application operation"""
@@ -228,7 +212,6 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 "data": result
             }
         except Exception as e:
-            self._add_error_log(f"Failed to stop operation: {e}")
             self.state_manager.update_state(ApplicationState.ERROR)
             return {
                 "success": False,
@@ -246,7 +229,6 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 "message": "Glue dispensing operation paused"
             }
         except Exception as e:
-            self._add_error_log(f"Failed to pause operation: {e}")
             return {
                 "success": False,
                 "message": f"Failed to pause operation: {e}",
@@ -263,7 +245,6 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 "message": "Glue dispensing operation resumed"
             }
         except Exception as e:
-            self._add_error_log(f"Failed to resume operation: {e}")
             return {
                 "success": False,
                 "message": f"Failed to resume operation: {e}",
@@ -291,12 +272,11 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 "message": "Application reset to initial state"
             }
         except Exception as e:
-            self._add_error_log(f"Failed to reset application: {e}")
             return {
                 "success": False,
                 "message": f"Failed to reset application: {e}",
                 "error": str(e)
-            }
+            } # TODO not used!
 
     # ========== Calibration Management ==========
     
@@ -304,9 +284,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         """Calibrate the robot coordinate system"""
         try:
             self.state_manager.update_state(ApplicationState.CALIBRATING)
-            self._calibration_status["robot"] = CalibrationStatus.IN_PROGRESS
             result = calibrate_robot(self)
-            self._calibration_status["robot"] = CalibrationStatus.CALIBRATED
             self.state_manager.update_state(ApplicationState.IDLE)
             return {
                 "success": True,
@@ -314,8 +292,6 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 "data": result
             }
         except Exception as e:
-            self._add_error_log(f"Robot calibration failed: {e}")
-            self._calibration_status["robot"] = CalibrationStatus.FAILED
             self.state_manager.update_state(ApplicationState.ERROR)
             return {
                 "success": False,
@@ -327,9 +303,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         """Calibrate the camera system"""
         try:
             self.state_manager.update_state(ApplicationState.CALIBRATING)
-            self._calibration_status["camera"] = CalibrationStatus.IN_PROGRESS
             result = calibrate_camera(self)
-            self._calibration_status["camera"] = CalibrationStatus.CALIBRATED
             self.state_manager.update_state(ApplicationState.IDLE)
             return {
                 "success": True,
@@ -337,20 +311,12 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 "data": result
             }
         except Exception as e:
-            self._add_error_log(f"Camera calibration failed: {e}")
-            self._calibration_status["camera"] = CalibrationStatus.FAILED
             self.state_manager.update_state(ApplicationState.ERROR)
             return {
                 "success": False,
                 "message": f"Camera calibration failed: {e}",
                 "error": str(e)
             }
-    
-
-    
-    def get_calibration_status(self) -> Dict[str, CalibrationStatus]:
-        """Get current calibration status for all components"""
-        return self._calibration_status.copy()
     
     # Legacy methods for backward compatibility
     def calibrateRobot(self):
@@ -387,7 +353,6 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 }
             }
         except Exception as e:
-            self._add_error_log(f"Failed to load workpiece {workpiece_id}: {e}")
             return {
                 "success": False,
                 "message": f"Failed to load workpiece: {e}",
@@ -414,66 +379,11 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                 }
             }
         except Exception as e:
-            self._add_error_log(f"Failed to process workpiece {workpiece_id}: {e}")
             return {
                 "success": False,
                 "message": f"Failed to process workpiece: {e}",
                 "error": str(e)
             }
-    
-    def validate_workpiece(self, workpiece_id: str) -> Dict[str, Any]:
-        """Validate that a workpiece can be processed by this application"""
-        try:
-            workpiece = self.workpieceService.get_workpiece_by_id(workpiece_id)
-            if workpiece is None:
-                return {
-                    "success": False,
-                    "valid": False,
-                    "message": f"Workpiece with ID {workpiece_id} not found",
-                    "issues": ["Workpiece does not exist"]
-                }
-            
-            issues = []
-            
-            # Check if workpiece has required contours
-            if not hasattr(workpiece, 'get_main_contour') or workpiece.get_main_contour() is None:
-                issues.append("Workpiece missing main contour")
-            
-            # Check if workpiece has pickup point (if nesting enabled)
-            if self.NESTING and (not hasattr(workpiece, 'pickupPoint') or workpiece.pickupPoint is None):
-                issues.append("Workpiece missing pickup point (required for nesting mode)")
-            
-            return {
-                "success": True,
-                "valid": len(issues) == 0,
-                "message": "Workpiece validation completed",
-                "issues": issues
-            }
-        except Exception as e:
-            self._add_error_log(f"Failed to validate workpiece {workpiece_id}: {e}")
-            return {
-                "success": False,
-                "message": f"Failed to validate workpiece: {e}",
-                "error": str(e)
-            }
-    
-    def get_workpiece_requirements(self) -> Dict[str, Any]:
-        """Get requirements for workpieces that can be processed by this application"""
-        return {
-            "required_fields": ["main_contour"],
-            "optional_fields": ["pickup_point", "name", "description"],
-            "contour_formats": ["DXF", "polygon_points"],
-            "coordinate_system": "robot_base",
-            "units": "millimeters",
-            "nesting_requirements": {
-                "enabled": self.NESTING,
-                "required_if_enabled": ["pickup_point"]
-            },
-            "contour_matching_requirements": {
-                "enabled": self.CONTOUR_MATCHING,
-                "required_if_enabled": ["reference_contour"]
-            }
-        }
     
     def get_workpieces(self):
         """Legacy method for backward compatibility"""
@@ -526,7 +436,6 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         else:
             raise ValueError(f"Unknown mode: {message}")
 
-
     def run_demo(self):
 
         if self.preselected_workpiece is None:
@@ -562,211 +471,9 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         else:
             print(f"Workpiece with ID: {wp_id} not found")
             return False, f"Workpiece with ID: {wp_id} not found"
-    
-    # ========== Configuration Management ==========
-    
-    def get_configuration(self) -> Dict[str, Any]:
-        """Get current application configuration"""
-        return {
-            "nesting_enabled": self.NESTING,
-            "contour_matching_enabled": self.CONTOUR_MATCHING,
-            "preselected_workpiece": self.preselected_workpiece.workpieceId if self.preselected_workpiece else None,
-            "glue_settings": self.settingsManager.get_glue_settings().to_dict() if hasattr(self.settingsManager, 'get_glue_settings') else {},
-            "robot_settings": self.settingsManager.get_robot_settings().to_dict() if hasattr(self.settingsManager, 'get_robot_settings') else {},
-            "camera_settings": self.settingsManager.get_camera_settings().to_dict() if hasattr(self.settingsManager, 'get_camera_settings') else {}
-        }
-    
-    def update_configuration(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Update application configuration"""
-        try:
-            updated_fields = []
-            
-            if "nesting_enabled" in config:
-                self.NESTING = config["nesting_enabled"]
-                updated_fields.append("nesting_enabled")
-            
-            if "contour_matching_enabled" in config:
-                self.CONTOUR_MATCHING = config["contour_matching_enabled"]
-                updated_fields.append("contour_matching_enabled")
-            
-            if "preselected_workpiece" in config:
-                wp_id = config["preselected_workpiece"]
-                if wp_id:
-                    load_result = self.load_workpiece(wp_id)
-                    if load_result["success"]:
-                        updated_fields.append("preselected_workpiece")
-                else:
-                    self.preselected_workpiece = None
-                    updated_fields.append("preselected_workpiece")
-            
-            return {
-                "success": True,
-                "message": "Configuration updated successfully",
-                "updated_fields": updated_fields
-            }
-        except Exception as e:
-            self._add_error_log(f"Failed to update configuration: {e}")
-            return {
-                "success": False,
-                "message": f"Failed to update configuration: {e}",
-                "error": str(e)
-            }
-    
-    def get_default_configuration(self) -> Dict[str, Any]:
-        """Get default configuration for this application"""
-        return {
-            "nesting_enabled": True,
-            "contour_matching_enabled": True,
-            "preselected_workpiece": None
-        }
-    
+
     # ========== Application-Specific Information ==========
-    
-    def get_application_version(self) -> str:
-        """Get the version of this application"""
-        return "1.0.0"
-    
-    def get_supported_operations(self) -> List[str]:
-        """Get list of operations supported by this application"""
-        return [
-            "start", "stop", "pause", "resume", "reset",
-            "calibrate_robot", "calibrate_camera", "calibrate_tools",
-            "load_workpiece", "process_workpiece", "validate_workpiece",
-            "clean_tool", "test_tool", "home_robot",
-            "start_nesting", "start_spraying", "create_workpiece_step_1", "create_workpiece_step_2"
-        ]
-    
-    def get_supported_tools(self) -> List[str]:
-        """Get list of tools supported by this application"""
-        return ["nozzle", "glue_dispenser"]
-    
-    def get_supported_workpiece_types(self) -> List[str]:
-        """Get list of workpiece types supported by this application"""
-        return ["flat_part", "contoured_part", "dxf_based"]
-    
-    # ========== Safety and Emergency ==========
-    
-    def emergency_stop(self) -> Dict[str, Any]:
-        """Emergency stop all robot operations immediately"""
-        try:
-            self.state_manager.update_state(ApplicationState.ERROR)
-            stop_result = self.stop(emergency=True)
-            return {
-                "success": True,
-                "message": "Emergency stop executed",
-                "data": stop_result
-            }
-        except Exception as e:
-            self._add_error_log(f"Emergency stop failed: {e}")
-            return {
-                "success": False,
-                "message": f"Emergency stop failed: {e}",
-                "error": str(e)
-            }
-    
-    def safety_check(self) -> Dict[str, Any]:
-        """Perform comprehensive safety check"""
-        try:
-            issues = []
-            warnings = []
-            
-            # Check robot service state
-            if self.state_manager.robot_service_state == RobotServiceState.ERROR:
-                issues.append("Robot service in error state")
-            
-            # Check vision system state
-            if self.state_manager.vision_service_state != VisionSystemState.RUNNING:
-                warnings.append("Vision system not running")
-            
-            # Check calibration status
-            for component, status in self._calibration_status.items():
-                if status == CalibrationStatus.NOT_CALIBRATED:
-                    warnings.append(f"{component} not calibrated")
-                elif status == CalibrationStatus.FAILED:
-                    issues.append(f"{component} calibration failed")
-            
-            return {
-                "success": True,
-                "safe": len(issues) == 0,
-                "message": "Safety check completed",
-                "issues": issues,
-                "warnings": warnings
-            }
-        except Exception as e:
-            self._add_error_log(f"Safety check failed: {e}")
-            return {
-                "success": False,
-                "message": f"Safety check failed: {e}",
-                "error": str(e)
-            }
-    
-    def get_safety_status(self) -> Dict[str, Any]:
-        """Get current safety system status"""
-        return {
-            "robot_state": self.state_manager.robot_service_state.value if self.state_manager.robot_service_state else "unknown",
-            "vision_state": self.state_manager.vision_service_state.value if self.state_manager.vision_service_state else "unknown",
-            "application_state": self.state_manager.state.value,
-            "calibration_status": {k: v.value for k, v in self._calibration_status.items()}
-        }
-    
-    # ========== Status and Monitoring ==========
-    
-    def get_operation_statistics(self) -> Dict[str, Any]:
-        """Get operation statistics and performance metrics"""
-        return {
-            "total_operations": 0,  # TODO: Implement operation counting
-            "successful_operations": 0,
-            "failed_operations": 0,
-            "average_cycle_time": 0.0,
-            "uptime": 0.0,
-            "error_count": len(self._error_log)
-        }
-    
-    def get_health_check(self) -> Dict[str, Any]:
-        """Perform health check on all application components"""
-        try:
-            health_status = {
-                "overall": "healthy",
-                "components": {
-                    "robot_service": "healthy" if self.robotService else "unavailable",
-                    "vision_service": "healthy" if self.visionService else "unavailable",
-                    "workpiece_service": "healthy" if self.workpieceService else "unavailable",
-                    "settings_service": "healthy" if self.settingsManager else "unavailable"
-                }
-            }
-            
-            # Check if any component is unhealthy
-            if "unavailable" in health_status["components"].values():
-                health_status["overall"] = "degraded"
-            
-            return {
-                "success": True,
-                "health_status": health_status
-            }
-        except Exception as e:
-            self._add_error_log(f"Health check failed: {e}")
-            return {
-                "success": False,
-                "message": f"Health check failed: {e}",
-                "error": str(e)
-            }
-    
-    def get_error_log(self, limit: int = 100) -> List[Dict[str, Any]]:
-        """Get recent error log entries"""
-        return self._error_log[-limit:] if limit > 0 else self._error_log[:]
-    
-    def _add_error_log(self, message: str):
-        """Add an error to the error log"""
-        self._error_log.append({
-            "timestamp": datetime.now().isoformat(),
-            "message": message,
-            "level": "error"
-        })
-        
-        # Keep only last 1000 entries
-        if len(self._error_log) > 1000:
-            self._error_log = self._error_log[-1000:]
-    
+
     def _register_settings(self):
         """Register glue application settings with the global settings registry"""
         try:
@@ -784,8 +491,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
             
         except Exception as e:
             self.logger.error(f"Failed to register glue application settings: {e}")
-            self._add_error_log(f"Settings registration failed: {e}")
-    
+
     def get_glue_settings(self):
         """Get glue settings object for this application"""
         try:

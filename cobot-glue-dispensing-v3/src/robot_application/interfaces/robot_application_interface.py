@@ -133,18 +133,7 @@ class RobotApplicationInterface(ABC):
             Dict containing calibration result and status
         """
         pass
-    
 
-    
-    @abstractmethod
-    def get_calibration_status(self) -> Dict[str, CalibrationStatus]:
-        """
-        Get current calibration status for all components.
-        
-        Returns:
-            Dict mapping component names to their calibration status
-        """
-        pass
     
     # ========== Workpiece Handling ==========
     
@@ -174,167 +163,8 @@ class RobotApplicationInterface(ABC):
             Dict containing processing result and statistics
         """
         pass
-    
-    @abstractmethod
-    def validate_workpiece(self, workpiece_id: str) -> Dict[str, Any]:
-        """
-        Validate that a workpiece can be processed by this application.
-        
-        Args:
-            workpiece_id: Unique identifier of the workpiece
-            
-        Returns:
-            Dict containing validation result and any issues found
-        """
-        pass
-    
-    @abstractmethod
-    def get_workpiece_requirements(self) -> Dict[str, Any]:
-        """
-        Get requirements for workpieces that can be processed by this application.
-        
-        Returns:
-            Dict containing workpiece requirements specification
-        """
-        pass
-    
-    # ========== Configuration Management ==========
-    
-    @abstractmethod
-    def get_configuration(self) -> Dict[str, Any]:
-        """
-        Get current application configuration.
-        
-        Returns:
-            Dict containing all configuration parameters
-        """
-        pass
-    
-    @abstractmethod
-    def update_configuration(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Update application configuration.
-        
-        Args:
-            config: Configuration parameters to update
-            
-        Returns:
-            Dict containing update result and validation errors if any
-        """
-        pass
-    
-    @abstractmethod
-    def validate_configuration(self) -> Dict[str, Any]:
-        """
-        Validate current application configuration.
-        
-        Returns:
-            Dict containing validation result and any issues found
-        """
-        pass
-    
-    @abstractmethod
-    def get_default_configuration(self) -> Dict[str, Any]:
-        """
-        Get default configuration for this application.
-        
-        Returns:
-            Dict containing default configuration parameters
-        """
-        pass
-    
-    # ========== Status and Monitoring ==========
-    
-    @abstractmethod
-    def get_status(self) -> Dict[str, Any]:
-        """
-        Get comprehensive application status.
-        
-        Returns:
-            Dict containing current status of all components
-        """
-        pass
-    
-    @abstractmethod
-    def get_operation_statistics(self) -> Dict[str, Any]:
-        """
-        Get operation statistics and performance metrics.
-        
-        Returns:
-            Dict containing statistics like cycle time, success rate, etc.
-        """
-        pass
-    
-    @abstractmethod
-    def get_health_check(self) -> Dict[str, Any]:
-        """
-        Perform health check on all application components.
-        
-        Returns:
-            Dict containing health status of all components
-        """
-        pass
-    
-    @abstractmethod
-    def get_error_log(self, limit: int = 100) -> List[Dict[str, Any]]:
-        """
-        Get recent error log entries.
-        
-        Args:
-            limit: Maximum number of entries to return
-            
-        Returns:
-            List of error log entries
-        """
-        pass
-    
-    # ========== Application-Specific Information ==========
-    
-    @abstractmethod
-    def get_application_type(self) -> ApplicationType:
-        """Get the type of this application"""
-        pass
-    
-    @abstractmethod
-    def get_application_name(self) -> str:
-        """Get the human-readable name of this application"""
-        pass
-    
-    @abstractmethod
-    def get_application_version(self) -> str:
-        """Get the version of this application"""
-        pass
-    
-    @abstractmethod
-    def get_supported_operations(self) -> List[str]:
-        """
-        Get list of operations supported by this application.
-        
-        Returns:
-            List of operation names
-        """
-        pass
-    
-    @abstractmethod
-    def get_supported_tools(self) -> List[str]:
-        """
-        Get list of tools supported by this application.
-        
-        Returns:
-            List of tool identifiers
-        """
-        pass
-    
-    @abstractmethod
-    def get_supported_workpiece_types(self) -> List[str]:
-        """
-        Get list of workpiece types supported by this application.
-        
-        Returns:
-            List of workpiece type identifiers
-        """
-        pass
-    
+
+
     # ========== Tool and Hardware Control ==========
     
     @abstractmethod
@@ -360,39 +190,6 @@ class RobotApplicationInterface(ABC):
             Dict containing operation result
         """
         pass
-    
-    # ========== Safety and Emergency ==========
-    
-    @abstractmethod
-    def emergency_stop(self) -> Dict[str, Any]:
-        """
-        Emergency stop all robot operations immediately.
-        
-        Returns:
-            Dict containing emergency stop result
-        """
-        pass
-    
-    @abstractmethod
-    def safety_check(self) -> Dict[str, Any]:
-        """
-        Perform comprehensive safety check.
-        
-        Returns:
-            Dict containing safety check results and any warnings
-        """
-        pass
-    
-    @abstractmethod
-    def get_safety_status(self) -> Dict[str, Any]:
-        """
-        Get current safety system status.
-        
-        Returns:
-            Dict containing safety system status
-        """
-        pass
-
 
 # ========== Helper Data Classes ==========
 

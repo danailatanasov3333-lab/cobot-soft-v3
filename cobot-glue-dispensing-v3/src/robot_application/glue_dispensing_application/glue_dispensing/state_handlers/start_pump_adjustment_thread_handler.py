@@ -2,7 +2,7 @@ import threading
 from collections import namedtuple
 from modules.shared.shared.settings.conreateSettings.enums.GlueSettingKey import GlueSettingKey
 from src.robot_application.glue_dispensing_application.glue_dispensing.glue_dispensing_operation import ADJUST_PUMP_SPEED_WHILE_SPRAY, glue_dispensing_logger_context
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 from src.backend.system.utils.custom_logging import log_debug_message, log_error_message
 from src.robot_application.glue_dispensing_application.glue_dispensing.dynamicPumpSpeedAdjustment import \
     start_dynamic_pump_speed_adjustment_thread
@@ -33,19 +33,19 @@ def handle_start_pump_adjustment_thread(context):
             log_debug_message(glue_dispensing_logger_context, message="Pump adjustment thread started.")
         except Exception as e:
             log_error_message(glue_dispensing_logger_context, message=f"Failed to start pump adjustment thread: {e}")
-            return PumpAdjustmentResult(False, RobotServiceState.ERROR, None, None, context.current_path_index, context.current_point_index, context.current_path, context.current_settings)
+            return PumpAdjustmentResult(False, GlueProcessState.ERROR, None, None, context.current_path_index, context.current_point_index, context.current_path, context.current_settings)
 
         # Wait for thread readiness
         if not pump_ready_event.wait(timeout=5.0):
             log_error_message(glue_dispensing_logger_context, message="Pump adjustment thread failed to initialize in time.")
-            return PumpAdjustmentResult(False, RobotServiceState.ERROR, None, None, context.current_path_index, context.current_point_index, context.current_path, context.current_settings)
+            return PumpAdjustmentResult(False, GlueProcessState.ERROR, None, None, context.current_path_index, context.current_point_index, context.current_path, context.current_settings)
 
         log_debug_message(glue_dispensing_logger_context, message="Pump adjustment thread ready.")
 
     # ✅ Return the result with thread references
     return PumpAdjustmentResult(
         handled=True,
-        next_state=RobotServiceState.SENDING_PATH_POINTS,
+        next_state=GlueProcessState.SENDING_PATH_POINTS,
         pump_thread=pump_thread,
         pump_ready_event=pump_ready_event,
         next_path_index=context.current_path_index,

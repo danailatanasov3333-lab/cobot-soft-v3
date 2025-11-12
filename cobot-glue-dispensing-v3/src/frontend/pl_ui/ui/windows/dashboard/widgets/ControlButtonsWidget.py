@@ -2,11 +2,10 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QSizePoli
 from PyQt6.QtCore import Qt, pyqtSignal, QMetaObject, pyqtSlot
 
 from modules.shared.MessageBroker import MessageBroker
-from modules.shared.v1.topics import SystemTopics, RobotTopics
+from modules.shared.v1.topics import SystemTopics
 from src.frontend.pl_ui.ui.widgets.MaterialButton import MaterialButton
 from src.frontend.pl_ui.localization import TranslationKeys, TranslatableWidget
 from src.robot_application.base_robot_application import ApplicationState
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
 
 
 class ControlButtonsWidget(TranslatableWidget):
@@ -18,9 +17,8 @@ class ControlButtonsWidget(TranslatableWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent, auto_retranslate=False)
         
-        # Track current states
+        # Track current state
         self.is_paused = False
-        self.robot_state = None
         self.app_state = None
         
         self.init_ui()
@@ -29,8 +27,9 @@ class ControlButtonsWidget(TranslatableWidget):
         # Initialize translations after UI is created
         self.init_translations()
         self.broker = MessageBroker()
-        self.broker.subscribe(SystemTopics.APPLICATION_STATE, self.on_system_status_update)
-        self.broker.subscribe(RobotTopics.SERVICE_STATE, self.on_robot_service_state_update)
+        print(f"🎛️ ControlButtonsWidget: Subscribing to {SystemTopics.SYSTEM_STATE}")
+        self.broker.subscribe(SystemTopics.SYSTEM_STATE, self.on_system_status_update)
+        print(f"🎛️ ControlButtonsWidget: Subscription completed")
 
     def init_ui(self) -> None:
         # Main layout for the widget
@@ -94,20 +93,6 @@ class ControlButtonsWidget(TranslatableWidget):
         """Enable or disable the pause button"""
         self.pause_btn.setEnabled(enabled)
 
-    def on_robot_service_state_update(self, robot_state) -> None:
-        """Handle robot service state updates for pause/resume button management"""
-        try:
-            if not self.pause_btn:
-                return
-
-            if self.robot_state == robot_state:
-                return
-            # Store the state and schedule GUI update on main thread
-            self.robot_state = robot_state
-            QMetaObject.invokeMethod(self, "_update_button_states_safe", Qt.ConnectionType.QueuedConnection)
-        except RuntimeError:
-            # Widget has been deleted, silently ignore
-            pass
 
     def on_system_status_update(self, state_data) -> None:
         """Handle application state updates from new base system"""
@@ -131,7 +116,10 @@ class ControlButtonsWidget(TranslatableWidget):
             # Store the state and schedule GUI update on main thread
             # FIRST CHECK IF THE RECEIVED STATE IS DIFFERENT FROM THE CURRENT ONE
             if self.app_state == new_state:
+                # print(f"🎮 Button widget: No state change needed - already {new_state}")
                 return
+                
+            # print(f"🎮 Button widget: State changing from {self.app_state} to {new_state}")
             self.app_state = new_state
             QMetaObject.invokeMethod(self, "_update_button_states_safe", Qt.ConnectionType.QueuedConnection)
         except RuntimeError:
@@ -152,25 +140,14 @@ class ControlButtonsWidget(TranslatableWidget):
             pass
 
     def update_button_states(self) -> None:
-        """Update button states and text based on current application and robot states"""
+        """Update button states and text based on current application state"""
         if not self.app_state:
             return
 
-        # Special handling for robot PAUSED state - override app state logic
-        if self.robot_state == RobotServiceState.PAUSED:
-            # When robot is paused, keep stop/pause enabled regardless of app state
-            self.start_btn.setEnabled(False)
-            self.stop_btn.setEnabled(True)  # Allow stopping from paused state
-            self.pause_btn.setEnabled(True)  # Allow resuming from paused state
-            self.is_paused = True
-            self.pause_btn.setText("Resume")  # Show Resume when paused
-            return
-
-        # Handle Application states (when robot is not paused)
+        # Handle all application states uniformly
         if self.app_state == ApplicationState.IDLE:
             # Only start button enabled when system is idle
             self.start_btn.setEnabled(True)
-            print(f"START BUTTON ENABLED: {self.start_btn.isEnabled()}")
             self.stop_btn.setEnabled(False)
             self.pause_btn.setEnabled(False)
             # Reset pause button text to "Pause"
@@ -182,8 +159,7 @@ class ControlButtonsWidget(TranslatableWidget):
             self.start_btn.setEnabled(False)
             self.stop_btn.setEnabled(True)
             self.pause_btn.setEnabled(True)
-            
-            # Handle pause button text (robot should not be paused here due to early return above)
+            # Ensure pause button shows "Pause"
             self.is_paused = False
             self.pause_btn.setText(self.tr(TranslationKeys.Dashboard.PAUSE))
         
@@ -230,8 +206,7 @@ class ControlButtonsWidget(TranslatableWidget):
 
     def clean_up(self) -> None:
         """Clean up resources when the widget is closed"""
-        self.broker.unsubscribe(SystemTopics.APPLICATION_STATE, self.on_system_status_update)
-        self.broker.unsubscribe(RobotTopics.SERVICE_STATE, self.on_robot_service_state_update)
+        self.broker.unsubscribe(SystemTopics.SYSTEM_STATE, self.on_system_status_update)
 
 if __name__ == "__main__":
     import sys

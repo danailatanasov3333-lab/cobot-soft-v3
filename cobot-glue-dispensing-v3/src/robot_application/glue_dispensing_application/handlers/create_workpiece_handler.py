@@ -1,6 +1,6 @@
 import cv2
 
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 from modules.VisionSystem.VisionSystem import VisionSystemState
 
 class CreateWorkpieceHandler:
@@ -9,7 +9,7 @@ class CreateWorkpieceHandler:
 
     def create_workpiece_step_1(self):
         # if robot service is not in idle state, return error
-        if self.application.glue_process_state_machine.state != RobotServiceState.IDLE:
+        if self.application.glue_process_state_machine.state != GlueProcessState.IDLE:
             print("Robot service not in IDLE state, cannot create workpiece")
             return False, "Robot service not in IDLE state"
 
@@ -22,7 +22,7 @@ class CreateWorkpieceHandler:
 
     def create_workpiece_step_2(self):
         # if robot service is not in idle state, return error
-        if self.application.state_manager.robotServiceState != RobotServiceState.IDLE:
+        if self.application.state_manager.robotServiceState != GlueProcessState.IDLE:
             print("Robot service not in IDLE state, cannot create workpiece")
             return False, "Robot service not in IDLE state"
 

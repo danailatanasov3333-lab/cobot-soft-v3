@@ -1,4 +1,4 @@
-from modules.shared.v1.topics import GlueTopics
+from modules.shared.v1.topics import GlueTopics, SystemTopics
 
 
 class GlueDispensingSubscriptionManager:
@@ -18,8 +18,16 @@ class GlueDispensingSubscriptionManager:
         # Subscribe to robot and vision topics with glue-specific callbacks
         self.subscribe_robot_service_topics()
         self.subscribe_vision_topics()
-        # Add glue-specific subscriptions
         self.subscribe_mode_change()
+        self.subscribe_glue_process_topics()
+
+    def subscribe_glue_process_topics(self):
+        """Subscribe to glue process topics with glue-specific callback"""
+        topic = GlueTopics.PROCESS_STATE
+        callback = self.glue_application.state_manager.on_glue_process_state_update
+        self.broker.subscribe(topic, callback)
+        self.base_subscription_manager.subscriptions[topic] = callback
+        print(f"Subscribed to glue process topic: {topic} with callback: {callback}")
 
     def subscribe_robot_service_topics(self):
         """Subscribe to robot service topics with glue-specific callback"""
@@ -38,7 +46,7 @@ class GlueDispensingSubscriptionManager:
         print(f"Subscribed to vision service topic: {topic} with callback: {callback}")
 
     def subscribe_mode_change(self):
-        topic = GlueTopics.MODE_CHANGE
+        topic = SystemTopics.SYSTEM_MODE_CHANGE
         callback = self.glue_application.changeMode
         self.broker.subscribe(topic, callback)
         self.glue_specific_subscriptions[topic] = callback

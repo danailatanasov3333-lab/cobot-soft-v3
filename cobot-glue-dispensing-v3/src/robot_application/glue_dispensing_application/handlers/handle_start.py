@@ -4,7 +4,7 @@ from src.robot_application.glue_dispensing_application.GlueDispensingApplication
 from src.robot_application.glue_dispensing_application.handlers.modes_handlers import \
     contour_matching_mode_handler, direct_trace_mode_handler
 
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 
 
 def start(application, contourMatching=True,nesting= False, debug=False):
@@ -19,8 +19,7 @@ def start(application, contourMatching=True,nesting= False, debug=False):
         result,message = direct_trace_mode_handler.handle_direct_tracing_mode(application)
 
     # Only move to calibration position if robot service is not stopped/paused
-    if application.glue_process_state_machine.state not in [RobotServiceState.STOPPED, RobotServiceState.PAUSED,
-                                                     RobotServiceState.ERROR]:
+    if application.glue_process_state_machine.state not in [GlueProcessState.STOPPED, GlueProcessState.PAUSED,GlueProcessState.ERROR]:
         application.move_to_spray_capture_position()
     application.state = GlueSprayApplicationState.IDLE
     return result, message

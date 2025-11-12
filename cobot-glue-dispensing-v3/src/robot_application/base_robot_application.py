@@ -46,8 +46,7 @@ class BaseMessagePublisher:
     
     def __init__(self, broker: MessageBroker):
         self.broker = broker
-        self.state_topic = SystemTopics.APPLICATION_STATE
-        self.application_topic = SystemTopics.APPLICATION_INFO
+        self.state_topic = SystemTopics.SYSTEM_STATE
     
     def publish_state(self, state: ApplicationState):
         """Publish application state"""
@@ -55,15 +54,7 @@ class BaseMessagePublisher:
             "state": state.value,
             "timestamp": self._get_timestamp()
         })
-    
-    def publish_application_info(self, app_type: ApplicationType, app_name: str):
-        """Publish current application information"""
-        self.broker.publish(self.application_topic, {
-            "type": app_type.value,
-            "name": app_name,
-            "timestamp": self._get_timestamp()
-        })
-    
+
     def _get_timestamp(self) -> str:
         """Get current timestamp"""
         import datetime
@@ -208,26 +199,13 @@ class BaseRobotApplication(ABC):
         self.state_manager.start_state_publisher_thread()
         self.subscription_manager.subscribe_all()
         
-        # Publish application info
-        self.message_publisher.publish_application_info(
-            self.get_application_type(),
-            self.get_application_name()
-        )
+
         
         # Keep initial state - let service callbacks determine when ready
         print(f"BaseRobotApplication initialized with state: {self.state_manager.state}")
     
     # Abstract methods that must be implemented by specific applications
-    
-    @abstractmethod
-    def get_application_type(self) -> ApplicationType:
-        """Return the type of this application"""
-        pass
-    
-    @abstractmethod
-    def get_application_name(self) -> str:
-        """Return the human-readable name of this application"""
-        pass
+
     
     @abstractmethod
     def get_initial_state(self) -> ApplicationState:
@@ -273,23 +251,7 @@ class BaseRobotApplication(ABC):
             Dict containing operation result
         """
         pass
-    
-    # Common methods with default implementations (can be overridden)
-    
-    def get_status(self) -> Dict[str, Any]:
-        """
-        Get current application status.
-        
-        Returns:
-            Dict containing current status information
-        """
-        return {
-            "application_type": self.get_application_type().value,
-            "application_name": self.get_application_name(),
-            "state": self.state_manager.state.value,
-            "robot_state": self.state_manager.robot_service_state,
-            "vision_state": self.state_manager.vision_service_state
-        }
+
     
     def calibrate_robot(self) -> Dict[str, Any]:
         """

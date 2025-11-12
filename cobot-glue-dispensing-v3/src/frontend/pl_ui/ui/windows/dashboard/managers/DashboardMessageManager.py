@@ -1,6 +1,7 @@
 from modules.shared.MessageBroker import MessageBroker
 from typing import List, Tuple, Callable
-from modules.shared.v1.topics import RobotTopics,VisionTopics,GlueTopics
+from modules.shared.v1.topics import RobotTopics, VisionTopics, GlueTopics, SystemTopics
+
 
 class DashboardMessageManager:
     def __init__(self):
@@ -75,7 +76,7 @@ class DashboardMessageManager:
 
     def publish_mode_change(self,mode):
         """Publish mode change to the broker"""
-        self.broker.publish(GlueTopics.MODE_CHANGE, mode)
+        self.broker.publish(SystemTopics.SYSTEM_MODE_CHANGE, mode)
 
     def subscribe_card_container(self, card_container) -> None:
         """Subscribe card container to glue type changes"""

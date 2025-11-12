@@ -1,8 +1,7 @@
 from collections import namedtuple
 from src.robot_application.glue_dispensing_application.glue_dispensing.glue_dispensing_operation import glue_dispensing_logger_context
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 from src.backend.system.utils.custom_logging import log_debug_message, log_error_message
-
 # Shared result type for all state handlers
 InitialPumpBoostResult = namedtuple(
     "HandlerResult",
@@ -43,7 +42,7 @@ def handle_pump_initial_boost(context):
             return InitialPumpBoostResult(
                 handled=False,
                 resume=False,
-                next_state=RobotServiceState.ERROR,
+                next_state=GlueProcessState.ERROR,
                 next_path_index=path_index,
                 next_point_index=point_index,
                 next_path=context.current_path,
@@ -59,7 +58,7 @@ def handle_pump_initial_boost(context):
         return InitialPumpBoostResult(
             handled=True,
             resume=False,
-            next_state=RobotServiceState.STARTING_PUMP_ADJUSTMENT_THREAD,
+            next_state=GlueProcessState.STARTING_PUMP_ADJUSTMENT_THREAD,
             next_path_index=path_index,
             next_point_index=point_index,
             next_path=context.current_path,
@@ -79,7 +78,7 @@ def handle_pump_initial_boost(context):
     return InitialPumpBoostResult(
         handled=True,
         resume=False,
-        next_state=RobotServiceState.STARTING_PUMP_ADJUSTMENT_THREAD,
+        next_state=GlueProcessState.STARTING_PUMP_ADJUSTMENT_THREAD,
         next_path_index=path_index,
         next_point_index=point_index,
         next_path=context.current_path,

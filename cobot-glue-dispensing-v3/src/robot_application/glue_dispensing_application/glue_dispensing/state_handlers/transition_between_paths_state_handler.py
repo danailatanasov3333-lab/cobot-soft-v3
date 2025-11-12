@@ -2,7 +2,7 @@ from src.robot_application.glue_dispensing_application.glue_dispensing.glue_disp
     glue_dispensing_logger_context,
     TURN_OFF_PUMP_BETWEEN_PATHS,
 )
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 from src.backend.system.utils.custom_logging import log_debug_message, log_error_message
 from collections import namedtuple
 
@@ -43,13 +43,13 @@ def handle_transition_between_paths(context):
     # ✅ Decide next state
     if next_path_index >= len(context.paths):
         log_debug_message(glue_dispensing_logger_context, message="All paths completed.")
-        next_state = RobotServiceState.COMPLETED
+        next_state = GlueProcessState.COMPLETED
     else:
         log_debug_message(
             glue_dispensing_logger_context,
             message=f"Preparing to move to next path: {next_path_index}"
         )
-        next_state = RobotServiceState.STARTING
+        next_state = GlueProcessState.STARTING
 
     # ✅ Return clean TransitionResult
     return TransitionResult(

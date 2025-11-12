@@ -1,7 +1,7 @@
 import time
 
 from src.robot_application.glue_dispensing_application.glue_dispensing.glue_dispensing_operation import glue_dispensing_logger_context
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 from src.backend.system.utils.custom_logging import log_debug_message
 from collections import namedtuple
 
@@ -52,7 +52,7 @@ def move_to_first_point(context,path):
             if ret != 0:
                 if attempt == max_attempts - 1:
                     # Max retries exhausted → signal error
-                    return MoveResult(False, RobotServiceState.ERROR, False)
+                    return MoveResult(False, GlueProcessState.ERROR, False)
                 time.sleep(0.2)
                 continue
 
@@ -60,7 +60,7 @@ def move_to_first_point(context,path):
             # Determine whether generator should be started
             generator_needed = bool(context.spray_on and not context.generator_started and not context.service.generatorState())
 
-            return MoveResult(True, RobotServiceState.MOVING_TO_FIRST_POINT, generator_needed)
+            return MoveResult(True, GlueProcessState.MOVING_TO_FIRST_POINT, generator_needed)
 
         except Exception as e:
             import traceback
@@ -71,10 +71,10 @@ def move_to_first_point(context,path):
                 continue
             else:
                 # Unexpected failure
-                return MoveResult(False, RobotServiceState.ERROR, False)
+                return MoveResult(False, GlueProcessState.ERROR, False)
 
     # If we somehow exit the loop without success
-    return MoveResult(False, RobotServiceState.ERROR, False)
+    return MoveResult(False, GlueProcessState.ERROR, False)
 
 def _handle_resume_case(context):
     """
@@ -88,7 +88,7 @@ def _handle_resume_case(context):
         return ResumeResult(
             handled=True,
             resume_flag=False,
-            next_state=RobotServiceState.COMPLETED,
+            next_state=GlueProcessState.COMPLETED,
             next_path_index=context.current_path_index,
             next_point_index=context.current_point_index,
             next_path=None,
@@ -98,7 +98,7 @@ def _handle_resume_case(context):
     path, settings = context.paths[context.current_path_index]
 
     # 2️⃣ Handle by paused_from_state
-    if context.paused_from_state == RobotServiceState.TRANSITION_BETWEEN_PATHS:
+    if context.paused_from_state == GlueProcessState.TRANSITION_BETWEEN_PATHS:
         print("RESUME: Paused between paths → move to next path's first point.")
         move_result = move_to_first_point(context, path)
 
@@ -112,13 +112,13 @@ def _handle_resume_case(context):
             clear_paused_state=True
         )
 
-    elif context.paused_from_state == RobotServiceState.EXECUTING_PATH:
+    elif context.paused_from_state == GlueProcessState.EXECUTING_PATH:
         if context.current_point_index >= len(path):
             print("RESUME: Path finished, move to next path.")
             return ResumeResult(
                 handled=True,
                 resume_flag=False,
-                next_state=RobotServiceState.MOVING_TO_FIRST_POINT,
+                next_state=GlueProcessState.MOVING_TO_FIRST_POINT,
                 next_path_index=context.current_path_index + 1,
                 next_point_index=0,
                 next_path=None,
@@ -133,14 +133,14 @@ def _handle_resume_case(context):
         return ResumeResult(
             handled=True,
             resume_flag=True,
-            next_state=RobotServiceState.EXECUTING_PATH,
+            next_state=GlueProcessState.EXECUTING_PATH,
             next_path_index=context.current_path_index,
             next_point_index=context.current_point_index,  # Keep same target point
             next_path=new_path,
             clear_paused_state=True
         )
 
-    elif context.paused_from_state == RobotServiceState.WAIT_FOR_PATH_COMPLETION:
+    elif context.paused_from_state == GlueProcessState.WAIT_FOR_PATH_COMPLETION:
         print(f"RESUME: Paused during path completion - continuing from current position towards point {context.current_point_index}")
         # Robot was paused while executing path, resume from current progress point
         if context.current_point_index >= len(path):
@@ -148,7 +148,7 @@ def _handle_resume_case(context):
             return ResumeResult(
                 handled=True,
                 resume_flag=False,
-                next_state=RobotServiceState.MOVING_TO_FIRST_POINT,
+                next_state=GlueProcessState.MOVING_TO_FIRST_POINT,
                 next_path_index=context.current_path_index + 1,
                 next_point_index=0,
                 next_path=None,
@@ -162,14 +162,14 @@ def _handle_resume_case(context):
         return ResumeResult(
             handled=True,
             resume_flag=True,
-            next_state=RobotServiceState.EXECUTING_PATH,  # Skip MOVING_TO_FIRST_POINT
+            next_state=GlueProcessState.EXECUTING_PATH,  # Skip MOVING_TO_FIRST_POINT
             next_path_index=context.current_path_index,
             next_point_index=context.current_point_index,
             next_path=new_path,
             clear_paused_state=True
         )
 
-    elif context.paused_from_state == RobotServiceState.SENDING_PATH_POINTS:
+    elif context.paused_from_state == GlueProcessState.SENDING_PATH_POINTS:
         print(f"RESUME: Paused during sending path points - resuming from point {context.current_point_index}")
         # Robot was paused while sending points to robot controller
         # Resume from the same point index since robot hasn't completed moving to it
@@ -179,14 +179,14 @@ def _handle_resume_case(context):
         return ResumeResult(
             handled=True,
             resume_flag=True,
-            next_state=RobotServiceState.EXECUTING_PATH,
+            next_state=GlueProcessState.EXECUTING_PATH,
             next_path_index=context.current_path_index,
             next_point_index=context.current_point_index,
             next_path=new_path,
             clear_paused_state=True
         )
 
-    elif context.paused_from_state == RobotServiceState.MOVING_TO_FIRST_POINT:
+    elif context.paused_from_state == GlueProcessState.MOVING_TO_FIRST_POINT:
         print("RESUME: Re-attempting move to first point.")
         move_result = move_to_first_point(context, path)
 
@@ -248,7 +248,7 @@ def handle_starting_state(context):
             resume=False,
             next_path_index=context.current_path_index,
             next_point_index=context.current_point_index,
-            next_state=RobotServiceState.COMPLETED,
+            next_state=GlueProcessState.COMPLETED,
             next_path=None,
             next_settings=context.current_settings,
         )
@@ -271,7 +271,7 @@ def handle_starting_state(context):
             resume=True,
             next_path_index=context.current_path_index,
             next_point_index=context.current_point_index,
-            next_state=RobotServiceState.EXECUTING_PATH,
+            next_state=GlueProcessState.EXECUTING_PATH,
             next_path=current_path,
             next_settings=settings,
         )
@@ -293,14 +293,14 @@ def handle_starting_state(context):
             resume=False,
             next_path_index=context.current_path_index + 1,
             next_point_index=0,
-            next_state=RobotServiceState.STARTING,  # still starting next path
+            next_state=GlueProcessState.STARTING,  # still starting next path
             next_path=None,
             next_settings=None,
         )
 
     # Only attempt to move to first point for new starts (not resumes)
     move_result = move_to_first_point(context,current_path)
-    next_state = move_result.next_state if move_result.success else RobotServiceState.ERROR
+    next_state = move_result.next_state if move_result.success else GlueProcessState.ERROR
 
     # Return a complete immutable result
     return HandlerResult(

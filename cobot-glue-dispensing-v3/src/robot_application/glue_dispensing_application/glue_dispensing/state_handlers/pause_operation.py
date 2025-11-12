@@ -1,20 +1,20 @@
 from src.robot_application.glue_dispensing_application.glue_dispensing.glue_dispensing_operation import glue_dispensing_logger_context
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 from src.backend.system.utils.custom_logging import log_debug_message
 
 
-def pause_operation(glue_dispencing_operation,context):
+def pause_operation(glue_dispensing_operation, context):
     """Pause current operation or resume if already paused with debouncing"""
 
     current_state = context.state_machine.state
 
-    if current_state == RobotServiceState.PAUSED:
+    if current_state == GlueProcessState.PAUSED:
         log_debug_message(glue_dispensing_logger_context, message=f"Already paused, resuming operation")
-        return glue_dispencing_operation.resume_operation()
+        return glue_dispensing_operation.resume_operation()
 
     log_debug_message(glue_dispensing_logger_context, message=f"Pausing operation")
 
-    if context.state_machine.transition(RobotServiceState.PAUSED):
+    if context.state_machine.transition(GlueProcessState.PAUSED):
         context.paused_from_state = current_state
         
         # If there's an active pump thread, capture its progress before pausing
@@ -24,7 +24,17 @@ def pause_operation(glue_dispencing_operation,context):
             # The pump thread will detect the PAUSED state and return its progress
             # The actual progress update happens when the thread terminates
         
-        context.pump_controller.pump_off(context.service,context.robot_service,context.glue_type,context.current_settings)
+
+
+        # Stop robot motion
+        try:
+            context.robot_service._stop_robot_motion()
+
+        except Exception as e:
+            log_debug_message(glue_dispensing_logger_context,
+                           message=f"Error stopping robot on pause: {e}")
+        context.pump_controller.pump_off(context.service, context.robot_service, context.glue_type,
+                                         context.current_settings)
         context.service.generatorOff()
         return True, "Operation paused"
     else:

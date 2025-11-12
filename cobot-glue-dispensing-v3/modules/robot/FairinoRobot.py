@@ -138,8 +138,8 @@ class FairinoRobot:
                    ip (str): IP address of the robot controller.
                """
         self.ip = ip
-        self.robot = Robot.RPC(self.ip)
-        # self.robot = TestRobotWrapper()  # For testing purposes, replace with real robot in production
+        # self.robot = Robot.RPC(self.ip)
+        self.robot = TestRobotWrapper()  # For testing purposes, replace with real robot in production
         self.logger_context = LoggerContext(logger=robot_logger, enabled=ENABLE_LOGGING)
         if self.robot is not None:
             log_info_message(self.logger_context, f"RobotWrapper initialized for robot at {self.ip}")

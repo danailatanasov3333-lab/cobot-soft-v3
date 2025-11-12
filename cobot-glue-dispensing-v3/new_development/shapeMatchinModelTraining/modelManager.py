@@ -2,7 +2,10 @@ import os
 import json
 import joblib
 from datetime import datetime
-from featuresExtraction import compute_enhanced_features
+
+from new_development.shapeMatchinModelTraining.featuresExtraction import get_feature_extraction_metadata, \
+    compute_enhanced_features
+
 
 # ======================================================
 # 💾 Model Persistence and Management
@@ -11,8 +14,7 @@ from featuresExtraction import compute_enhanced_features
 def save_model(model, model_name, accuracy, save_dir="saved_models", dataset_info=None):
     """Save the trained model with comprehensive metadata in timestamped folder"""
     # Import here to avoid circular import
-    from featuresExtraction import get_feature_extraction_metadata
-    
+
     # Create timestamped folder for this model
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     model_folder = os.path.join(save_dir, f"model_{timestamp}")

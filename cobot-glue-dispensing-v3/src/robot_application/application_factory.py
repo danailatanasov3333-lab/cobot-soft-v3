@@ -249,52 +249,7 @@ class ApplicationFactory:
             List of registered application types
         """
         return list(self._application_registry.keys())
-    
-    def get_application_info(self, app_type: ApplicationType) -> Dict[str, Any]:
-        """
-        Get information about a registered application type.
-        
-        Args:
-            app_type: Type of application to get info for
-            
-        Returns:
-            Dict containing application information
-            
-        Raises:
-            ApplicationRegistryError: If application type is not registered
-        """
-        if app_type not in self._application_registry:
-            raise ApplicationRegistryError(f"Application type {app_type.value} is not registered")
-        
-        app_class = self._application_registry[app_type]
-        
-        # Try to get information from a temporary instance
-        try:
-            temp_instance = self.create_application(app_type, use_cache=False)
-            info = {
-                "type": app_type.value,
-                "name": temp_instance.get_application_name(),
-                "version": temp_instance.get_application_version(),
-                "supported_operations": temp_instance.get_supported_operations(),
-                "supported_tools": temp_instance.get_supported_tools(),
-                "supported_workpiece_types": temp_instance.get_supported_workpiece_types(),
-                "class_name": app_class.__name__
-            }
-            
-            # Clean up temporary instance if not cached
-            if app_type not in self._application_cache:
-                self._shutdown_application(temp_instance)
-            
-            return info
-            
-        except Exception as e:
-            # Fallback to basic information
-            logger.warning(f"Could not get full info for {app_type.value}: {e}")
-            return {
-                "type": app_type.value,
-                "class_name": app_class.__name__,
-                "error": str(e)
-            }
+
     
     def is_application_registered(self, app_type: ApplicationType) -> bool:
         """

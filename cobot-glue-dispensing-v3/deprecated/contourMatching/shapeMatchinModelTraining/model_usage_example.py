@@ -13,12 +13,6 @@ Features:
 import cv2
 import numpy as np
 
-from GlueDispensingApplication.contourMatching.shapeMatchinModelTraining.modelManager import load_latest_model, predict_similarity
-from GlueDispensingApplication.contourMatching.shapeMatchinModelTraining.featuresExtraction import compute_enhanced_features
-from GlueDispensingApplication.workpiece.WorkpieceController import WorkpieceController
-from API.shared.workpiece.WorkpieceService import WorkpieceService
-from GlueDispensingApplication.workpiece.Workpiece import Workpiece
-
 # ===============================================================
 # Global variables
 # ===============================================================

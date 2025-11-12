@@ -14,7 +14,7 @@ import time
 import cv2
 import numpy as np
 from modules.shared.shared.ContourStandartized import Contour
-from src.backend.system import CompareContours
+from src.backend.system.contour_matching import CompareContours
 from src.robot_application.glue_dispensing_application.pick_and_place.Plane import Plane
 from src.backend.system.utils import utils
 from modules.shared.MessageBroker import MessageBroker
@@ -364,7 +364,11 @@ def start_nesting(visionService, robotService,preselected_workpiece,z_offset_for
 
         # === FUNCTIONALITY ===
         # Match workpieces with detected contours
-        matches_data, noMatches, _ = CompareContours.findMatchingWorkpieces(workpieces, newContours)
+        try:
+            matches_data, noMatches, _ = CompareContours.findMatchingWorkpieces(workpieces, newContours)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
         orientations = matches_data["orientations"]
         matches = matches_data["workpieces"]
 

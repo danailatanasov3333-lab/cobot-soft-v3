@@ -1,11 +1,21 @@
 from src.robot_application.glue_dispensing_application.glue_dispensing.glue_dispensing_operation import glue_dispensing_logger_context
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
+from src.robot_application.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
 from src.backend.system.utils.custom_logging import log_debug_message
 
 
-def stop_operation(glue_dispencing_operation,context):
+def stop_operation(glue_dispensing_operation,context):
     """Stop current operation"""
-    if context.state_machine.transition(RobotServiceState.STOPPED):
+    if context.state_machine.transition(GlueProcessState.STOPPED):
+        # Stop robot motion
+        try:
+            context.robot_service._stop_robot_motion()
+
+        except Exception as e:
+            log_debug_message(glue_dispensing_logger_context,
+                           message=f"Error stopping robot on pause: {e}")
+        context.pump_controller.pump_off(context.service, context.robot_service, context.glue_type,
+                                         context.current_settings)
+        context.service.generatorOff()
         context.pump_controller.pump_off(context.service,context.robot_service,context.glue_type,context.current_settings)
         context.service.generatorOff()
         log_debug_message(glue_dispensing_logger_context,

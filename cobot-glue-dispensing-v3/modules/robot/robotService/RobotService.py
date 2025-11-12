@@ -12,7 +12,6 @@ from modules.shared.MessageBroker import MessageBroker
 from modules.shared.shared.settings.robotConfig.robotConfigModel import RobotConfig
 from modules.robot.FairinoRobot import Axis, Direction
 from modules.robot.RobotUtils import calculate_distance_between_points
-from src.robot_application.glue_dispensing_application.glue_dispensing.GlueProcessStateMachine import GlueProcessStateMachine
 from modules.robot.robotService.RobotServiceMessagePublisher import RobotServiceMessagePublisher
 from modules.robot.robotService.RobotServiceStateManager import RobotServiceStateManager
 from modules.robot.robotService.RobotServiceSubscriptionManager import RobotServiceSubscriptionManager
@@ -110,19 +109,10 @@ class RobotService:
         self.laser = Laser()
         self.toolChanger = ToolChanger()
         self.currentGripper = None
-
-
-        
         # Thread safety
         self._operation_lock = threading.Lock()
         self._stop_thread = threading.Event()
-        
-        # Resume flag for tracking when we're resuming vs starting new
 
-        
-        # Debouncing for pause/resume commands
-        # self._last_pause_time = 0
-        # self._pause_debounce_interval = 0.5  # 500ms debounce
 
     def _stop_robot_motion(self):
         """Stop robot motion safely"""
@@ -148,11 +138,12 @@ class RobotService:
 
 
         while True:
+            print(f"RobotService: Waiting for robot to reach position {endPoint} with threshold {threshold}mm")
             # Check cancellation token (replaces state machine dependency)
             if cancellation_token is not None and cancellation_token.is_cancelled():
                 log_debug_message(self.robot_service_logger_context,message=f"Operation cancelled via cancellation token: {cancellation_token.get_cancellation_reason()}")
                 return False
-            
+
             # Check timeout
             if time.time() - start_time > timeout:
                 log_debug_message(self.robot_service_logger_context,message=f"Timeout reached while waiting for robot position {endPoint}")

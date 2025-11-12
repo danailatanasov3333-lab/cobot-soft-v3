@@ -1,17 +1,13 @@
 import queue
 import time
-from src.backend.system import CompareContours
-import cv2
-import threading
 import numpy as np
-from modules.shared.shared.workpiece.WorkpieceService import WorkpieceService
+import cv2
 # from system.robot.RobotCalibrationService import CAMERA_TO_ROBOT_MATRIX_PATH
 from src.backend.system.utils import utils
 from modules.VisionSystem.VisionSystem import VisionSystem
 import os
 from modules.shared.MessageBroker import MessageBroker
-from libs.plvision.PLVision.arucoModule import *
-
+import threading
 CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), '..', 'storage', 'settings', 'camera_settings.json')
 
 
