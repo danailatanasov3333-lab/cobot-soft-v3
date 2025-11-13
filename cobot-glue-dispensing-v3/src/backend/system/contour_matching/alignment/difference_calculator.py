@@ -1,62 +1,71 @@
 import numpy as np
 from modules.shared.shared.ContourStandartized import Contour
 from src.backend.system.contour_matching.debug.plot_generator import get_similarity_debug_plot
+from pathlib import Path
 
-
-def _calculateDifferences(workpieceContour, contour,debug=False):
+def _calculateDifferences(workpieceContour: Contour, contour: Contour, debug: bool = False):
     """
-       Calculate the centroid and rotation differences between two contours.
+    Calculate the centroid and rotation differences between two contours.
 
-       Args:
-           workpieceContour (Contour): Contour object representing the workpieces contour.
-           contour (Contour): Contour object representing the new contour.
+    Args:
+        workpieceContour (Contour): Contour object representing the workpiece contour.
+        contour (Contour): Contour object representing the new contour.
+        debug (bool): Whether to generate debug plots.
 
-       Returns:
-           tuple: Centroid difference (numpy array) and rotation difference (float).
-       """
+    Returns:
+        tuple: (centroidDiff, rotationDiff, contourAngle)
+    """
+    contour = _ensure_closed(contour)
 
-    # check if the new contour last point is different then the first point if so close the contour
-    if not np.array_equal(contour.get()[0], contour.get()[-1]):
-        print("    Closing contour by adding first point to the end")
-        closed_points = np.vstack([
-            contour.get(),
-            contour.get()[0].reshape(1, 1, 2)
-        ])
-
-        contour = Contour(closed_points)
-
+    # --- Compute centroids ---
     workpieceCentroid = workpieceContour.getCentroid()
     contourCentroid = contour.getCentroid()
     centroidDiff = np.array(contourCentroid) - np.array(workpieceCentroid)
+
+    # --- Compute rotation difference ---
     wpAngle = workpieceContour.getOrientation()
     contourAngle = contour.getOrientation()
-    rotationDiff = contourAngle - wpAngle
-    rotationDiff = (rotationDiff + 180) % 360 - 180  # Normalize to [-180, 180]
+    rotationDiff = (contourAngle - wpAngle + 180) % 360 - 180  # Normalize to [-180, 180]
 
-    handle_debug(debug, wpAngle, workpieceContour, contourAngle, contour, rotationDiff,workpieceCentroid, contourCentroid, centroidDiff)
-
-
+    # --- Optional debug output ---
+    if debug:
+        _debug_contours(workpieceContour, contour, wpAngle, contourAngle, rotationDiff,
+                        workpieceCentroid, contourCentroid, centroidDiff)
 
     return centroidDiff, rotationDiff, contourAngle
 
-def handle_debug(debug, wpAngle, workpieceContour, contourAngle, contour, rotationDiff,workpieceCentroid, contourCentroid, centroidDiff):
 
-    # Debug plotting for _calculateDifferences
-    if debug:
-        from pathlib import Path
+def _ensure_closed(contour: Contour) -> Contour:
+    """
+    Ensure the contour is closed (first point = last point).
+    """
+    points = contour.get()
+    if not np.array_equal(points[0], points[-1]):
+        closed_points = np.vstack([points, points[0].reshape(1, 1, 2)])
+        return Contour(closed_points)
+    return contour
 
-        # ... after computing wpAngle, contourAngle, rotationDiff ...
-        debug_dir = Path(__file__).resolve().parent / "debug"
-        debug_dir.mkdir(parents=True, exist_ok=True)
-        file_path = debug_dir / "contour_debug.txt"
 
-        with file_path.open("w", encoding="utf-8") as f:
-            f.write(f"Workpiece orientation: {wpAngle}\n")
-            f.write(f"Workpiece points: {workpieceContour.get()}\n")
-            f.write(f"Contour orientation: {contourAngle}\n")
-            f.write(f"Contour points: {contour.get()}\n")
-            f.write(f"Calculated rotation difference: {rotationDiff}\n")
+def _debug_contours(workpieceContour, contour, wpAngle, contourAngle, rotationDiff,
+                    workpieceCentroid, contourCentroid, centroidDiff):
+    """
+    Handle debug output for contour differences.
+    """
+    debug_dir = Path(__file__).resolve().parent / "debug"
+    debug_dir.mkdir(parents=True, exist_ok=True)
+    file_path = debug_dir / "contour_debug.txt"
 
-        print(f"Contour debug written to: {file_path}")
-        get_similarity_debug_plot(workpieceContour, contour, workpieceCentroid, contourCentroid, wpAngle, contourAngle,
-                                  centroidDiff, rotationDiff)
+    with file_path.open("w", encoding="utf-8") as f:
+        f.write(f"Workpiece orientation: {wpAngle}\n")
+        f.write(f"Workpiece points: {workpieceContour.get()}\n")
+        f.write(f"Contour orientation: {contourAngle}\n")
+        f.write(f"Contour points: {contour.get()}\n")
+        f.write(f"Calculated rotation difference: {rotationDiff}\n")
+
+    print(f"Contour debug written to: {file_path}")
+
+    # Optional debug plot
+    get_similarity_debug_plot(
+        workpieceContour, contour, workpieceCentroid, contourCentroid,
+        wpAngle, contourAngle, centroidDiff, rotationDiff
+    )

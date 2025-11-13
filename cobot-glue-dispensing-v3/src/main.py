@@ -21,7 +21,6 @@ from src.backend.system.settings.SettingsController import SettingsController
 # from src.backend.system.RequestHandler import RequestHandler
 # IMPORT SERVICES
 from src.backend.system.settings.SettingsService import SettingsService
-from src.robot_application.glue_dispensing_application.tools.GlueCell import GlueDataFetcher
 
 
 from src.backend.system.vision.CameraSystemController import CameraSystemController
@@ -40,9 +39,7 @@ logging.basicConfig(
 
 sensorPublisher = SensorPublisher()
 
-# register glue meters
-glueFetcher = GlueDataFetcher()
-glueFetcher.start()
+
 
 API_VERSION = 1
 newGui = True
@@ -79,8 +76,6 @@ if __name__ == "__main__":
 
     robotService = RobotService(robot, settingsService)
 
-
-
     # INIT CONTROLLERS
     settingsController = SettingsController(settingsService)
     cameraSystemController = CameraSystemController(cameraService)
@@ -105,7 +100,7 @@ if __name__ == "__main__":
     # INIT REQUEST HANDLER
     if API_VERSION == 1:
 
-        from communication_layer import RequestHandler
+        from src.communication_layer.api_gateway.handlers.request_handler import RequestHandler
         requestHandler = RequestHandler(current_application, settingsController, cameraSystemController,
                                         workpieceController, robotController, application_factory)
 
@@ -124,6 +119,8 @@ if __name__ == "__main__":
     if API_VERSION == 1:
         from src.frontend.pl_ui.controller.Controller import Controller
         controller = Controller(domesticRequestSender)
+    else:
+        raise ValueError("Unsupported API_VERSION. Please set to 1")
 
 
     from src.frontend.pl_ui.runPlUi import PlGui

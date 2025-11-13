@@ -31,7 +31,7 @@ from src.robot_application.glue_dispensing_application.handlers.workpieces_to_sp
     WorkpieceToSprayPathsGenerator
 from src.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from src.robot_application.glue_dispensing_application.settings.GlueSettingsHandler import GlueSettingsHandler
-from src.robot_application.glue_dispensing_application.tools.GlueCell import GlueCellsManagerSingleton
+from src.robot_application.glue_dispensing_application.tools.GlueCell import GlueCellsManagerSingleton, GlueDataFetcher
 from src.robot_application.interfaces.application_settings_interface import settings_registry
 from src.robot_application.interfaces.robot_application_interface import (
     RobotApplicationInterface, OperationMode, CalibrationStatus
@@ -71,7 +71,9 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         # Initialize logger first (before base class to avoid issues)
         import logging
         self.logger = logging.getLogger(self.__class__.__name__)
-        
+        # register glue meters
+        glue_fetcher = GlueDataFetcher()
+        glue_fetcher.start()
         # Initialize the base class
         super().__init__(vision_service, settings_manager, workpiece_service, robot_service)
 
@@ -95,7 +97,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
 
         self.glue_process_state_machine = GlueProcessStateMachine(GlueProcessState.INITIALIZING)
 
-        self.workpiece_matcher = WorkpieceMatcher(self)
+        self.workpiece_matcher = WorkpieceMatcher()
 
         # Initialize glue dispensing operation with proper settings access
         self.glue_dispensing_operation = GlueDispensingOperation(self.robotService, self)

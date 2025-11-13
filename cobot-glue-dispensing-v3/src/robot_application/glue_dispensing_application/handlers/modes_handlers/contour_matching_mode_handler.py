@@ -1,3 +1,5 @@
+import time
+
 
 def handle_contour_matching_mode(application,nesting,debug):
 
@@ -10,7 +12,10 @@ def handle_contour_matching_mode(application,nesting,debug):
     application.move_to_spray_capture_position()
     application.message_publisher.publish_brightness_region(region="spray")
 
-    matches = application.workpiece_matcher.perform_matching(debug)
+    workpieces = application.get_workpieces()
+    time.sleep(2)  # wait for camera to stabilize
+    new_contours = application.visionService.contours
+    matches = application.workpiece_matcher.perform_matching(workpieces,new_contours,debug)
     print(f"Contour Matching Mode: Matches found: {len(matches)}")
     if not matches:
         from modules.shared.localization.enums.Message import Message
