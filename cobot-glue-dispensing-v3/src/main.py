@@ -105,7 +105,7 @@ if __name__ == "__main__":
     # INIT REQUEST HANDLER
     if API_VERSION == 1:
 
-        from src.communication_layer.api_gateway.handlers.request_handler import RequestHandler
+        from communication_layer import RequestHandler
         requestHandler = RequestHandler(current_application, settingsController, cameraSystemController,
                                         workpieceController, robotController, application_factory)
 
