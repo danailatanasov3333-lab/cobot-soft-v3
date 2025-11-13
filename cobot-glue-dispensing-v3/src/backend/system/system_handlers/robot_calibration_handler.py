@@ -1,7 +1,8 @@
 import threading
 
-from modules.robot.calibration.newRobotCalibUsingTopLeftCornersOfArucoMarkers import RobotCalibrationPipeline, \
-    RobotCalibrationConfig, RobotCalibrationEventsConfig, AdaptiveMovementConfig
+from modules.robot.calibration.config_helpers import AdaptiveMovementConfig, RobotCalibrationEventsConfig, \
+    RobotCalibrationConfig
+from modules.robot.calibration.newRobotCalibUsingTopLeftCornersOfArucoMarkers import RobotCalibrationPipeline
 from modules.shared.MessageBroker import MessageBroker
 from modules.shared.v1.topics import RobotTopics
 
@@ -15,7 +16,7 @@ def calibrate_robot(application):
                 min_step_mm=0.1, # minimum movement (for very small errors)
                 max_step_mm=25.0,# maximum movement for very large misalignment's
                 target_error_mm=0.25, # desired error to reach
-                max_error_ref=50.0, # error at which we reach max step
+                max_error_ref=100.0, # error at which we reach max step
                 k=2.0, # responsiveness (1.0 = smooth, 2.0 = faster reaction)
                 derivative_scaling=0.5 # how strongly derivative term reduces step
             )

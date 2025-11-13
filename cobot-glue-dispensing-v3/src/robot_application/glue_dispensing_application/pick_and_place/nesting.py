@@ -582,11 +582,13 @@ def start_nesting(visionService, robotService,preselected_workpiece,z_offset_for
                                                                                   laserTrackingService,
                                                                                   height_measure_pos,
                                                                                   laser)
-            measured_height = measured_height+2 # temp add 1 mm
+
 
             if not result:
                 laser.turnOff()
                 return False, "Failed to measure height."
+
+            measured_height = measured_height + 2  # temp add 1 mm
 
             log_if_enabled(enabled=ENABLE_LOGGING,
                            logger=nesting_logger,

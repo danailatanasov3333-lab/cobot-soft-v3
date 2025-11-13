@@ -6,12 +6,15 @@ from PyQt6.QtWidgets import QScroller
 from PyQt6.QtWidgets import (QVBoxLayout, QLabel, QWidget, QApplication, QHBoxLayout,
                              QSizePolicy, QComboBox,
                              QScrollArea, QGroupBox, QGridLayout)
+
+from robot_application.glue_dispensing_application.tools.GlueCell import UPDATE_SCALE_ENDPOINT, GET_CONFIG_ENDPOINT, \
+    GlueCellsManagerSingleton, GlueDataFetcher, UPDATE_OFFSET_ENDPOINT, TARE_ENDPOINT
 from src.frontend.pl_ui.ui.widgets.MaterialButton import MaterialButton
 from src.frontend.pl_ui.localization import get_app_translator
 from src.frontend.pl_ui.ui.widgets.SwitchButton import QToggle
 from src.frontend.pl_ui.ui.widgets.ToastWidget import ToastWidget
 from src.frontend.pl_ui.ui.windows.settings.BaseSettingsTabLayout import BaseSettingsTabLayout
-from src.robot_application import GlueCellsManagerSingleton, GlueDataFetcher
+
 import random
 import json
 from pathlib import Path
@@ -816,7 +819,7 @@ class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         """)
 
     def fetch_calibration_config(self, load_cell_id: int):
-        from src.robot_application import GET_CONFIG_ENDPOINT
+
         """Fetch calibration settings (offset and scale) for the given load cell."""
         import requests
 
@@ -852,8 +855,7 @@ class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
 
     def tare_load_cell(self):
         """Tare (zero) the selected load cell"""
-        import requests
-        from GlueDispensingApplication.tools.GlueCell import TARE_ENDPOINT
+
         print(f"Taring Load Cell {self.current_cell}...")
         self.showToast(f"Taring Load Cell {self.current_cell}...")
         try:
@@ -979,7 +981,6 @@ class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         print(f"[Config] Cell {self.current_cell} fetch timeout changed to: {value}")
 
     def _on_zero_offset_changed(self, value):
-        from GlueDispensingApplication.tools.GlueCell import UPDATE_OFFSET_ENDPOINT
         """Handle zero offset change"""
 
         try:
@@ -1011,7 +1012,6 @@ class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
 
 
     def _on_scale_factor_changed(self, value):
-        from GlueDispensingApplication.tools.GlueCell import UPDATE_SCALE_ENDPOINT
         try:
             # Get base URL from the already loaded configuration
             if self.glue_cells_manager and hasattr(self.glue_cells_manager, 'config_data'):
