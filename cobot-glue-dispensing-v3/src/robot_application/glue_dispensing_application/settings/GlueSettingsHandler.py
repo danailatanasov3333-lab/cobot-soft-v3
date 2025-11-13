@@ -13,7 +13,7 @@ from typing import Dict, Any
 from src.robot_application.interfaces.application_settings_interface import ApplicationSettingsHandler
 from src.robot_application.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from src.robot_application.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
-
+from src.backend.system.utils import PathResolver
 
 class GlueSettingsHandler(ApplicationSettingsHandler):
     """
@@ -34,13 +34,9 @@ class GlueSettingsHandler(ApplicationSettingsHandler):
         
         # Default storage path if not provided
         if storage_path is None:
-            storage_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 
-                "..", "..", "..", "system", "storage", "settings"
-            )
-            storage_path = os.path.normpath(storage_path)
-        
-        self.settings_file = os.path.join(storage_path, "glue_settings.json")
+            self.settings_file = PathResolver.get_settings_file_path("glue_settings.json")
+        else:
+            self.settings_file = os.path.join(storage_path, "glue_settings.json")
         print(f"GLUE SETTINGS FILE PATH: {self.settings_file}")
         # Initialize glue settings
         self.glue_settings = GlueSettings()
@@ -120,7 +116,7 @@ class GlueSettingsHandler(ApplicationSettingsHandler):
             else:
                 self.logger.info(f"Glue settings file not found at {self.settings_file}. Using defaults.")
                 self._save_settings()  # Create file with defaults
-                
+
         except Exception as e:
             raise ValueError(f"Failed to load glue settings: {e}") from e
             # self.logger.error(f"Error loading glue settings: {e}")

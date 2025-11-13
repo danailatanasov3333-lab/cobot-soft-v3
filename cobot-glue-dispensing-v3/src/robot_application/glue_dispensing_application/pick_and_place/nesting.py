@@ -369,6 +369,7 @@ def start_nesting(visionService, robotService,preselected_workpiece,z_offset_for
         except Exception as e:
             import traceback
             traceback.print_exc()
+
         orientations = matches_data["orientations"]
         matches = matches_data["workpieces"]
 

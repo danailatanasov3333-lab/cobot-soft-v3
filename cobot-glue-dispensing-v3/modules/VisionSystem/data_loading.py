@@ -5,14 +5,16 @@ import numpy as np
 
 from src.backend.system.utils.custom_logging import log_if_enabled, LoggingLevel
 
+
 # Paths to camera calibration data
 CAMERA_DATA_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
                                 'calibration_result', 'camera_calibration.npz')
 
 PERSPECTIVE_MATRIX_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
                                        'calibration_result', 'perspectiveTransform.npy')
+
 CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
-                                           'calibration_result', 'cameraToRobotMatrix_robot_tcp.npy')
+                                           'calibration_result', 'cameraToRobotMatrix_camera_center.npy')
 
 WORK_AREA_POINTS_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
                                         'calibration_result', 'workAreaPoints.npy')
@@ -20,6 +22,7 @@ WORK_AREA_POINTS_PATH = os.path.join(os.path.dirname(__file__), 'calibration', '
 # Separate paths for pickup and spray areas
 PICKUP_AREA_POINTS_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
                                        'calibration_result', 'pickupAreaPoints.npy')
+
 SPRAY_AREA_POINTS_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
                                       'calibration_result', 'sprayAreaPoints.npy')
 
@@ -45,6 +48,12 @@ class DataManager:
             self.workAreaPoints = np.load(WORK_AREA_POINTS_PATH)
             self.work_area_polygon = np.array(self.workAreaPoints, dtype=np.int32).reshape((-1, 1, 2))
             self.isSystemCalibrated = True
+            log_if_enabled(enabled=self.ENABLE_LOGGING,
+                           logger=self.logger,
+                           level=LoggingLevel.INFO,
+                           message=f"Work area points loaded from: {WORK_AREA_POINTS_PATH}",
+                           broadcast_to_ui=False)
+
         except FileNotFoundError:
             self.workAreaPoints = None
             self.isSystemCalibrated = False
@@ -60,24 +69,29 @@ class DataManager:
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.INFO,
-                           message="Pickup area points loaded successfully",
+                           message=f"Pickup area points loaded successfully from: {PICKUP_AREA_POINTS_PATH}",
                            broadcast_to_ui=False)
         except FileNotFoundError:
             self.pickupAreaPoints = None
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.ERROR,
-                           message="Pickup area points file not found - will be created when first saved",
+                           message=f"Pickup area points file not found in {PICKUP_AREA_POINTS_PATH}- will be created when first saved",
                            broadcast_to_ui=False)
         # Load spray area points
         try:
             self.sprayAreaPoints = np.load(SPRAY_AREA_POINTS_PATH)
+            log_if_enabled(enabled=self.ENABLE_LOGGING,
+                           logger=self.logger,
+                           level=LoggingLevel.INFO,
+                           message=f"Spray area points loaded successfully from: {SPRAY_AREA_POINTS_PATH}",
+                           broadcast_to_ui=False)
         except FileNotFoundError:
             self.sprayAreaPoints = None
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.ERROR,
-                           message="Spray area points file not found - will be created when first saved",
+                           message=f"Spray area points file not found in {SPRAY_AREA_POINTS_PATH} - will be created when first saved",
                            broadcast_to_ui=False)
 
 

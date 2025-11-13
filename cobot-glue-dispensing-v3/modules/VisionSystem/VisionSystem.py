@@ -262,13 +262,14 @@ class VisionSystem:
     def saveWorkAreaPoints(self, data):
         return self.data_manager.saveWorkAreaPoints(data)
 
+
     def getPickupAreaPoints(self):
         """Get pickup area points if available."""
-        return getattr(self, 'pickupAreaPoints', None)
+        return self.data_manager.pickupAreaPoints
 
     def getSprayAreaPoints(self):
         """Get spray area points if available."""
-        return getattr(self, 'sprayAreaPoints', None)
+        return self.data_manager.sprayAreaPoints
 
 
     def detectArucoMarkers(self, flip=False, image=None):

@@ -57,30 +57,31 @@ class ColoredFormatter(logging.Formatter):
         return s
 
 class LoggerContext:
-    def __init__(self,enabled:bool,logger:logging.Logger):
+    def __init__(self,enabled:bool,logger:logging.Logger,broadcast_to_ui:bool=False):
         self.enabled=enabled
         self.logger=logger
+        self.broadcast_to_ui = broadcast_to_ui
 
 def log_info_message(logger_context:LoggerContext, message:str):
     log_if_enabled(enabled=logger_context.enabled,
                    logger=logger_context.logger,
                    message=message,
                    level=LoggingLevel.INFO,
-                   broadcast_to_ui=False)
+                   broadcast_to_ui=logger_context.broadcast_to_ui)
 
 def log_debug_message(logger_context:LoggerContext, message:str):
     log_if_enabled(enabled=logger_context.enabled,
                    logger=logger_context.logger,
                    message=message,
                    level=LoggingLevel.DEBUG,
-                   broadcast_to_ui=False)
+                   broadcast_to_ui=logger_context.broadcast_to_ui)
 
 def log_error_message(logger_context:LoggerContext, message:str):
     log_if_enabled(enabled=logger_context.enabled,
                    logger=logger_context.logger,
                    message=message,
                    level=LoggingLevel.ERROR,
-                   broadcast_to_ui=False)
+                   broadcast_to_ui=logger_context.broadcast_to_ui)
 
 def setup_logger(name:str):
     """Setup a specialized logger for RobotWrapper operations"""

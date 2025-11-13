@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QScroller
 from PyQt6.QtWidgets import (QSizePolicy, QScrollArea, QPushButton,
                              QTextEdit, QProgressBar)
 
+from backend.system.utils import PathResolver
 from src.frontend.pl_ui.ui.widgets.ClickableLabel import ClickableLabel
 from src.frontend.pl_ui.ui.widgets.MaterialButton import MaterialButton
 from modules.shared.MessageBroker import MessageBroker
@@ -26,11 +27,9 @@ from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGridLayout, QGroupBox
 from PyQt6.QtCore import Qt
 
 # Work area points file paths
-VISION_SYSTEM_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'VisionSystem')
-CALIBRATION_RESULT_DIR = os.path.join(VISION_SYSTEM_DIR, 'calibration', 'cameraCalibration', 'storage', 'calibration_result')
-PICKUP_AREA_POINTS_PATH = os.path.join(CALIBRATION_RESULT_DIR, 'pickupAreaPoints.npy')
-SPRAY_AREA_POINTS_PATH = os.path.join(CALIBRATION_RESULT_DIR, 'sprayAreaPoints.npy')
-WORK_AREA_POINTS_PATH = os.path.join(CALIBRATION_RESULT_DIR, 'workAreaPoints.npy')
+PICKUP_AREA_POINTS_PATH = PathResolver.get_calibration_result_path('pickupAreaPoints.npy')
+SPRAY_AREA_POINTS_PATH = PathResolver.get_calibration_result_path('sprayAreaPoints.npy')
+WORK_AREA_POINTS_PATH = PathResolver.get_calibration_result_path('workAreaPoints.npy')
 
 
 class ClickableRow(QWidget):
@@ -211,32 +210,6 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
 
             # Update corner positions for drag detection
             self.update_corner_positions_for_dragging()
-
-    # def update_camera_preview_from_cv2(self, cv2_image,zoom_in=False):
-    #     print("Update image received for preview")
-    #     if hasattr(self, 'calibration_preview_label'):
-    #         # Store the original image
-    #         self.original_image = cv2_image.copy()
-    #
-    #         # Draw work area overlay on the image
-    #         overlay_image = self.draw_work_area_overlay(cv2_image)
-    #
-    #         rgb_image = overlay_image[:, :, ::-1] if len(overlay_image.shape) == 3 else overlay_image
-    #         height, width = rgb_image.shape[:2]
-    #         bytes_per_line = 3 * width if len(rgb_image.shape) == 3 else width
-    #
-    #         img_bytes = rgb_image.tobytes()
-    #
-    #         if len(rgb_image.shape) == 3:
-    #             q_image = QImage(img_bytes, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-    #         else:
-    #             q_image = QImage(img_bytes, width, height, bytes_per_line, QImage.Format.Format_Grayscale8)
-    #
-    #         pixmap = QPixmap.fromImage(q_image)
-    #         self.update_calibration_preview(pixmap)
-    #
-    #         # Update corner positions for drag detection
-    #         self.update_corner_positions_for_dragging()
 
     def draw_work_area_overlay(self, cv2_image):
         """Draw work area corners and lines on the camera image"""
@@ -857,7 +830,7 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
                 else:
                     print(f"Invalid number of points in {area_type} area file: {len(points)}")
             else:
-                print(f"No saved {area_type} area points found")
+                print(f"No saved {area_type} area points found in {file_path}")
         except Exception as e:
             print(f"Error loading {area_type} area points: {str(e)}")
 
