@@ -128,10 +128,7 @@ class RobotCalibrationPipeline:
                                                     self.debug_draw,
                                                     self.debug)
 
-
-
         log_info_message(self.logger_context,message = f"Looking for chessboard with size: {self.chessboard_size}")
-
 
     def get_current_state_name(self):
         return self.current_state.name
@@ -253,11 +250,6 @@ class RobotCalibrationPipeline:
         # Flush camera buffer and get stable frame
         for _ in range(self.min_camera_flush):
             self.system.getLatestFrame()
-            # log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, f"Flushing camera buffer... {_ + 1}/5",
-            #                broadcast_to_ui=self.broadcast_events, topic=BROADCAST_TOPIC)
-
-
-
 
     def run(self):
         try:
@@ -274,7 +266,6 @@ class RobotCalibrationPipeline:
             traceback.print_exc()
             raise
 
-        
         while True:
             log_if_enabled(ENABLE_LOGGING, robot_calibration_logger, LoggingLevel.INFO,
                            "--- Calibration Pipeline State Machine ---",

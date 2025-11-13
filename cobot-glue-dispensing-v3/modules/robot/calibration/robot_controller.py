@@ -17,6 +17,7 @@ class CalibrationRobotController:
                                                    velocity=30,
                                                    acceleration=10,
                                                    waitToReachPosition=blocking)
+
         return result
 
 

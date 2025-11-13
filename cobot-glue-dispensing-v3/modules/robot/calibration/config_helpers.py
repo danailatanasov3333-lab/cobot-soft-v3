@@ -8,6 +8,14 @@ class AdaptiveMovementConfig:
         self.k = k # responsiveness (1.0 = smooth, 2.0 = faster reaction)
         self.derivative_scaling = derivative_scaling # how strongly derivative term reduces step
 
+        # # New: define mapping from image axes to robot axes
+        # # Example: {'robot_x': ('image_y', 1), 'robot_y': ('image_x', -1)}
+        # # Meaning: robot_x comes from image_y with positive direction, robot_y comes from image_x inverted
+        # self.image_to_robot_axis = image_to_robot_axis or {
+        #     'robot_x': ('image_x', 1),
+        #     'robot_y': ('image_y', 1)
+        # }
+
 class RobotCalibrationEventsConfig:
     def __init__(self,broker,
                  calibration_start_topic,
