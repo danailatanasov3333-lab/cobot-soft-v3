@@ -1,7 +1,7 @@
 from modules.shared.v1 import Constants
 from modules.shared.v1.Response import Response
 from modules.robot.robotService.RobotService import RobotService
-from modules.robot.enums.axis import Direction, Axis
+from modules.robot.enums.axis import Direction, RobotAxis
 import modules.shared.v1.endpoints.robot_endpoints as robot_endpoints
 
 
@@ -167,7 +167,7 @@ class RobotController:
         axis = parts[-3]
         direction = parts[-2]
         step = float(parts[-1]) if parts[-1].isdigit() else 1.0
-        ret = self.robotService.startJog(Axis.get_by_string(axis), Direction.get_by_string(direction), step)
+        ret = self.robotService.startJog(RobotAxis.get_by_string(axis), Direction.get_by_string(direction), step)
         return self._moveSuccess(ret, "Failed JOG", "Success JOG")
 
     def _handleSlotOperation(self, request, parts):

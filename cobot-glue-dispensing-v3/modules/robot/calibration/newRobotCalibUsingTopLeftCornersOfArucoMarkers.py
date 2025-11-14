@@ -9,6 +9,7 @@ from backend.system.utils.custom_logging import log_warning_message
 from modules.VisionSystem.data_loading import CAMERA_TO_ROBOT_MATRIX_PATH
 from modules.robot.calibration import metrics, visualizer
 from modules.robot.calibration.CalibrationVision import CalibrationVision
+from modules.robot.calibration.axis_mapping import auto_calibrate_image_to_robot_mapping
 from modules.robot.calibration.config_helpers import RobotCalibrationEventsConfig, RobotCalibrationConfig, \
     AdaptiveMovementConfig
 from modules.robot.calibration.debug import DebugDraw
@@ -28,6 +29,7 @@ robot_calibration_logger = setup_logger("RobotCalibrationService") if ENABLE_LOG
 
 class RobotCalibrationStates(Enum):
     INITIALIZING = auto()
+    AXIS_MAPPING = auto()
     LOOKING_FOR_CHESSBOARD = auto()
     CHESSBOARD_FOUND = auto()
     ALIGN_TO_CHESSBOARD_CENTER = auto()
@@ -49,6 +51,7 @@ class RobotCalibrationPipeline:
                  events_config:RobotCalibrationEventsConfig=None):
 
 
+        self.image_to_robot_mapping = None
         self.alignment_threshold_mm = adaptive_movement_config.target_error_mm
 
         if events_config is not None:
@@ -287,7 +290,18 @@ class RobotCalibrationPipeline:
                 else:
                     log_if_enabled(ENABLE_LOGGING, robot_calibration_logger, LoggingLevel.INFO, "System initialized ✅",
                                    broadcast_to_ui=self.broadcast_events, topic=self.BROADCAST_TOPIC)
-                    self.current_state = RobotCalibrationStates.LOOKING_FOR_CHESSBOARD
+                    self.current_state = RobotCalibrationStates.AXIS_MAPPING
+
+            elif self.current_state == RobotCalibrationStates.AXIS_MAPPING:
+                print(f"Performing axis mapping...")
+                image_to_robot_mapping = auto_calibrate_image_to_robot_mapping(self.system,
+                                                                               self.calibration_vision,
+                                                                               self.calibration_robot_controller)
+                self.image_to_robot_mapping = image_to_robot_mapping
+                self.calibration_robot_controller.move_to_calibration_position()
+                time.sleep(1)
+
+                self.current_state = RobotCalibrationStates.LOOKING_FOR_CHESSBOARD
 
             elif self.current_state == RobotCalibrationStates.LOOKING_FOR_CHESSBOARD:
                 chessboard_frame = None
@@ -351,7 +365,7 @@ class RobotCalibrationPipeline:
                     log_debug_message(self.logger_context,"Capturing frame for ArUco detection...")
 
                     all_aruco_detection_frame = self.system.getLatestFrame()
-
+                self.show_live_feed(all_aruco_detection_frame, 0, broadcast_image=self.broadcast_events)
                 result = self.calibration_vision.find_required_aruco_markers(all_aruco_detection_frame)
                 frame= result.frame
                 all_found = result.found
@@ -370,7 +384,9 @@ class RobotCalibrationPipeline:
                     for marker_id, top_left_corner_px in self.calibration_vision.marker_top_left_corners.items():
                         # Convert to mm relative to bottom-left
                         x_mm = (top_left_corner_px[0] - bottom_left_px[0]) / self.calibration_vision.PPM
-                        y_mm = (bottom_left_px[1] - top_left_corner_px[1]) / self.calibration_vision.PPM  # y relative to bottom-left
+                        y_mm = (top_left_corner_px[1]-bottom_left_px[1]) / self.calibration_vision.PPM
+                        # y_mm = (bottom_left_px[1] - top_left_corner_px[1]) / self.calibration_vision.PPM  # y relative to bottom-left
+
 
                         self.calibration_vision.marker_top_left_corners_mm[marker_id] = (x_mm, y_mm)
 
@@ -397,12 +413,17 @@ class RobotCalibrationPipeline:
 
                     # Convert image center to mm relative to bottom-left of chessboard
                     center_x_mm = (image_center_px[0] - self.bottom_left_chessboard_corner_px[0]) / self.calibration_vision.PPM
-                    center_y_mm = (self.bottom_left_chessboard_corner_px[1] - image_center_px[1]) / self.calibration_vision.PPM
+                    center_y_mm = (image_center_px[1] - self.bottom_left_chessboard_corner_px[1]) / self.calibration_vision.PPM
+                    # center_y_mm = (self.bottom_left_chessboard_corner_px[1] - image_center_px[1]) / self.calibration_vision.PPM
 
                     # Calculate offsets for all markers relative to image center
                     for marker_id, marker_mm in self.calibration_vision.marker_top_left_corners_mm.items():
                         offset_x = marker_mm[0] - center_x_mm
                         offset_y = marker_mm[1] - center_y_mm
+                        # Store robot-space offsets
+                        print("[CENTER_MM]", center_x_mm, center_y_mm)
+                        print("[OFFSET_MM] marker", marker_id, ":", offset_x, offset_y)
+
                         self.markers_offsets_mm[marker_id] = (offset_x, offset_y)
 
                     # Build unified message
@@ -421,16 +442,39 @@ class RobotCalibrationPipeline:
                 required_ids_list = sorted(list(self.required_ids))
                 marker_id = required_ids_list[self.current_marker_id]
                 self.iteration_count = 0
+
                 calib_to_marker = self.markers_offsets_mm.get(marker_id, (0, 0))
+                # apply mapping to calib_to_marker
+                calib_to_marker_mapped = self.image_to_robot_mapping.map(
+                    calib_to_marker[0],
+                    calib_to_marker[1]
+                )
+                calib_to_marker = calib_to_marker_mapped
+
+                print(f"calib_to_marker for ID {marker_id}: {calib_to_marker}")
                 current_pose = self.calibration_robot_controller.get_current_position()
+                print(f"current_pose: {current_pose}")
                 calib_pose = self.calibration_robot_controller.get_calibration_position()
-                result = None
+                print(f"calib_pose: {calib_pose}")
                 retry_attempted = False
 
                 # Compute new target position
                 x, y, z, rx, ry, rz = current_pose
                 cx, cy, cz, crx, cry, crz = calib_pose
+
                 calib_to_current = (x - cx, y - cy)
+                print(f"calib_to_current: {calib_to_current}")
+                # Map image offsets to robot space
+                x_offset_before_mapping = calib_to_marker[0] - calib_to_current[0]
+                y_offset_before_mapping = calib_to_marker[1] - calib_to_current[1]
+                print(f"Before mapping: X {x_offset_before_mapping}, Y {y_offset_before_mapping}")
+                # mapped_x_mm, mapped_y_mm = self.image_to_robot_mapping.map(
+                #     x_offset_before_mapping,
+                #     y_offset_before_mapping
+                # )
+                # print("After mapping:", mapped_x_mm, mapped_y_mm)
+                # current_to_marker = (mapped_x_mm, mapped_y_mm)
+
                 current_to_marker = (
                     calib_to_marker[0] - calib_to_current[0],
                     calib_to_marker[1] - calib_to_current[1]
@@ -438,8 +482,10 @@ class RobotCalibrationPipeline:
 
                 x_new = x + current_to_marker[0]
                 y_new = y + current_to_marker[1]
+
                 z_new = self.Z_target
                 new_position = [x_new, y_new, z_new, rx, ry, rz]
+
 
                 # Move to position
                 result = self.calibration_robot_controller.move_to_position(new_position, blocking=True)
@@ -523,6 +569,7 @@ class RobotCalibrationPipeline:
                 current_error_mm = current_error_px / newPpm
                 offset_x_mm = offset_x_px / newPpm
                 offset_y_mm = offset_y_px / newPpm
+
                 processing_time = time.time() - processing_start
                 alignment_success = current_error_mm <= self.alignment_threshold_mm
                 movement_time = stability_time = None
@@ -543,7 +590,13 @@ class RobotCalibrationPipeline:
 
                 else:
                     # Compute next move
-                    iterative_position = self.calibration_robot_controller.get_iterative_align_position(current_error_mm, offset_x_mm, offset_y_mm,self.alignment_threshold_mm)
+                    mapped_x_mm, mapped_y_mm = self.image_to_robot_mapping.map(offset_x_mm, offset_y_mm)
+                    log_debug_message(
+                        self.logger_context,
+                        f"Marker {marker_id} offsets: image_mm=({offset_x_mm:.2f},{offset_y_mm:.2f}) -> mapped_robot_mm=({mapped_x_mm:.2f},{mapped_y_mm:.2f})"
+                    )
+                    iterative_position = self.calibration_robot_controller.get_iterative_align_position(current_error_mm, mapped_x_mm, mapped_y_mm,self.alignment_threshold_mm)
+                    # iterative_position = self.calibration_robot_controller.get_iterative_align_position(current_error_mm, offset_x_mm, offset_y_mm,self.alignment_threshold_mm)
                     movement_start = time.time()
                     result = self.calibration_robot_controller.move_to_position(iterative_position, blocking=True)
                     movement_time = time.time() - movement_start

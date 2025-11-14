@@ -62,8 +62,11 @@ class CalibrationRobotController:
         # - If marker is BELOW image center (offset_y_mm > 0), move robot BACK (+Y)
         # - If marker is ABOVE image center (offset_y_mm < 0), move robot FORWARD (-Y)
 
-        move_x_mm = max(-max_move_mm, min(max_move_mm, offset_x_mm))  # Move toward marker
-        move_y_mm = max(-max_move_mm, min(max_move_mm, -offset_y_mm))  # Y inverted: image down = robot back
+        # move_x_mm = max(-max_move_mm, min(max_move_mm, offset_x_mm))  # Move toward marker
+        # move_y_mm = max(-max_move_mm, min(max_move_mm, -offset_y_mm))  # Y inverted: image down = robot back
+
+        move_x_mm = max(-max_move_mm, min(max_move_mm, offset_x_mm))
+        move_y_mm = max(-max_move_mm, min(max_move_mm, offset_y_mm))
 
         log_debug_message(self.logger_context,f"Adaptive movement: max_move={max_move_mm:.1f}mm (error={current_error_mm:.3f}mm)")
         log_debug_message(self.logger_context,f"Making iterative movement: X+={move_x_mm:.3f}mm, Y+={move_y_mm:.3f}mm")
@@ -77,7 +80,7 @@ class CalibrationRobotController:
         return iterative_position
 
     def move_to_calibration_position(self):
-        self.robot_service.moveToCalibartionPosition()
+        self.robot_service.moveToCalibrationPosition()
 
     def get_current_z_value(self):
         return self.robot_service.getCurrentPosition()[2]
@@ -87,3 +90,29 @@ class CalibrationRobotController:
 
     def get_calibration_position(self):
         return self.robot_service.robot_config.getCalibrationPositionParsed()
+
+    def move_y_relative(self,dy_mm,blocking=False):
+        current_pose = self.robot_service.getCurrentPosition()
+        x, y, z, rx, ry, rz = current_pose
+        y += dy_mm
+        new_position = [x, y, z, rx, ry, rz]
+        result = self.robot_service.moveToPosition(position=new_position,
+                                                   tool=self.robot_service.robot_config.robot_tool,
+                                                   workpiece=self.robot_service.robot_config.robot_user,
+                                                   velocity=30,
+                                                   acceleration=10,
+                                                   waitToReachPosition=blocking)
+        return result
+
+    def move_x_relative(self,dx_mm,blocking=False):
+        current_pose = self.robot_service.getCurrentPosition()
+        x, y, z, rx, ry, rz = current_pose
+        x += dx_mm
+        new_position = [x, y, z, rx, ry, rz]
+        result = self.robot_service.moveToPosition(position=new_position,
+                                                   tool=self.robot_service.robot_config.robot_tool,
+                                                   workpiece=self.robot_service.robot_config.robot_user,
+                                                   velocity=30,
+                                                   acceleration=10,
+                                                   waitToReachPosition=blocking)
+        return result

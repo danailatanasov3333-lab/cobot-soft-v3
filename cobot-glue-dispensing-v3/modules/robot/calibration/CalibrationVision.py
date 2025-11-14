@@ -192,12 +192,27 @@ class CalibrationVision:
             top_left_corner_px = tuple(corners[i][0][0].astype(int))
             self.marker_top_left_corners[marker_id] = top_left_corner_px
 
-            # Convert to mm relative to bottom-left of chessboard
+            # Convert to mm relative to bottom-left of chessboard, keep Y downwards!
             x_mm = (top_left_corner_px[0] - self.bottom_left_chessboard_corner_px[0]) / self.PPM
-            y_mm = (self.bottom_left_chessboard_corner_px[1] - top_left_corner_px[1]) / self.PPM
+            y_mm = (top_left_corner_px[1] - self.bottom_left_chessboard_corner_px[1]) / self.PPM  # <-- image-space mm
 
             # update marker top-left corner in mm
             self.marker_top_left_corners_mm[marker_id] = (x_mm, y_mm)
+
+    # def update_marker_top_left_corners(self, marker_id, corners, ids):
+    #     for i, iter_marker_id in enumerate(ids.flatten()):
+    #         if iter_marker_id != marker_id:
+    #             continue
+    #         # update marker top-left corner in pixels
+    #         top_left_corner_px = tuple(corners[i][0][0].astype(int))
+    #         self.marker_top_left_corners[marker_id] = top_left_corner_px
+    #
+    #         # Convert to mm relative to bottom-left of chessboard
+    #         x_mm = (top_left_corner_px[0] - self.bottom_left_chessboard_corner_px[0]) / self.PPM
+    #         y_mm = (self.bottom_left_chessboard_corner_px[1] - top_left_corner_px[1]) / self.PPM
+    #
+    #         # update marker top-left corner in mm
+    #         self.marker_top_left_corners_mm[marker_id] = (x_mm, y_mm)
 
     def detect_specific_marker(self, frame, marker_id) -> SpecificMarkerDetectionResult :
         marker_found = False

@@ -10,7 +10,7 @@ from typing import Optional
 
 from modules.shared.MessageBroker import MessageBroker
 from modules.shared.shared.settings.robotConfig.robotConfigModel import RobotConfig
-from modules.robot.enums.axis import Axis, Direction
+from modules.robot.enums.axis import RobotAxis, Direction
 from modules.robot.RobotUtils import calculate_distance_between_points
 from modules.robot.robotService.RobotServiceMessagePublisher import RobotServiceMessagePublisher
 from modules.robot.robotService.RobotServiceStateManager import RobotServiceStateManager
@@ -433,7 +433,7 @@ class RobotService:
             temp_step = -abs(step)
             print(f"Direction plus, step set to {temp_step}")
 
-        if axis == Axis.Z:
+        if axis == RobotAxis.Z:
             currentPos = self.getCurrentPosition()
             proposedZ = currentPos[2] + temp_step
             print(f"RobotService: startJog: current Z: {currentPos[2]}, proposed Z: {proposedZ}")
