@@ -342,7 +342,7 @@ def get_legacy_paths():
     return {
         # Settings paths
         'CAMERA_SETTINGS_PATH': get_settings_file_path('camera_settings.json'),
-        'ROBOT_SETTINGS_PATH': get_settings_file_path('robot_settings.json'),
+
         'GLUE_CELLS_CONFIG_PATH': get_settings_file_path('glue_cells_config.json'),
         'GLUE_SETTINGS_PATH': get_glue_settings_file_path(),
         'ROBOT_CONFIG_PATH': get_robot_config_file_path(),

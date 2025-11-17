@@ -1,10 +1,11 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
 
 from applications.glue_dispensing_application.settings.enums import GlueSettingKey
-from frontend.pl_ui.contour_editor.widgets.SegmentSettingsWidget import SegmentSettingsWidget
+from frontend.pl_ui.contour_editor.widgets.SegmentSettingsWidget import SegmentSettingsWidget, update_default_settings
 
 from modules.shared.core.settings.conreateSettings.enums.RobotSettingKey import RobotSettingKey
-from frontend.pl_ui.utils.enums.GlueType import GlueType
+from modules.shared.tools.GlueCell import GlueType
+
 
 class GlobalSettingsDialog(QDialog):
     def __init__(self, point_manager_widget, parent=None):
@@ -65,7 +66,7 @@ class GlobalSettingsDialog(QDialog):
         settings_dict = self.segment_settings_widget.get_global_values()
         
         # Update the default settings for future segments
-        from pl_ui.contour_editor.widgets.SegmentSettingsWidget import update_default_settings
+
         update_default_settings(settings_dict)
         
         # Apply to all segments through the point manager

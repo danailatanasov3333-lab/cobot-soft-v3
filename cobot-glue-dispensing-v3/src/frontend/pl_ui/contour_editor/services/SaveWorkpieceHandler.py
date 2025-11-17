@@ -7,8 +7,11 @@ code duplication across the application.
 """
 
 from typing import Dict, Any, Optional
+
+from frontend.legacy_ui.widgets.CustomFeedbackDialog import CustomFeedbackDialog, DialogType
 from frontend.pl_ui.contour_editor.adapters.WorkpieceAdapter import WorkpieceAdapter
 from frontend.pl_ui.contour_editor.EditorDataModel import ContourEditorData
+from modules.shared.core.workpiece.Workpiece import WorkpieceField
 
 
 class SaveWorkpieceHandler:
@@ -47,7 +50,6 @@ class SaveWorkpieceHandler:
             if not validation_result:
                 error_message = "Validation failed:\n" + "\n".join(validation_errors)
                 print(f"❌ {error_message}")
-                from pl_ui.ui.widgets.CustomFeedbackDialog import CustomFeedbackDialog,DialogType
                 dialog = CustomFeedbackDialog(
                     title="Validation Error",
                     message=error_message,
@@ -127,7 +129,6 @@ class SaveWorkpieceHandler:
         Returns:
             Merged dictionary with all required fields
         """
-        from modules.shared.core.workpiece.Workpiece import WorkpieceField
 
         # Start with form data
         complete_data = form_data.copy()
@@ -197,7 +198,6 @@ class SaveWorkpieceHandler:
 
         # Print workpiece metadata
         print(f"\nWorkpiece Metadata:")
-        from modules.shared.core.workpiece.Workpiece import WorkpieceField
 
         metadata_fields = [
             WorkpieceField.WORKPIECE_ID,
@@ -245,7 +245,6 @@ class SaveWorkpieceHandler:
             errors.extend([f"Editor: {err}" for err in editor_errors])
 
         # Validate required form fields
-        from modules.shared.core.workpiece.Workpiece import WorkpieceField
 
         required_fields = [
             WorkpieceField.WORKPIECE_ID,
@@ -275,7 +274,6 @@ class SaveWorkpieceHandler:
             Tuple of (is_valid, error_messages)
         """
         errors = []
-        from modules.shared.core.workpiece.Workpiece import WorkpieceField
 
         # Validate required fields
         required_fields = {

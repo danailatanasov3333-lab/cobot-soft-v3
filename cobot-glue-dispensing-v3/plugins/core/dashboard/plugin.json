@@ -1,0 +1,16 @@
+{
+    "name": "Dashboard",
+    "version": "1.0.0",
+    "description": "Main dashboard with system overview and quick access",
+    "author": "System",
+    "category": "core",
+    "entry_point": "plugin.DashboardPlugin",
+    "dependencies": [],
+    "ui_components": [
+        "dashboard_widget"
+    ],
+    "services": [
+        "dashboard_service"
+    ],
+    "icon": "icons/dashboard.png"
+}

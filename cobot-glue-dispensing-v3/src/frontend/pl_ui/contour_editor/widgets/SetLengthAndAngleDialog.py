@@ -1,11 +1,10 @@
 """
 Dialog for setting the length and angle of a line segment
 """
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
-from frontend.pl_ui.ui.widgets.virtualKeyboard.VirtualKeyboard import FocusLineEdit
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+from frontend.legacy_ui.widgets.virtualKeyboard import FocusLineEdit
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QDoubleValidator
-import math
 
 
 class SetLengthAndAngleDialog(QDialog):

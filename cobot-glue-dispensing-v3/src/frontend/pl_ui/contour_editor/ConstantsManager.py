@@ -6,6 +6,9 @@ with fallback to defaults in constants.py
 import json
 import os
 from PyQt6.QtGui import QColor
+import importlib
+
+from frontend.pl_ui.contour_editor import constants
 
 
 class ConstantsManager:
@@ -122,7 +125,6 @@ class ConstantsManager:
             return
 
         try:
-            from pl_ui.contour_editor import constants
 
             applied_count = 0
             for const_name, value in settings.items():
@@ -153,8 +155,6 @@ class ConstantsManager:
                 print(f"Deleted settings file: {settings_path}")
 
             # Reload constants module to get defaults
-            from pl_ui.contour_editor import constants
-            import importlib
             importlib.reload(constants)
 
             print("Reset to default settings")
@@ -169,7 +169,6 @@ class ConstantsManager:
     @staticmethod
     def get_all_constants():
         """Get all constant values from the constants module (for populating dialog)"""
-        from pl_ui.contour_editor import constants
 
         # List of all constants we want to manage
         constant_names = [

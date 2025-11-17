@@ -18,8 +18,8 @@ from frontend.pl_ui.contour_editor.widgets.PointManagerWidget import PointManage
 from frontend.pl_ui.contour_editor.widgets.SlidingPanel import SlidingPanel
 from frontend.pl_ui.contour_editor.widgets.TopbarWidget import TopBarWidget
 from frontend.pl_ui.contour_editor.utils.utils import shrink_contour_points, generate_spray_pattern
-from frontend.pl_ui.ui.widgets.CreateWorkpieceForm import CreateWorkpieceForm
-from frontend.pl_ui.ui.widgets.CustomFeedbackDialog import CustomFeedbackDialog, DialogType
+from frontend.legacy_ui.widgets.CreateWorkpieceForm import CreateWorkpieceForm
+from frontend.legacy_ui.widgets.CustomFeedbackDialog import CustomFeedbackDialog, DialogType
 from modules.shared.core.workpiece.Workpiece import WorkpieceField
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))

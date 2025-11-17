@@ -2,10 +2,11 @@ import os
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QSizePolicy,
-    QMessageBox, QApplication, QSpacerItem
+    QWidget, QHBoxLayout, QPushButton, QSizePolicy,
+    QMessageBox, QApplication
 )
-from frontend.pl_ui.utils.IconLoader import PICKUP_POINT_ICON
+
+from frontend.core.utils.IconLoader import PICKUP_POINT_ICON
 
 ICON_WIDTH = 64
 ICON_HEIGHT = 64
@@ -95,7 +96,7 @@ class TopBarWidget(QWidget):
         self.tools_button = self.create_button(TOOLS_ICON, self.tools_requested.emit)
 
         # Pickup point
-        self.pickup_point_button = self.create_button(PICKUP_POINT_ICON, self.toggle_pickup_point_mode)
+        self.pickup_point_button = self.create_button(ICKUP_POINT_ICON, self.toggle_pickup_point_mode)
         self.pickup_point_button.setCheckable(True)
 
         self.preview_path_button = self.create_button(PREVIEW_ICON, self.preview_requested.emit)

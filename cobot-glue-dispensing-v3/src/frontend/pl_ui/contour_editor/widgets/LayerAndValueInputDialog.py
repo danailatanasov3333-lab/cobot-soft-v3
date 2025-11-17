@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton, QHBoxLayout
-from PyQt6.QtCore import Qt
 
-from frontend.pl_ui.ui.widgets.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox
+from frontend.legacy_ui.widgets.virtualKeyboard import FocusDoubleSpinBox
 
 
 class LayerAndValueInputDialog(QDialog):

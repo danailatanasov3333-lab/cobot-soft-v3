@@ -4,12 +4,12 @@ Opens with Ctrl+S shortcut
 Saves to JSON file instead of modifying constants.py
 """
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
-                              QLabel, QSpinBox, QDoubleSpinBox, QCheckBox,
-                              QPushButton, QWidget, QGridLayout, QGroupBox,
-                              QColorDialog, QScrollArea, QComboBox)
-from frontend.pl_ui.ui.widgets.virtualKeyboard.VirtualKeyboard import FocusSpinBox,FocusDoubleSpinBox
+                             QLabel, QCheckBox,
+                             QPushButton, QWidget, QGridLayout, QGroupBox,
+                             QColorDialog, QScrollArea, QComboBox)
+from frontend.legacy_ui.widgets.virtualKeyboard import FocusSpinBox,FocusDoubleSpinBox
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QColor, QKeySequence, QShortcut
+from PyQt6.QtGui import QFont, QColor
 from frontend.pl_ui.contour_editor.ConstantsManager import ConstantsManager
 
 

@@ -3,7 +3,7 @@ import logging
 import os
 
 from applications.glue_dispensing_application.workpiece.WorkPieceRepositorySingleton import WorkPieceRepositorySingleton
-from frontend.pl_ui.localization import setup_localization
+from frontend.legacy_ui.localization import setup_localization
 
 setup_localization()
 
@@ -46,7 +46,7 @@ API_VERSION = 1
 newGui = True
 testRobot = False
 if newGui:
-    from frontend.pl_ui.runPlUi import PlGui
+    from frontend.legacy_ui.runPlUi import PlGui
 else:
     pass
 
@@ -54,10 +54,10 @@ if __name__ == "__main__":
     messageBroker = MessageBroker()
     # INIT SERVICES
     camera_settings_path = PathResolver.get_settings_file_path("camera_settings.json")
-    robot_settings_path = PathResolver.get_settings_file_path("robot_settings.json")
+
     settings_file_paths = {
         "camera":camera_settings_path,
-        "robot_settings": robot_settings_path,
+
         "robot_config": PathResolver.get_settings_file_path("robot_config.json"),
     }
 
@@ -119,13 +119,13 @@ if __name__ == "__main__":
     # INIT MAIN WINDOW
 
     if API_VERSION == 1:
-        from frontend.pl_ui.controller.Controller import Controller
+        from frontend.core.controller.Controller import Controller
         controller = Controller(domesticRequestSender)
     else:
         raise ValueError("Unsupported API_VERSION. Please set to 1")
 
 
-    from frontend.pl_ui.runPlUi import PlGui
+    from frontend.legacy_ui.runPlUi import PlGui
     gui = PlGui(controller=controller)
     gui.start()
 

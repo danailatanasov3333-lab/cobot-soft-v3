@@ -1,19 +1,21 @@
 
-from frontend.pl_ui.ui.widgets.virtualKeyboard.VirtualKeyboard import VirtualKeyboardSingleton
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QComboBox,
-    QSizePolicy, QPushButton, QScrollArea, QGroupBox
+    QSizePolicy, QPushButton, QScrollArea
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSignal
 
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettingKey
+from frontend.legacy_ui.widgets.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox, VirtualKeyboardSingleton
 from modules.shared.core.settings.conreateSettings.enums.RobotSettingKey import RobotSettingKey
 # import qt DoubleSpinBox
-from PyQt6.QtWidgets import QDoubleSpinBox
-from frontend.pl_ui.ui.widgets.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox
+
 import json
 import os
+
+from modules.shared.tools.GlueCell import GlueType
+
 default_settings = {
     GlueSettingKey.SPRAY_WIDTH.value: "10",
     GlueSettingKey.SPRAYING_HEIGHT.value: "0",
@@ -352,7 +354,7 @@ initialize_default_settings()
 if __name__ == "__main__":
     from applications.glue_dispensing_application.settings.GlueSettings import GlueSettingKey
     from modules.shared.core.settings.conreateSettings.enums.RobotSettingKey import RobotSettingKey
-    from frontend.pl_ui.utils.enums.GlueType import GlueType
+
 
     from PyQt6.QtWidgets import QApplication
     import sys
