@@ -104,11 +104,18 @@ class RobotService:
         Returns:
             ServiceResult with success/failure status
         """
+        print(f"Attempting to jog robot: axis={axis}, direction={direction}, step={step}")
         try:
             # Validate inputs
-            if axis not in [a.value for a in RobotAxis]:
+
+            if axis.lower() not in [a.value for a in RobotAxis]:
                 return ServiceResult.error_result(f"Invalid axis: {axis}. Valid axes: {[a.value for a in RobotAxis]}")
-            
+
+            if direction == "Plus":
+                direction = "+"
+            elif direction == "Minus":
+                direction = "-"
+
             if direction not in [d.value for d in RobotDirection]:
                 return ServiceResult.error_result(f"Invalid direction: {direction}. Valid directions: {[d.value for d in RobotDirection]}")
             
@@ -187,7 +194,7 @@ class RobotService:
         try:
             self.logger.info("Saving robot calibration point")
             
-            result = self.controller.handle(robot_endpoints.ROBOT_SAVE_CALIBRATION_POINT)
+            result = self.controller.handle(robot_endpoints.ROBOT_SAVE_POINT)
             
             return ServiceResult.success_result("Calibration point saved successfully")
                 

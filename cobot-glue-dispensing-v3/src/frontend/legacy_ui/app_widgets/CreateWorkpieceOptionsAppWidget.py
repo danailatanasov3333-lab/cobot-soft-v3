@@ -1,8 +1,6 @@
 from PyQt6.QtCore import pyqtSignal
 
-import os
-
-from frontend.legacy_ui.widgets.WorkpieceOptionsWidget import WorkpieceOptionsWidget
+from frontend.widgets.WorkpieceOptionsWidget import WorkpieceOptionsWidget
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 
 

@@ -393,7 +393,7 @@ Qt stylesheet definitions:
 
 Multi-language UI support.
 
-**Documentation**: [localization/MIGRATION_GUIDE.md](localization/MIGRATION_GUIDE.md)
+**Documentation**: [localization/MIGRATION_GUIDE.md](../core/utils/localization/MIGRATION_GUIDE.md)
 
 #### Setup
 
@@ -724,7 +724,7 @@ worker.start()
 - [Main System README](../docs/README.md)
 - [API Documentation](../shared/README.md)
 - [GlueDispensingApplication](../GlueDispensingApplication/README.md)
-- [Localization Migration Guide](localization/MIGRATION_GUIDE.md)
+- [Localization Migration Guide](../core/utils/localization/MIGRATION_GUIDE.md)
 - [Contour Editor Documentation](./contour_editor/README.md)
 
 ---

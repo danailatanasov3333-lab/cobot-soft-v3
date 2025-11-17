@@ -4,7 +4,7 @@ Domain Services
 Individual domain services for specific areas of functionality.
 """
 
-from .SettingsService import SettingsService
+from frontend.core.services.domain.SettingsService import SettingsService
 from .RobotService import RobotService
 from .CameraService import CameraService
 from .WorkpieceService import WorkpieceService

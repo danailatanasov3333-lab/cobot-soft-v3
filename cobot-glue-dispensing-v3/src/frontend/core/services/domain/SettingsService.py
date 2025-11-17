@@ -9,14 +9,14 @@ import logging
 from typing import TYPE_CHECKING, Any
 from enum import Enum
 
-from ..types.ServiceResult import ServiceResult
+from frontend.core.services.types.ServiceResult import ServiceResult
 
 # Import settings classes for type hints and validation
 
 # Import UI component classes for validation
-from frontend.legacy_ui.windows.settings.CameraSettingsTabLayout import CameraSettingsTabLayout
+from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
 
-from frontend.legacy_ui.windows.settings.GlueSettingsTabLayout import GlueSettingsTabLayout
+from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
 
 if TYPE_CHECKING:
     from frontend.core.controller.Controller import Controller

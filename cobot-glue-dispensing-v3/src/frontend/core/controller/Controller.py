@@ -8,7 +8,7 @@ from applications.glue_dispensing_application.settings.GlueSettings import GlueS
 from modules.shared.core.settings.conreateSettings.RobotSettings import RobotSettings
 
 from frontend.legacy_ui.controller.RequestWorker import RequestWorker
-from frontend.legacy_ui.widgets.FeedbackProvider import FeedbackProvider
+from frontend.feedback.FeedbackProvider import FeedbackProvider
 
 # Import new structured endpoints
 from modules.shared.v1.endpoints import (
@@ -27,8 +27,8 @@ from applications.glue_dispensing_application.settings.GlueConstants import (
 )
 
 
-from frontend.legacy_ui.windows.settings.CameraSettingsTabLayout import CameraSettingsTabLayout
-from frontend.legacy_ui.windows.settings.GlueSettingsTabLayout import GlueSettingsTabLayout
+from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
+from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
 
 import logging
 

@@ -63,6 +63,6 @@ class CreateWorkpieceManager:
 
     def via_camera_failure(self, req, msg):
         print("via_camera_failure called with message:", msg)
-        from frontend.legacy_ui.widgets.FeedbackProvider import FeedbackProvider
+        from frontend.feedback.FeedbackProvider import FeedbackProvider
         FeedbackProvider.showMessage(msg)
 

@@ -9,11 +9,11 @@ from PyQt6.QtWidgets import (
     QTabWidget, QLabel, QDialog
 )
 
-from frontend.legacy_ui.localization import TranslationKeys, TranslatableDialog
+from frontend.core.utils.localization import TranslationKeys, TranslatableDialog
 
-from frontend.legacy_ui.widgets.CustomFeedbackDialog import CustomFeedbackDialog, DialogType
-from frontend.legacy_ui.widgets.Header import Header
-from frontend.legacy_ui.widgets.ToastWidget import ToastWidget
+from frontend.dialogs.CustomFeedbackDialog import CustomFeedbackDialog, DialogType
+from frontend.widgets.Header import Header
+from frontend.widgets.ToastWidget import ToastWidget
 from frontend.legacy_ui.windows.login.LoginController import LoginController
 from frontend.legacy_ui.windows.login.LoginTab import LoginTab
 from frontend.legacy_ui.windows.login.QRLoginTab import QRLoginTab

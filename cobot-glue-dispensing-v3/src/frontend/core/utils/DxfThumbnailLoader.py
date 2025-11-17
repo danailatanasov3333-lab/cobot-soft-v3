@@ -10,8 +10,6 @@ from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 from matplotlib import pyplot as plt
 
-from frontend.legacy_ui.windows.gallery.ThumbnailWidget import ThumbnailWidget
-
 
 class DXFThumbnailLoader:
     def __init__(self, dxf_directory=None, thumbnail_size=(800, 600)):

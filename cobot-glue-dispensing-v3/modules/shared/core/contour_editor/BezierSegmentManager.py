@@ -5,7 +5,9 @@ import math
 import numpy as np
 from PyQt6.QtCore import QPointF
 import copy
-from frontend.pl_ui.contour_editor.widgets.SegmentSettingsWidget import default_settings
+
+from frontend.contour_editor.widgets import SegmentSettingsWidget
+
 
 class Segment:
     def __init__(self, layer=None,settings=None):
@@ -14,7 +16,7 @@ class Segment:
         self.visible = True
         self.layer = layer
         if settings == None:
-            self.settings = default_settings
+            self.settings = SegmentSettingsWidget.default_settings
             print("Setting default settings:", self.settings)
         else:
             self.settings = settings

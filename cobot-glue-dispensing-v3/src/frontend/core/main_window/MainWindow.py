@@ -7,12 +7,13 @@ from PyQt6.QtWidgets import (QVBoxLayout, QApplication)
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QMessageBox
 
+from frontend.contour_editor.utils.utils import create_light_gray_pixmap, qpixmap_to_cv
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
-from frontend.legacy_ui.localization import TranslationKeys, TranslatableWidget
+from frontend.core.utils.localization import TranslationKeys, TranslatableWidget
 from modules.shared.core.user.Session import SessionManager
 
 from modules.shared.v1.endpoints import operations_endpoints, robot_endpoints,workpiece_endpoints
-from frontend.legacy_ui.widgets.Header import Header
+from frontend.widgets.Header import Header
 from frontend.legacy_ui.windows.folders_page.FoldersPage import FoldersPage, FolderConfig
 from frontend.legacy_ui.windows.login.LoginWindow import LoginWindow
 from frontend.core.main_window.WidgetFactory import WidgetType
@@ -22,12 +23,11 @@ from frontend.core.utils.DxfThumbnailLoader import DXFThumbnailLoader
 from frontend.core.utils.IconLoader import (DASHBOARD_ICON, CREATE_WORKPIECE_ICON, GALLERY_ICON,
                                                  SETTINGS_ICON, CALIBRATION_ICON, USER_MANAGEMENT_ICON,
                                                  GLUE_WEIGHT_CELL_ICON)
-from frontend.legacy_ui.authorization.authorizationService import AuthorizationService , Permission
-from frontend.core.utils.FilePaths import DXF_DIRECTORY
+from frontend.core.services.authorizationService import AuthorizationService , Permission
 from frontend.core.utils.FilePaths import DXF_DIRECTORY
 from modules.shared.core.dxf.DxfParser import DXFPathExtractor
 from modules.shared.core.dxf.utils import scale_contours
-from frontend.pl_ui.contour_editor.utils.utils import qpixmap_to_cv, create_light_gray_pixmap
+
 
 
 
@@ -581,7 +581,7 @@ class MainWindow(TranslatableWidget):
         """Toggle the session info drawer with proper state management"""
         # Create drawer on first use
         if not hasattr(self, 'session_info_drawer') or self.session_info_drawer is None:
-            from frontend.legacy_ui.widgets.SessionInfoWidget import SessionInfoWidget
+            from frontend.widgets.SessionInfoWidget import SessionInfoWidget
             self.session_info_drawer = SessionInfoWidget(self, onLogoutCallback=self.onLogout)
             self.session_info_drawer.setFixedWidth(300)
             self.session_info_drawer.heightOffset = self.header.height()  # Account for header height
@@ -608,7 +608,7 @@ class MainWindow(TranslatableWidget):
     def show_tcp_offset_dialog(self):
         """Show the TCP offset configuration dialog"""
         try:
-            from frontend.legacy_ui.widgets.TcpOffsetDialog import show_tcp_offset_dialog
+            from frontend.dialogs.TcpOffsetDialog import show_tcp_offset_dialog
             
             # Show the dialog with this window as parent
             dialog = show_tcp_offset_dialog(self)

@@ -15,7 +15,7 @@ from plugins.base.plugin_interface import IPlugin, PluginMetadata, PluginCategor
 
 # Import the existing settings widget
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
-from frontend.legacy_ui.app_widgets.SettingsAppWidget import SettingsAppWidget
+from plugins.core.settings.ui.SettingsAppWidget import SettingsAppWidget
 
 
 class SettingsPlugin(IPlugin):

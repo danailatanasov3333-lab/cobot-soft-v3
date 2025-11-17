@@ -10,6 +10,8 @@ import logging
 from typing import Optional, Dict, Any
 from PyQt6.QtWidgets import QWidget
 
+from plugins.core.gallery.ui.GalleryAppWidget import GalleryAppWidget
+
 # Add plugin path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..'))
 
@@ -143,15 +145,15 @@ class PluginWidgetFactory:
                 WidgetType.DASHBOARD.value: 'Dashboard',
                 WidgetType.GALLERY.value: 'Gallery',
                 WidgetType.CALIBRATION.value: 'Calibration',
-                WidgetType.USER_MANAGEMENT.value: 'UserManagement',
+                WidgetType.USER_MANAGEMENT.value: 'User Management',
                 WidgetType.CONTOUR_EDITOR.value: 'ContourEditor',
                 WidgetType.CREATE_WORKPIECE_OPTIONS.value: 'CreateWorkpiece',
-                WidgetType.GLUE_WEIGHT_CELL.value: 'GlueWeightCell',
+                WidgetType.GLUE_WEIGHT_CELL.value: 'Glue Weight Cell Settings',
                 WidgetType.DXF_BROWSER.value: 'DxfBrowser'
             }
             
             plugin_name = plugin_name_map.get(app_name.lower(), app_name)
-            
+
             # Debug logging
             self.logger.info(f"Looking for plugin: {plugin_name} (from app_name: {app_name})")
             loaded_plugins = self.plugin_manager.get_loaded_plugin_names()
@@ -188,13 +190,8 @@ class PluginWidgetFactory:
         try:
             # Legacy widget creation for non-migrated widgets using WidgetType enum
             legacy_methods = {
-                WidgetType.DASHBOARD.value: self._create_legacy_dashboard,
-                WidgetType.GALLERY.value: self._create_legacy_gallery,
-                WidgetType.CALIBRATION.value: self._create_legacy_calibration,
-                WidgetType.USER_MANAGEMENT.value: self._create_legacy_user_management,
                 WidgetType.CONTOUR_EDITOR.value: self._create_legacy_contour_editor,
                 WidgetType.CREATE_WORKPIECE_OPTIONS.value: self._create_legacy_create_workpiece,
-                WidgetType.GLUE_WEIGHT_CELL.value: self._create_legacy_glue_weight_cell,
                 WidgetType.DXF_BROWSER.value: self._create_legacy_dxf_browser
             }
             
@@ -213,47 +210,22 @@ class PluginWidgetFactory:
             return None
     
     # Legacy widget creation methods (gradually remove as plugins are created)
-    
-    def _create_legacy_dashboard(self, *args, **kwargs):
-        """Create legacy dashboard widget"""
-        from frontend.legacy_ui.app_widgets.DashboardAppWidget import DashboardAppWidget
-        return DashboardAppWidget(controller=self.controller)
-    
-    def _create_legacy_gallery(self, *args, **kwargs):
-        """Create legacy gallery widget"""
-        from frontend.legacy_ui.app_widgets.GalleryAppWidget import GalleryAppWidget
-        return GalleryAppWidget(controller=self.controller)
-    
-    def _create_legacy_calibration(self, *args, **kwargs):
-        """Create legacy calibration widget"""
-        from frontend.legacy_ui.app_widgets.CalibrationAppWidget import CalibrationAppWidget
-        return CalibrationAppWidget(controller=self.controller)
-    
-    def _create_legacy_user_management(self, *args, **kwargs):
-        """Create legacy user management widget"""
-        from frontend.legacy_ui.app_widgets.UserManagementAppWidget import UserManagementAppWidget
-        return UserManagementAppWidget(*args, **kwargs)
-    
+
     def _create_legacy_contour_editor(self, *args, **kwargs):
         """Create legacy contour editor widget"""
-        from frontend.legacy_ui.app_widgets.ContourEditorAppWidget import ContourEditorAppWidget
+        from plugins.core.contour_editor.ui.ContourEditorAppWidget import ContourEditorAppWidget
         return ContourEditorAppWidget(parent=self.main_window, controller=self.controller)
     
     def _create_legacy_create_workpiece(self, *args, **kwargs):
         """Create legacy create workpiece widget"""
         from frontend.legacy_ui.app_widgets.CreateWorkpieceOptionsAppWidget import CreateWorkpieceOptionsAppWidget
         return CreateWorkpieceOptionsAppWidget(controller=self.controller)
-    
-    def _create_legacy_glue_weight_cell(self, *args, **kwargs):
-        """Create legacy glue weight cell widget"""
-        from frontend.legacy_ui.app_widgets.GlueWeightCellSettingsAppWidget import GlueWeightCellSettingsAppWidget
-        return GlueWeightCellSettingsAppWidget(parent=self.main_window, controller=None)
+
     
     def _create_legacy_dxf_browser(self, *args, **kwargs):
         """Create legacy DXF browser widget"""
-        from frontend.legacy_ui.app_widgets.GalleryAppWidget import GalleryAppWidget
         return GalleryAppWidget(*args, **kwargs)
-    
+
     def get_available_apps(self) -> Dict[str, Dict[str, Any]]:
         """
         Get list of available apps/plugins.
@@ -278,12 +250,9 @@ class PluginWidgetFactory:
         # Add legacy apps that haven't been migrated yet using WidgetType enum
         legacy_apps = {
             WidgetType.DASHBOARD.value: {'name': 'Dashboard', 'description': 'Main dashboard', 'category': 'core'},
-            WidgetType.GALLERY.value: {'name': 'Gallery', 'description': 'File gallery', 'category': 'feature'},
-            WidgetType.CALIBRATION.value: {'name': 'Calibration', 'description': 'System calibration', 'category': 'feature'},
-            WidgetType.USER_MANAGEMENT.value: {'name': 'User Management', 'description': 'User management', 'category': 'feature'},
+
             WidgetType.CONTOUR_EDITOR.value: {'name': 'Contour Editor', 'description': 'Contour editing', 'category': 'feature'},
             WidgetType.CREATE_WORKPIECE_OPTIONS.value: {'name': 'Create Workpiece', 'description': 'Create workpiece', 'category': 'feature'},
-            WidgetType.GLUE_WEIGHT_CELL.value: {'name': 'Glue Weight Cell', 'description': 'Glue weight settings', 'category': 'tool'},
             WidgetType.DXF_BROWSER.value: {'name': 'DXF Browser', 'description': 'DXF file browser', 'category': 'tool'}
         }
         

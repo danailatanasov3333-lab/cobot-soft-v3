@@ -78,7 +78,7 @@ class FoldersPage(QWidget):
         self.__connect_folder_signals()
 
     def __create_folder(self, ID,folder_name, apps,translate_fn):
-        from frontend.legacy_ui.localization import get_app_translator
+        from frontend.core.utils.localization import get_app_translator
 
         """Create a folder widget and its controller"""
         # Create folder widget

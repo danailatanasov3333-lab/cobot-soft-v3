@@ -7,11 +7,12 @@
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QTimer
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGridLayout, QScrollArea,
-    QGraphicsDropShadowEffect,QPushButton
+    QGraphicsDropShadowEffect
 )
 from PyQt6.QtGui import QFont, QColor
+from PyQt6.QtWidgets import QPushButton
 
-from frontend.legacy_ui.localization.mixins import TranslatableQFrame
+from frontend.core.utils.localization.mixins import TranslatableQFrame
 from frontend.legacy_ui.windows.mainWindow.managers.AnimationManager import AnimationManager
 
 

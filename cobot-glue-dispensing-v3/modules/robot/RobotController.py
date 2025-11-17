@@ -36,8 +36,6 @@ class RobotController:
             ]:
                 return self._handleMoveToCalibPose()
 
-
-
             elif request in [
                 robot_endpoints.ROBOT_STOP
             ]:
@@ -71,6 +69,7 @@ class RobotController:
                 return self._handleGetCurrentPosition()
 
             # === JOGGING ===
+            # Accept both API-style endpoints (/api/v1/robot/jog/...) and legacy short forms like 'robot/jog/x/plus/1'
             elif any(j in request for j in [
                 robot_endpoints.ROBOT_ACTION_JOG_X_PLUS,
                 robot_endpoints.ROBOT_ACTION_JOG_X_MINUS,
@@ -78,7 +77,7 @@ class RobotController:
                 robot_endpoints.ROBOT_ACTION_JOG_Y_MINUS,
                 robot_endpoints.ROBOT_ACTION_JOG_Z_PLUS,
                 robot_endpoints.ROBOT_ACTION_JOG_Z_MINUS
-            ]):
+            ]) or request.startswith("robot/jog") or "/jog/" in request:
                 return self._handleJog(parts)
 
             # === SLOT OPERATIONS ===
@@ -144,10 +143,45 @@ class RobotController:
             return Response(Constants.RESPONSE_STATUS_ERROR, "Invalid position format", {}).to_dict()
 
     def _handleJog(self, parts):
+        """Handle jogging requests. Supports both API-style and legacy string formats.
+
+        Expected parts examples:
+          - ['/api','v1','robot','jog','x','plus','5']
+          - ['robot','jog','Z','+','5.0']
+        """
+        # Defensive parsing of axis / direction / step from the last three parts
+        if len(parts) < 3:
+            return Response(Constants.RESPONSE_STATUS_ERROR, "Invalid JOG request format", {}).to_dict()
+
         axis = parts[-3]
-        direction = parts[-2]
-        step = float(parts[-1]) if parts[-1].isdigit() else 1.0
-        ret = self.robotService.startJog(RobotAxis.get_by_string(axis), Direction.get_by_string(direction), step)
+        direction_str = parts[-2]
+        step_str = parts[-1]
+
+        # Parse step as float robustly
+        try:
+            step = float(step_str)
+        except Exception:
+            step = 1.0
+
+        # Normalize direction: accept '+', '-', 'plus', 'minus', or textual names
+        dir_upper = str(direction_str).strip().lower()
+        if dir_upper in ['+', 'plus', 'p', 'add']:
+            direction = Direction.PLUS
+        elif dir_upper in ['-', 'minus', 'm', 'sub']:
+            direction = Direction.MINUS
+        else:
+            try:
+                direction = Direction.get_by_string(direction_str)
+            except Exception:
+                return Response(Constants.RESPONSE_STATUS_ERROR, f"Invalid JOG direction: {direction_str}", {}).to_dict()
+
+        # Normalize axis and get enum
+        try:
+            axis_enum = RobotAxis.get_by_string(axis)
+        except Exception:
+            return Response(Constants.RESPONSE_STATUS_ERROR, f"Invalid JOG axis: {axis}", {}).to_dict()
+
+        ret = self.robotService.startJog(axis_enum, direction, step)
         return self._moveSuccess(ret, "Failed JOG", "Success JOG")
 
     def _handleSlotOperation(self, request, parts):

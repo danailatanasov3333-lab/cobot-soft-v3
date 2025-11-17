@@ -4,12 +4,12 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QPixmap
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget
 
-from frontend.legacy_ui.localization import TranslationKeys, TranslatableWidget
+from frontend.core.utils.localization import TranslationKeys, TranslatableWidget
 
 if TYPE_CHECKING:
     pass
 from frontend.core.utils.IconLoader import MACHINE_BUTTONS_IMAGE
-from frontend.legacy_ui.widgets.MaterialButton import MaterialButton
+from frontend.widgets.MaterialButton import MaterialButton
 from frontend.core.utils.styles.globalStyles import FONT
 class SetupStepsWidget(TranslatableWidget):
     """Initial setup steps widget."""

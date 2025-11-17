@@ -5,9 +5,9 @@ from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout
 
 from modules.shared.v1 import Constants
-from frontend.legacy_ui.localization import TranslationKeys, TranslatableWidget
-from frontend.legacy_ui.widgets.CameraFeed import CameraFeed,CameraFeedConfig
-from frontend.legacy_ui.widgets.MaterialButton import MaterialButton
+from frontend.core.utils.localization import TranslationKeys, TranslatableWidget
+from frontend.widgets.CameraFeed import CameraFeed,CameraFeedConfig
+from frontend.widgets.MaterialButton import MaterialButton
 from modules.shared.v1.endpoints import camera_endpoints,auth_endpoints
 
 

@@ -6,9 +6,10 @@ from PyQt6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout
 )
 
-from frontend.legacy_ui.widgets.virtualKeyboard.VirtualKeyboard import FocusLineEdit
-from frontend.legacy_ui.localization import TranslationKeys, TranslatableWidget
-from frontend.legacy_ui.widgets.MaterialButton import MaterialButton
+
+from frontend.core.utils.localization import TranslationKeys, TranslatableWidget
+from frontend.virtualKeyboard.VirtualKeyboard import FocusLineEdit
+from frontend.widgets.MaterialButton import MaterialButton
 from frontend.core.utils.styles.globalStyles import FONT
 
 

@@ -1,17 +1,17 @@
 from enum import Enum
 
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
-from frontend.legacy_ui.app_widgets.CalibrationAppWidget import CalibrationAppWidget
-from frontend.legacy_ui.app_widgets.ContourEditorAppWidget import ContourEditorAppWidget
+from plugins.core.calibration.ui.CalibrationAppWidget import CalibrationAppWidget
+from plugins.core.contour_editor.ui.ContourEditorAppWidget import ContourEditorAppWidget
 from frontend.legacy_ui.app_widgets.CreateWorkpieceOptionsAppWidget import CreateWorkpieceOptionsAppWidget
-from frontend.legacy_ui.app_widgets.DashboardAppWidget import DashboardAppWidget
-from frontend.legacy_ui.app_widgets.GalleryAppWidget import GalleryAppWidget
-from frontend.legacy_ui.app_widgets.GlueWeightCellSettingsAppWidget import GlueWeightCellSettingsAppWidget
-from frontend.legacy_ui.app_widgets.UserManagementAppWidget import UserManagementAppWidget
+from plugins.core.dashboard.ui.DashboardAppWidget import DashboardAppWidget
+from plugins.core.wight_cells_settings_plugin.ui.GlueWeightCellSettingsAppWidget import GlueWeightCellSettingsAppWidget
+from plugins.core.gallery.ui.GalleryAppWidget import GalleryAppWidget
+from plugins.core.user_management.ui.UserManagementAppWidget import UserManagementAppWidget
 
 
 class WidgetType(Enum):
-    USER_MANAGEMENT = "user_management"
+    USER_MANAGEMENT = "User Management"
     SETTINGS = "settings"
     CREATE_WORKPIECE_OPTIONS =  "create_workpiece_options"
     CONTOUR_EDITOR = "contour_editor"
@@ -91,7 +91,7 @@ class WidgetFactory:
 
     def __create_calibration_widget(self, *args, **kwargs):
         print("Creating Calibration Widget")
-        return CalibrationAppWidget(controller=self.controller)
+        return CalibrationAppWidget(controller_service=self.controller)
 
     def __create_glue_weight_cell_settings_widget(self, *args, **kwargs):
         print("Creating Glue Weight Cell Settings Widget")

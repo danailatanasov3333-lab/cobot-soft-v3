@@ -5,11 +5,11 @@ from PyQt6.QtWidgets import QWidget
 # Import plugin base classes
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
-from plugins.base.plugin_interface import IPlugin, PluginMetadata, PluginCategory, PluginPermission
+from plugins.base.plugin_interface import IPlugin, PluginMetadata, PluginCategory
 
 # Import the existing settings widget
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
-from frontend.legacy_ui.app_widgets.DashboardAppWidget import DashboardAppWidget
+from plugins.core.dashboard.ui.DashboardAppWidget import DashboardAppWidget
 
 class DashboardPlugin(IPlugin):
     """

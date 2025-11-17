@@ -9,7 +9,7 @@ import logging
 from typing import TYPE_CHECKING
 
 # Import domain services
-from .domain.SettingsService import SettingsService
+from frontend.core.services.domain.SettingsService import SettingsService
 from .domain.RobotService import RobotService
 from .domain.CameraService import CameraService
 from .domain.WorkpieceService import WorkpieceService

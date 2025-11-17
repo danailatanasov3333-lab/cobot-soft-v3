@@ -1,5 +1,4 @@
-from frontend.pl_ui.Endpoints import SAVE_WORKPIECE, CREATE_WORKPIECE_TOPIC
-
+from modules.shared.v1.endpoints import workpiece_endpoints
 class CreateWorkpieceManager:
 
 
@@ -9,7 +8,7 @@ class CreateWorkpieceManager:
 
     def via_camera(self):
         print("Invoking via_camera in CreateWorkpieceManager")
-        self.controller.handle(CREATE_WORKPIECE_TOPIC,
+        self.controller.handle(workpiece_endpoints.WORKPIECE_CREATE,
                                self.via_camera_success,
                                self.via_camera_failure)
 
@@ -30,7 +29,7 @@ class CreateWorkpieceManager:
         data[WorkpieceField.CONTOUR.value] = wp_contours_data.get('External')
         print("Workpiece data to save:", data)
 
-        self.controller.handle(SAVE_WORKPIECE, data)
+        self.controller.handle(workpiece_endpoints.WORKPIECE_SAVE, data)
 
     def via_camera_success(self,frame,contours,data):
         print("Setting image in via_camera_success")
@@ -46,6 +45,6 @@ class CreateWorkpieceManager:
 
     def via_camera_failure(self, req, msg):
         print("via_camera_failure called with message:", msg)
-        from frontend.legacy_ui.widgets.FeedbackProvider import FeedbackProvider
+        from frontend.feedback.FeedbackProvider import FeedbackProvider
         FeedbackProvider.showMessage(msg)
 
