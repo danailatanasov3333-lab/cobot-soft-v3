@@ -1,10 +1,11 @@
 import threading
 import time
 
+from backend.system.utils import robot_utils
+from core.model.robot import fairino_robot
 from modules.shared.MessageBroker import MessageBroker
 from modules.shared.v1.topics import RobotTopics
-from modules.robot.RobotUtils import calculate_velocity, calculate_acceleration
-from modules.robot.FairinoRobot import FairinoRobot
+
 from core.services.robot_service.enums.RobotState import RobotState
 
 class RobotMonitor:
@@ -13,7 +14,7 @@ class RobotMonitor:
     and reports results via a callback to the manager.
     """
     def __init__(self, robot_ip, data_callback, cycle_time=0.03):
-        self.robot = FairinoRobot(robot_ip)
+        self.robot = fairino_robot.FairinoRobot(robot_ip)
         self.data_callback = data_callback  # <-- sends (pos, vel, accel, timestamp)
         self.cycle_time = cycle_time
         self._stop_event = threading.Event()
@@ -41,9 +42,9 @@ class RobotMonitor:
 
                 if self.prev_pos is not None:
                     dt = current_time - self.prev_time
-                    velocity = calculate_velocity(current_pos, self.prev_pos, dt)
+                    velocity = robot_utils.calculate_velocity(current_pos, self.prev_pos, dt)
                     if self.prev_velocity is not None:
-                        acceleration = calculate_acceleration(velocity, self.prev_velocity, dt, use_dt=False)
+                        acceleration = robot_utils.calculate_acceleration(velocity, self.prev_velocity, dt, use_dt=False)
 
                 # Send motion data back to manager
                 self.data_callback(current_pos, velocity, acceleration, current_time)

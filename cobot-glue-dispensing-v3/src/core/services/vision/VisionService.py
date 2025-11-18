@@ -189,6 +189,13 @@ class _VisionService(VisionSystem):
         print("Calibration result: ", result)
         return result
 
+    def calibrate(self):
+        """
+        Backwards-compatible adapter: call calibrateCamera.
+        Some controllers expect a `calibrate()` method on the service — forward to the implemented method.
+        """
+        return self.calibrateCamera()
+
     def setRawMode(self, rawMode: bool):
         """
                 Sets the camera's raw mode, enabling or disabling it.

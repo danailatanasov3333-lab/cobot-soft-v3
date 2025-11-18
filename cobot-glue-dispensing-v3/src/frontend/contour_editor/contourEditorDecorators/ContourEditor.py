@@ -17,7 +17,7 @@ from frontend.contour_editor.managers.event_manager import EventManager
 from frontend.contour_editor.managers.layer_manager import LayerManager
 from frontend.contour_editor.managers.workpiece_manager import WorkpieceManager
 from frontend.contour_editor.rendering.editor_renderer import EditorRenderer
-from modules.shared.core.workpiece.Workpiece import BaseWorkpiece
+from core.model.workpiece.Workpiece import BaseWorkpiece
 
 
 class ContourEditor(QFrame):

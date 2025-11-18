@@ -4,13 +4,18 @@ from PyQt6.QtWidgets import (
     QListWidget, QListWidgetItem, QMessageBox, QInputDialog, QFrame,
     QSizePolicy, QSpacerItem, QSlider, QComboBox, QDialog, QDialogButtonBox
 )
+
+from backend.system.settings.robotConfig.GlobalMotionSettings import GlobalMotionSettings
+from backend.system.settings.robotConfig.MovementGroup import MovementGroup
+from backend.system.settings.robotConfig.SafetyLimits import SafetyLimits
+from backend.system.settings.robotConfig.robotConfigModel import get_default_config, RobotConfig
 from frontend.virtualKeyboard.VirtualKeyboard import FocusLineEdit,FocusSpinBox,FocusDoubleSpinBox
 from PyQt6.QtCore import QObject, pyqtSignal, Qt, QTimer
 
 import json
 import os
 import copy
-from modules.shared.core.settings.robotConfig.robotConfigModel import RobotConfig, MovementGroup,get_default_config
+
 
 from modules.shared.v1.Response import Response
 from modules.shared.v1.Constants import  RESPONSE_STATUS_ERROR
@@ -1129,7 +1134,6 @@ class RobotConfigController:
             movement_groups["NOZZLE CLEAN"].iterations = self.ui.nozzle_clean_iterations.value()
 
         # Get safety limits from UI
-        from modules.shared.core.settings.robotConfig.robotConfigModel import SafetyLimits, GlobalMotionSettings
         
         safety_limits = SafetyLimits()
         if hasattr(self.ui, 'safety_limits'):

@@ -19,7 +19,7 @@ from backend.system.settings.SettingsService import SettingsService
 from backend.system.SystemStatePublisherThread import SystemStatePublisherThread
 from core.operations_handlers.robot_calibration_handler import calibrate_robot
 from core.operations_handlers.camera_calibration_handler import calibrate_camera
-
+from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 
 
 class ApplicationType(Enum):
@@ -151,6 +151,7 @@ class BaseRobotApplication(ABC):
                  vision_service: _VisionService,
                  settings_manager: SettingsService,
                  robot_service: IRobotService,
+                 settings_registry:ApplicationSettingsRegistry,
                  **kwargs
                  ):
         """
@@ -166,6 +167,7 @@ class BaseRobotApplication(ABC):
         self.visionService = vision_service
         self.settingsManager = settings_manager
         self.robotService = robot_service
+        self.settings_registry = settings_registry
 
         # Optional services
         self.workpieceService = kwargs.get("workpiece_service", None)

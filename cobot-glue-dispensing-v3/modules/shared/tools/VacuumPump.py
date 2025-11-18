@@ -88,7 +88,7 @@ class VacuumPump:
         print("PUMP TURNED OFF")
 
 if __name__ == "__main__":
-    from modules.robot.FairinoRobot import FairinoRobot
+    from core.model.robot import FairinoRobot
     robot = FairinoRobot("192.168.58.2")
     pump = VacuumPump()
     print("Vacuum Pump initialized with digital output pin:", pump.digitalOutput)

@@ -9,12 +9,13 @@ their lifecycle.
 from typing import Dict, Optional, Type, List
 import logging
 
+from .application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 from .application.interfaces.robot_application_interface import RobotApplicationInterface
 from .base_robot_application import BaseRobotApplication, ApplicationType
 
 from core.services.vision.VisionService import _VisionService
 from backend.system.settings.SettingsService import SettingsService
-from modules.shared.core.workpiece.WorkpieceService import WorkpieceService
+from core.services.workpiece.WorkpieceService import WorkpieceService
 from applications.glue_dispensing_application.GlueDispensingApplication import GlueSprayingApplication
 from applications.example_painting_application.application import PaintingApplication
 from .services.robot_service.IRobotService import IRobotService
@@ -47,7 +48,8 @@ class ApplicationFactory:
                  vision_service: _VisionService,
                  settings_service: SettingsService,
                  workpiece_service: WorkpieceService,
-                 robot_service: IRobotService):
+                 robot_service: IRobotService,
+                 settings_registry=ApplicationSettingsRegistry):
         """
         Initialize the application factory with core services.
         
@@ -61,6 +63,7 @@ class ApplicationFactory:
         self.settings_service = settings_service
         self.workpiece_service = workpiece_service
         self.robot_service = robot_service
+        self.settings_registry = settings_registry
         
         # Registry of application types to their implementation classes
         self._application_registry: Dict[ApplicationType, Type[BaseRobotApplication]] = {}
@@ -163,6 +166,7 @@ class ApplicationFactory:
                 vision_service=self.vision_service,
                 settings_manager=self.settings_service,
                 robot_service=self.robot_service,
+                settings_registry=self.settings_registry,
                 workpiece_service=self.workpiece_service  # optional for apps that use it
             )
             
@@ -376,6 +380,7 @@ def create_application_factory(vision_service: _VisionService,
                              settings_service: SettingsService,
                              workpiece_service: WorkpieceService,
                              robot_service: IRobotService,
+                                settings_registry=ApplicationSettingsRegistry,
                              auto_register: bool = True) -> ApplicationFactory:
     """
     Create and configure an ApplicationFactory with automatic application discovery.
@@ -394,7 +399,8 @@ def create_application_factory(vision_service: _VisionService,
         vision_service=vision_service,
         settings_service=settings_service,
         workpiece_service=workpiece_service,
-        robot_service=robot_service
+        robot_service=robot_service,
+        settings_registry=settings_registry
     )
     
     if auto_register:

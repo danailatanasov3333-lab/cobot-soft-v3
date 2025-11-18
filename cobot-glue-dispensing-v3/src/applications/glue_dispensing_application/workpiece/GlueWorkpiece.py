@@ -1,8 +1,8 @@
 import numpy as np
-from modules.shared.core.workpiece.Workpiece import BaseWorkpiece
+
+from applications.glue_dispensing_application.workpiece.GlueWorkpieceField import GlueWorkpieceField
+from core.model.workpiece.Workpiece import BaseWorkpiece
 from modules.shared.core.interfaces.JsonSerializable import JsonSerializable
-from modules.shared.core.workpiece.Workpiece import WorkpieceField
-from modules.shared import tools
 from modules.shared.tools.GlueCell import GlueType
 from modules.shared.tools.enums.Gripper import Gripper
 from modules.shared.tools.enums.Program import Program
@@ -219,7 +219,7 @@ class GlueWorkpiece(BaseWorkpiece, JsonSerializable):
             return obj
 
         # ----- Main contour -----
-        raw_contour = data.get(WorkpieceField.CONTOUR.value, [])
+        raw_contour = data.get(GlueWorkpieceField.CONTOUR.value, [])
 
         if isinstance(raw_contour, dict):
             contour = convert_list_to_ndarray(raw_contour)
@@ -229,7 +229,7 @@ class GlueWorkpiece(BaseWorkpiece, JsonSerializable):
             contour = raw_contour  # unexpected type, leave as-is
 
         # ----- Spray pattern -----
-        raw_spray_pattern = data.get(WorkpieceField.SPRAY_PATTERN.value, {})
+        raw_spray_pattern = data.get(GlueWorkpieceField.SPRAY_PATTERN.value, {})
         spray_pattern = {}
 
         if isinstance(raw_spray_pattern, dict):
@@ -252,23 +252,23 @@ class GlueWorkpiece(BaseWorkpiece, JsonSerializable):
                     dict: A dictionary containing the Workpiece's properties, suitable for serialization or storage.
                 """
         return {
-            WorkpieceField.WORKPIECE_ID.value: self.workpieceId,
-            WorkpieceField.NAME.value: self.name,
-            WorkpieceField.DESCRIPTION.value: self.description,
-            WorkpieceField.TOOL_ID.value: self.toolID.value,
-            WorkpieceField.GRIPPER_ID.value: self.gripperID.value,
-            WorkpieceField.GLUE_TYPE.value: self.glueType.value,
-            WorkpieceField.PROGRAM.value: self.program.value,
-            WorkpieceField.MATERIAL.value: self.material,
-            WorkpieceField.CONTOUR.value: self.contour,
-            WorkpieceField.OFFSET.value: self.offset,
-            WorkpieceField.HEIGHT.value: self.height,
-            WorkpieceField.GLUE_QTY.value: self.glueQty,
-            WorkpieceField.SPRAY_WIDTH.value: self.sprayWidth,
-            WorkpieceField.PICKUP_POINT.value: self.pickupPoint,
-            WorkpieceField.SPRAY_PATTERN.value: self.sprayPattern,
-            WorkpieceField.CONTOUR_AREA.value: self.contourArea,
-            WorkpieceField.NOZZLES.value: self.nozzles
+            GlueWorkpieceField.WORKPIECE_ID.value: self.workpieceId,
+            GlueWorkpieceField.NAME.value: self.name,
+            GlueWorkpieceField.DESCRIPTION.value: self.description,
+            GlueWorkpieceField.TOOL_ID.value: self.toolID.value,
+            GlueWorkpieceField.GRIPPER_ID.value: self.gripperID.value,
+            GlueWorkpieceField.GLUE_TYPE.value: self.glueType.value,
+            GlueWorkpieceField.PROGRAM.value: self.program.value,
+            GlueWorkpieceField.MATERIAL.value: self.material,
+            GlueWorkpieceField.CONTOUR.value: self.contour,
+            GlueWorkpieceField.OFFSET.value: self.offset,
+            GlueWorkpieceField.HEIGHT.value: self.height,
+            GlueWorkpieceField.GLUE_QTY.value: self.glueQty,
+            GlueWorkpieceField.SPRAY_WIDTH.value: self.sprayWidth,
+            GlueWorkpieceField.PICKUP_POINT.value: self.pickupPoint,
+            GlueWorkpieceField.SPRAY_PATTERN.value: self.sprayPattern,
+            GlueWorkpieceField.CONTOUR_AREA.value: self.contourArea,
+            GlueWorkpieceField.NOZZLES.value: self.nozzles
 
         }
 
@@ -345,23 +345,23 @@ class GlueWorkpiece(BaseWorkpiece, JsonSerializable):
           GlueWorkpiece: The reconstructed Workpiece object.
         """
         return GlueWorkpiece(
-            workpieceId=dict[WorkpieceField.WORKPIECE_ID.value],
-            name=dict[WorkpieceField.NAME.value],
-            description=dict[WorkpieceField.DESCRIPTION.value],
-            toolID=ToolID(dict[WorkpieceField.TOOL_ID.value]),
-            gripperID=Gripper(dict[WorkpieceField.GRIPPER_ID.value]),
-            glueType=GlueType(dict[WorkpieceField.GLUE_TYPE.value]),
-            program=Program(dict[WorkpieceField.PROGRAM.value]),
-            material=dict[WorkpieceField.MATERIAL.value],
-            contour=dict[WorkpieceField.CONTOUR.value],
-            offset=dict[WorkpieceField.OFFSET.value],
-            height=dict.get(WorkpieceField.HEIGHT.value,4),
-            pickupPoint=dict.get(WorkpieceField.PICKUP_POINT.value, None),
-            nozzles=dict.get(WorkpieceField.NOZZLES.value, []),  # Setting nozzles to empty list if missing
-            contourArea=dict[WorkpieceField.CONTOUR_AREA.value],
-            glueQty=dict[WorkpieceField.GLUE_QTY.value],
-            sprayWidth=dict[WorkpieceField.SPRAY_WIDTH.value],
-            sprayPattern=dict.get(WorkpieceField.SPRAY_PATTERN.value, []),
+            workpieceId=dict[GlueWorkpieceField.WORKPIECE_ID.value],
+            name=dict[GlueWorkpieceField.NAME.value],
+            description=dict[GlueWorkpieceField.DESCRIPTION.value],
+            toolID=ToolID(dict[GlueWorkpieceField.TOOL_ID.value]),
+            gripperID=Gripper(dict[GlueWorkpieceField.GRIPPER_ID.value]),
+            glueType=GlueType(dict[GlueWorkpieceField.GLUE_TYPE.value]),
+            program=Program(dict[GlueWorkpieceField.PROGRAM.value]),
+            material=dict[GlueWorkpieceField.MATERIAL.value],
+            contour=dict[GlueWorkpieceField.CONTOUR.value],
+            offset=dict[GlueWorkpieceField.OFFSET.value],
+            height=dict.get(GlueWorkpieceField.HEIGHT.value, 4),
+            pickupPoint=dict.get(GlueWorkpieceField.PICKUP_POINT.value, None),
+            nozzles=dict.get(GlueWorkpieceField.NOZZLES.value, []),  # Setting nozzles to empty list if missing
+            contourArea=dict[GlueWorkpieceField.CONTOUR_AREA.value],
+            glueQty=dict[GlueWorkpieceField.GLUE_QTY.value],
+            sprayWidth=dict[GlueWorkpieceField.SPRAY_WIDTH.value],
+            sprayPattern=dict.get(GlueWorkpieceField.SPRAY_PATTERN.value, []),
 
             # Setting spray pattern to empty list if missing
         )

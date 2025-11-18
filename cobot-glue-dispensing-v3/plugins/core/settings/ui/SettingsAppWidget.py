@@ -65,8 +65,6 @@ class SettingsAppWidget(AppWidget):
                 if settings_result:
                     settings_data = settings_result.data
                     self.content_widget.updateCameraSettings(settings_data["camera"])
-                    self.content_widget.updateRobotSettings(settings_data["robot"])
-                    self.content_widget.updateContourSettings(settings_data["camera"])
                     self.content_widget.updateGlueSettings(settings_data["glue"])
                     print(f"✅ Settings loaded successfully: {settings_result.message}")
                 else:

@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from core.services.robot_service.robotService import CancellationToken
-from modules.shared.core.settings.conreateSettings.enums.RobotSettingKey import RobotSettingKey
+from backend.system.settings.enums import RobotSettingKey
 from applications.glue_dispensing_application.glue_process.glue_dispensing_operation import \
     glue_dispensing_logger_context
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState

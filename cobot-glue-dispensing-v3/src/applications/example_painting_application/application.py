@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional, List
 
 from core.application.interfaces.robot_application_interface import RobotApplicationInterface, CalibrationStatus
-from modules.shared.core.workpiece.WorkpieceService import WorkpieceService
+from core.services.workpiece.WorkpieceService import WorkpieceService
 from core.base_robot_application import BaseRobotApplication, ApplicationType, ApplicationState
 from applications.glue_dispensing_application.GlueDispensingApplicationStateManager import \
     GlueDispensingApplicationStateManager

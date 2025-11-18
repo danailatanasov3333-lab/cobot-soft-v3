@@ -24,10 +24,10 @@ class CreateWorkpieceManager:
         sprayPatternsDict['Contour'] = wp_contours_data.get('Contour')
         sprayPatternsDict['Fill'] = wp_contours_data.get('Fill')
 
-        from modules.shared.core.workpiece.Workpiece import WorkpieceField
-        data[WorkpieceField.SPRAY_PATTERN.value] = sprayPatternsDict
-        data[WorkpieceField.CONTOUR.value] = wp_contours_data.get('Workpiece')
-        data[WorkpieceField.CONTOUR_AREA] = "0"
+        from core.model.workpiece.Workpiece import GlueWorkpieceField
+        data[GlueWorkpieceField.SPRAY_PATTERN.value] = sprayPatternsDict
+        data[GlueWorkpieceField.CONTOUR.value] = wp_contours_data.get('Workpiece')
+        data[GlueWorkpieceField.CONTOUR_AREA] = "0"
         print("Workpiece data to save:", data)
 
         self.controller.handle(workpiece_endpoints.WORKPIECE_SAVE, data)

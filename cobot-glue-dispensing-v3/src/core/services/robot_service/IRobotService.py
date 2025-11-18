@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from modules.robot.enums.axis import Direction, RobotAxis
+from core.model.robot.enums.axis import Direction, RobotAxis
 
 class IRobotService(ABC):
     """Interface for all robot service implementations."""

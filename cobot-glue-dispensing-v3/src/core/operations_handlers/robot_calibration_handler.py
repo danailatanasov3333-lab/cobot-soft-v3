@@ -1,8 +1,8 @@
 import threading
 
-from modules.robot.calibration.config_helpers import AdaptiveMovementConfig, RobotCalibrationEventsConfig, \
+from modules.robot_calibration.config_helpers import AdaptiveMovementConfig, RobotCalibrationEventsConfig, \
     RobotCalibrationConfig
-from modules.robot.calibration.newRobotCalibUsingTopLeftCornersOfArucoMarkers import RobotCalibrationPipeline
+from modules.robot_calibration.newRobotCalibUsingTopLeftCornersOfArucoMarkers import RobotCalibrationPipeline
 from modules.shared.MessageBroker import MessageBroker
 from modules.shared.v1.topics import RobotTopics
 

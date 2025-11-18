@@ -2,7 +2,10 @@
 import logging
 import os
 
-from applications.glue_dispensing_application.workpiece.WorkPieceRepositorySingleton import WorkPieceRepositorySingleton
+from applications.glue_dispensing_application.workpiece.GlueWorkPieceRepositorySingleton import \
+    GlueWorkPieceRepositorySingleton
+from communication_layer.api_gateway.dispatch.main_router import RequestHandler
+from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 from frontend.core.utils.localization import setup_localization
 from core.services.robot_service.RobotStateManager import RobotStateManager
 
@@ -10,13 +13,13 @@ setup_localization()
 
 
 from modules.shared.MessageBroker import MessageBroker
-from modules.shared.core.workpiece.WorkpieceService import WorkpieceService
+from core.services.workpiece.WorkpieceService import WorkpieceService
 from modules.shared.v1.DomesticRequestSender import DomesticRequestSender
 from core.application_factory import create_application_factory
 from core.base_robot_application import ApplicationType
 from backend.system.SensorPublisher import SensorPublisher
 
-from modules.robot.RobotController import RobotController
+from applications.glue_dispensing_application.controllers.RobotController import RobotController
 from applications.glue_dispensing_application.services.robot_service.GlueRobotService import RobotService
 # IMPORT CONTROLLERS
 from backend.system.settings.SettingsController import SettingsController
@@ -25,7 +28,7 @@ from backend.system.settings.SettingsController import SettingsController
 from backend.system.settings.SettingsService import SettingsService
 
 
-from core.controllers.vision.CameraSystemController import CameraSystemController
+from applications.glue_dispensing_application.controllers.CameraSystemController import CameraSystemController
 from core.services.vision.VisionService import VisionServiceSingleton
 from applications.glue_dispensing_application.workpiece.WorkpieceController import WorkpieceController
 from backend.system.utils import PathResolver
@@ -54,36 +57,37 @@ else:
 if __name__ == "__main__":
     messageBroker = MessageBroker()
     # INIT SERVICES
+
+    # Global registry instance
+    settings_registry = ApplicationSettingsRegistry()
     camera_settings_path = PathResolver.get_settings_file_path("camera_settings.json")
 
     settings_file_paths = {
         "camera":camera_settings_path,
-
         "robot_config": PathResolver.get_settings_file_path("robot_config.json"),
     }
 
-    settingsService = SettingsService(settings_file_paths=settings_file_paths)
-    robot_config = settingsService.load_robot_config()
-
+    settings_service = SettingsService(settings_file_paths=settings_file_paths,settings_registry=settings_registry)
+    robot_config = settings_service.get_robot_config()
     if testRobot:
-        from modules.robot.FairinoRobot import TestRobotWrapper
+        from core.model.robot import TestRobotWrapper
         robot = TestRobotWrapper()
     else:
-        from modules.robot.FairinoRobot import FairinoRobot
-        robot = FairinoRobot(robot_config.robot_ip)
+        from core.model.robot import fairino_robot
+        robot = fairino_robot.FairinoRobot(robot_config.robot_ip)
 
     cameraService = VisionServiceSingleton().get_instance()
 
-    repository = WorkPieceRepositorySingleton().get_instance()
+    repository = GlueWorkPieceRepositorySingleton().get_instance()
     workpieceService = WorkpieceService(repository=repository)
 
     robot_state_manager_cycle_time = 0.03  # 30ms cycle time
     robot_state_manager = RobotStateManager(robot_ip=robot_config.robot_ip,
                                             cycle_time=robot_state_manager_cycle_time)
-    robotService = RobotService(robot, settingsService,robot_state_manager)
+    robotService = RobotService(robot, settings_service,robot_state_manager)
 
     # INIT CONTROLLERS
-    settingsController = SettingsController(settingsService)
+    settingsController = SettingsController(settings_service,settings_registry)
     cameraSystemController = CameraSystemController(cameraService)
 
     workpieceController = WorkpieceController(workpieceService)
@@ -93,9 +97,10 @@ if __name__ == "__main__":
     
     application_factory = create_application_factory(
         vision_service=cameraService,
-        settings_service=settingsService, 
+        settings_service=settings_service,
         workpiece_service=workpieceService,
         robot_service=robotService,
+        settings_registry=settings_registry,
         auto_register=True
     )
     
@@ -106,7 +111,6 @@ if __name__ == "__main__":
     # INIT REQUEST HANDLER
     if API_VERSION == 1:
 
-        from communication_layer.api_gateway.handlers.request_handler import RequestHandler
         requestHandler = RequestHandler(current_application, settingsController, cameraSystemController,
                                         workpieceController, robotController, application_factory)
 

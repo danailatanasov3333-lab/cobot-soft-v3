@@ -1,10 +1,11 @@
 from applications.glue_dispensing_application.workpiece.GlueWorkpiece import GlueWorkpiece
-from modules.shared.core.workpiece.WorkpieceService import WorkpieceService
+from core.controllers.BaseController import BaseController
+from core.services.workpiece.WorkpieceService import WorkpieceService
 from modules.shared.v1 import Constants
 import modules.shared.v1.endpoints.workpiece_endpoints as workpiece_endpoints
 
 
-class WorkpieceController:
+class WorkpieceController(BaseController):
     """
     Controller for handling workpiece-related requests.
 
@@ -18,71 +19,25 @@ class WorkpieceController:
         if not isinstance(workpieceService, WorkpieceService):
             raise ValueError("workpieceService must be an instance of WorkpieceService")
         self.workpieceService = workpieceService
+        super().__init__()
+        self._initialize_handlers()
 
-    # =========================
-    # MAIN HANDLER
-    # =========================
-    def handle(self, request, parts, data=None):
-        """
-        Main handler for workpiece requests.
-
-        Args:
-            request (str): Full request string
-            parts (list): Split request path parts
-            data (dict, optional): Data for POST/save operations
-
-        Returns:
-            dict or bool: Response or operation result
-        """
-        try:
-            # === GET ALL WORKPIECES ===
-            if request in [workpiece_endpoints.WORKPIECE_GET_ALL]:
-                return self._getAllWorkpieces()
-
-            # === GET WORKPIECE BY ID ===
-            elif request in [workpiece_endpoints.WORKPIECE_GET_BY_ID]:
-                workpieceId = data.get("id") if data else None
-                return self._getWorkpieceById(workpieceId)
-
-            # === SAVE WORKPIECE ===
-            elif request in [workpiece_endpoints.WORKPIECE_SAVE]:
-                return self._saveWorkpiece(data)
-
-            # === DELETE WORKPIECE ===
-            elif request in [workpiece_endpoints.WORKPIECE_DELETE]:
-                workpieceId = data.get("id") if data else None
-                return self._deleteWorkpiece(workpieceId)
-
-            # === DXF IMPORT ===
-            elif request in [workpiece_endpoints.WORKPIECE_SAVE_DXF]:
-                return self._saveWorkpieceDXF(data)
-
-            # === MULTI-STEP CREATION ===
-            elif request in [
-                workpiece_endpoints.WORKPIECE_CREATE
-            ]:
-                return self._createWorkpiece(data)
-
-            elif request in [
-                workpiece_endpoints.WORKPIECE_CREATE_STEP_1
-            ]:
-                return self._createWorkpieceStep(1, data)
-
-            elif request in [
-                workpiece_endpoints.WORKPIECE_CREATE_STEP_2
-            ]:
-                return self._createWorkpieceStep(2, data)
-
-            else:
-                raise ValueError(f"Unknown workpiece endpoint: {request}")
-
-        except Exception as e:
-            print(f"Error handling workpiece request: {e}")
-            return {
-                "status": Constants.RESPONSE_STATUS_ERROR,
-                "message": f"Error processing request: {e}",
-                "data": None,
-            }
+    # ============================================================
+    # REGISTER HANDLERS
+    # ============================================================
+    def _initialize_handlers(self):
+        self.register_handler(workpiece_endpoints.WORKPIECE_GET_ALL, lambda data=None: self._getAllWorkpieces())
+        self.register_handler(workpiece_endpoints.WORKPIECE_GET_BY_ID,
+                              lambda data: self._getWorkpieceById(data.get("id") if data else None))
+        self.register_handler(workpiece_endpoints.WORKPIECE_SAVE, lambda data: self._saveWorkpiece(data))
+        self.register_handler(workpiece_endpoints.WORKPIECE_DELETE,
+                              lambda data: self._deleteWorkpiece(data.get("id") if data else None))
+        self.register_handler(workpiece_endpoints.WORKPIECE_SAVE_DXF, lambda data: self._saveWorkpieceDXF(data))
+        self.register_handler(workpiece_endpoints.WORKPIECE_CREATE, lambda data: self._createWorkpiece(data))
+        self.register_handler(workpiece_endpoints.WORKPIECE_CREATE_STEP_1,
+                              lambda data: self._createWorkpieceStep(1, data))
+        self.register_handler(workpiece_endpoints.WORKPIECE_CREATE_STEP_2,
+                              lambda data: self._createWorkpieceStep(2, data))
 
     # =========================
     # INTERNAL HANDLERS

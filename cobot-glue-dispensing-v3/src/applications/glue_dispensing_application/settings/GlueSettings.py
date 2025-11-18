@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-from modules.shared.core.settings.BaseSettings import Settings
+from backend.system.settings.BaseSettings import Settings
 from core.application.interfaces.application_settings_interface import ApplicationSettingsInterface
 from applications.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
 

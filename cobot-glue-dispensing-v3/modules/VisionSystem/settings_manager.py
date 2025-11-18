@@ -1,7 +1,7 @@
 import json
 import os
 
-from modules.shared.core.settings.conreateSettings.enums.CameraSettingKey import CameraSettingKey
+from backend.system.settings.enums.CameraSettingKey import CameraSettingKey
 from backend.system.utils.custom_logging import log_if_enabled, LoggingLevel
 from libs.plvision.PLVision.Camera import Camera
 

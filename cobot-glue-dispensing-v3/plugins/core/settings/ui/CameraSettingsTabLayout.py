@@ -2,13 +2,12 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import QScroller
+from PyQt6.QtWidgets import QScroller,QWidget
 from PyQt6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QSizePolicy, QComboBox, QScrollArea, QGroupBox, QGridLayout)
-from PyQt6.QtWidgets import QWidget
 from frontend.widgets.ClickableLabel import ClickableLabel
 from frontend.widgets.MaterialButton import MaterialButton
-from modules.shared.core.settings.conreateSettings.CameraSettings import CameraSettings
-from modules.shared.core.settings.conreateSettings.enums.CameraSettingKey import CameraSettingKey
+from backend.system.settings.CameraSettings import CameraSettings
+from backend.system.settings.enums.CameraSettingKey import CameraSettingKey
 from frontend.widgets.SwitchButton import QToggle
 from frontend.widgets.ToastWidget import ToastWidget
 from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout

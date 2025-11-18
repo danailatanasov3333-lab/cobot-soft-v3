@@ -3,9 +3,9 @@ from PyQt6.QtCore import QThread
 from applications.glue_dispensing_application.workpiece.GlueWorkpiece import GlueWorkpiece
 from modules.shared.v1.Response import Response
 from modules.shared.v1 import Constants
-from modules.shared.core.settings.conreateSettings.CameraSettings import CameraSettings
+from backend.system.settings.CameraSettings import CameraSettings
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettings
-from modules.shared.core.settings.conreateSettings.RobotSettings import RobotSettings
+
 
 from frontend.legacy_ui.controller.RequestWorker import RequestWorker
 from frontend.feedback.FeedbackProvider import FeedbackProvider
@@ -216,10 +216,9 @@ class Controller:
         glueSettingsDict = glueSettingsResponse.data if glueSettingsResponse.status == Constants.RESPONSE_STATUS_SUCCESS else {}
 
         cameraSettings = CameraSettings(data=cameraSettingsDict)
-        robotSettings = RobotSettings(data=robotSettingsDict)
         glueSettings = GlueSettings(data=glueSettingsDict)
 
-        return cameraSettings, robotSettings, glueSettings
+        return cameraSettings, glueSettings
 
     def saveWorkpieceFromDXF(self, data):
 

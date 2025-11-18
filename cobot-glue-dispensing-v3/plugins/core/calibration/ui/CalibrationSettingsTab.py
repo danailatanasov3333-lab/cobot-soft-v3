@@ -11,7 +11,7 @@ from backend.system.utils import PathResolver
 from frontend.widgets.ClickableLabel import ClickableLabel
 from frontend.widgets.MaterialButton import MaterialButton
 from modules.shared.MessageBroker import MessageBroker
-from frontend.widgets.robotManualControl import RobotJogWidget
+from frontend.widgets.robotManualControl.RobotJogWidget import RobotJogWidget
 from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout
 from frontend.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox
 from modules.shared.v1.topics import VisionTopics , RobotTopics

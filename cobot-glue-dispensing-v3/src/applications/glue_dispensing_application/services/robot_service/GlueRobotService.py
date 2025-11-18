@@ -161,14 +161,8 @@ class RobotService(BaseRobotService):
             callback(success, message)
         return success, message
 
-    def loadConfig(self):
-        try:
-            self.robot_config = self.settings_service.load_robot_config()
-            print("Robot Config reloaded in RobotService: ", self.robot_config)
-            return True
-        except:
-            print("Failed to reload robot config in RobotService")
-            return False
+    def reload_config(self):
+        self. robot_config = self.settings_service.reload_robot_config()
 
    
 

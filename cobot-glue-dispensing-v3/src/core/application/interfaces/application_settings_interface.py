@@ -225,5 +225,3 @@ class ApplicationSettingsRegistry:
         return endpoint_mapping
 
 
-# Global registry instance
-settings_registry = ApplicationSettingsRegistry()

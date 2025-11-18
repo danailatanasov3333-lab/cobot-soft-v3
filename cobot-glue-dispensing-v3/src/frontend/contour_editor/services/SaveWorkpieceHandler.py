@@ -8,10 +8,10 @@ code duplication across the application.
 
 from typing import Dict, Any
 
+from applications.glue_dispensing_application.workpiece.GlueWorkpieceField import GlueWorkpieceField
 from frontend.dialogs.CustomFeedbackDialog import CustomFeedbackDialog, DialogType
 from frontend.contour_editor.adapters.WorkpieceAdapter import WorkpieceAdapter
 from frontend.contour_editor.EditorDataModel import ContourEditorData
-from modules.shared.core.workpiece.Workpiece import WorkpieceField
 
 
 class SaveWorkpieceHandler:
@@ -140,15 +140,15 @@ class SaveWorkpieceHandler:
                 "contour": workpiece_data["main_contour"],
                 "settings": workpiece_data.get("main_settings", {})
             }
-            complete_data[WorkpieceField.CONTOUR.value] = contour_data
+            complete_data[GlueWorkpieceField.CONTOUR.value] = contour_data
 
         # Add spray pattern
         if workpiece_data.get("spray_pattern"):
-            complete_data[WorkpieceField.SPRAY_PATTERN.value] = workpiece_data["spray_pattern"]
+            complete_data[GlueWorkpieceField.SPRAY_PATTERN.value] = workpiece_data["spray_pattern"]
 
         # Ensure contour_area is set (default to "0" if not present)
-        if WorkpieceField.CONTOUR_AREA.value not in complete_data:
-            complete_data[WorkpieceField.CONTOUR_AREA.value] = "0"
+        if GlueWorkpieceField.CONTOUR_AREA.value not in complete_data:
+            complete_data[GlueWorkpieceField.CONTOUR_AREA.value] = "0"
 
         return complete_data
 
@@ -200,10 +200,10 @@ class SaveWorkpieceHandler:
         print(f"\nWorkpiece Metadata:")
 
         metadata_fields = [
-            WorkpieceField.WORKPIECE_ID,
-            WorkpieceField.NAME,
-            WorkpieceField.DESCRIPTION,
-            WorkpieceField.HEIGHT,
+            GlueWorkpieceField.WORKPIECE_ID,
+            GlueWorkpieceField.NAME,
+            GlueWorkpieceField.DESCRIPTION,
+            GlueWorkpieceField.HEIGHT,
         ]
 
         for field in metadata_fields:
@@ -211,7 +211,7 @@ class SaveWorkpieceHandler:
             print(f"  - {field.name}: {value}")
 
         # Print spray pattern info
-        spray_pattern = complete_data.get(WorkpieceField.SPRAY_PATTERN.value, {})
+        spray_pattern = complete_data.get(GlueWorkpieceField.SPRAY_PATTERN.value, {})
         if spray_pattern:
             contour_count = len(spray_pattern.get("Contour", []))
             fill_count = len(spray_pattern.get("Fill", []))
@@ -247,8 +247,8 @@ class SaveWorkpieceHandler:
         # Validate required form fields
 
         required_fields = [
-            WorkpieceField.WORKPIECE_ID,
-            WorkpieceField.NAME,
+            GlueWorkpieceField.WORKPIECE_ID,
+            GlueWorkpieceField.NAME,
         ]
 
         for field in required_fields:
@@ -277,8 +277,8 @@ class SaveWorkpieceHandler:
 
         # Validate required fields
         required_fields = {
-            WorkpieceField.WORKPIECE_ID: "Workpiece ID",
-            WorkpieceField.HEIGHT: "Height"
+            GlueWorkpieceField.WORKPIECE_ID: "Workpiece ID",
+            GlueWorkpieceField.HEIGHT: "Height"
         }
 
         for field, field_name in required_fields.items():
@@ -287,7 +287,7 @@ class SaveWorkpieceHandler:
                 errors.append(f"{field_name} is mandatory and cannot be empty")
 
         # Validate height is a valid number
-        height_value = form_data.get(WorkpieceField.HEIGHT.value, "").strip()
+        height_value = form_data.get(GlueWorkpieceField.HEIGHT.value, "").strip()
         if height_value:  # Only validate if not empty (already checked above)
             try:
                 height_float = float(height_value)

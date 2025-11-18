@@ -514,11 +514,11 @@ class MainWindow(TranslatableWidget):
         sprayPatternsDict['Contour'] = wp_contours_data.get('Contour', [])
         sprayPatternsDict['Fill'] = wp_contours_data.get('Fill', [])
 
-        from modules.shared.core.workpiece.Workpiece import WorkpieceField
+        from core.model.workpiece.Workpiece import GlueWorkpieceField
 
-        data[WorkpieceField.SPRAY_PATTERN.value] = sprayPatternsDict
-        data[WorkpieceField.CONTOUR.value] = wp_contours_data.get('Workpiece', [])
-        data[WorkpieceField.CONTOUR_AREA.value] = 0  # PLACEHOLDER NEED TO CALCULATE AREA
+        data[GlueWorkpieceField.SPRAY_PATTERN.value] = sprayPatternsDict
+        data[GlueWorkpieceField.CONTOUR.value] = wp_contours_data.get('Workpiece', [])
+        data[GlueWorkpieceField.CONTOUR_AREA.value] = 0  # PLACEHOLDER NEED TO CALCULATE AREA
 
         # Save the workpiece using DXF endpoint
         print("Saving DXF workpiece with data:", data)

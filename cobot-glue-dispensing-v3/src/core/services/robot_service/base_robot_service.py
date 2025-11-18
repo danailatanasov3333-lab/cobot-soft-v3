@@ -3,10 +3,11 @@ import time
 from typing import Optional
 
 from backend.system.utils.custom_logging import log_info_message, log_debug_message, setup_logger, LoggerContext
+from backend.system.utils import robot_utils
 from core.services.robot_service.IRobotService import IRobotService
 from frontend.core.services.domain.RobotService import RobotAxis
-from modules.robot.RobotUtils import calculate_distance_between_points
-from modules.robot.enums.axis import Direction
+
+from core.model.robot.enums.axis import Direction
 from core.services.robot_service.enums.RobotState import RobotState
 from modules.shared.MessageBroker import MessageBroker
 from backend.system.SystemStatePublisherThread import SystemStatePublisherThread
@@ -262,7 +263,7 @@ class BaseRobotService(IRobotService):
                 time.sleep(0.1)
                 continue
 
-            distance = calculate_distance_between_points(current_position, endPoint)
+            distance = robot_utils.calculate_distance_between_points(current_position, endPoint)
 
             if distance < threshold:
                 log_debug_message(self.logger_context,

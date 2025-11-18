@@ -1,6 +1,9 @@
 from typing import Any
 
+from backend.system.contour_matching.alignment.difference_calculator import _calculateDifferences
 from backend.system.contour_matching.matching.best_match_result import BestMatchResult
+from backend.system.contour_matching.matching_config import DEBUG_CALCULATE_DIFFERENCES
+from modules.shapeMatchinModelTraining.modelManager import predict_similarity
 from modules.shared.core.ContourStandartized import Contour
 
 
@@ -11,9 +14,7 @@ class MLMatchingStrategy:
     def find_best_match(
         self, workpieces: list[Any], contour: Contour
     ) -> BestMatchResult:
-        from backend.system.contour_matching.alignment.difference_calculator import _calculateDifferences
-        from backend.system.contour_matching.matching_config import DEBUG_CALCULATE_DIFFERENCES
-        from new_development.shapeMatchinModelTraining.modelManager import predict_similarity
+
 
         best = BestMatchResult(workpiece=None, confidence=0.0, result="DIFFERENT")
 

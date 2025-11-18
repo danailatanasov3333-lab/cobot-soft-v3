@@ -9,6 +9,8 @@ from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QPixmap, QIcon, QPalette, QColor
 from PyQt6.QtWidgets import QFrame, QSizePolicy, QSpacerItem, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, \
     QCheckBox, QWidget, QMessageBox, QDialog, QScrollArea, QStyleFactory, QListView
+
+from applications.glue_dispensing_application.workpiece.GlueWorkpieceField import GlueWorkpieceField
 from frontend.core.utils.styles.CreateWorkpieceStyles import getStyles
 from frontend.core.utils.styles.CreateWorkpieceStyles import get_input_field_styles
 from frontend.core.utils.styles.CreateWorkpieceStyles import get_popup_view_styles
@@ -19,7 +21,6 @@ from frontend.virtualKeyboard.VirtualKeyboard import FocusLineEdit
 from frontend.core.utils.IconLoader import WORKPIECE_ID_ICON_PATH, WORKPIECE_NAME_ICON_PATH, DESCRIPTION_ICON_PATH, \
     HEIGHT_ICON_PATH, GRIPPER_ID_ICON_PATH, GLUE_TYPE_ICON_PATH, ACCEPT_BUTTON_ICON_PATH, \
     CANCEL_BUTTON_ICON_PATH, GLUE_QTY_ICON_PATH
-from modules.shared.core.workpiece.Workpiece import WorkpieceField
 from modules.shared.tools.GlueCell import GlueType
 from modules.shared.tools.enums.Gripper import Gripper
 from modules.shared.tools.enums.Program import Program
@@ -34,18 +35,18 @@ RESOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resourc
 # Configuration file path
 CONFIG_FILE = "settings/workpiece_form_config.json"
 DEFAULT_FIELD_CONFIG = {
-    WorkpieceField.WORKPIECE_ID.value: {"visible": True, "mandatory": False},
-    WorkpieceField.NAME.value: {"visible": True, "mandatory": False},
-    WorkpieceField.DESCRIPTION.value: {"visible": True, "mandatory": False},
-    WorkpieceField.OFFSET.value: {"visible": True, "mandatory": False},
-    WorkpieceField.HEIGHT.value: {"visible": True, "mandatory": False},
-    WorkpieceField.GLUE_QTY.value: {"visible": True, "mandatory": False},
-    WorkpieceField.SPRAY_WIDTH.value: {"visible": True, "mandatory": False},
-    WorkpieceField.TOOL_ID.value: {"visible": True, "mandatory": False},
-    WorkpieceField.GRIPPER_ID.value: {"visible": True, "mandatory": False},
-    WorkpieceField.GLUE_TYPE.value: {"visible": True, "mandatory": False},
-    WorkpieceField.PROGRAM.value: {"visible": True, "mandatory": False},
-    WorkpieceField.MATERIAL.value: {"visible": True, "mandatory": False}
+    GlueWorkpieceField.WORKPIECE_ID.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.NAME.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.DESCRIPTION.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.OFFSET.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.HEIGHT.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.GLUE_QTY.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.SPRAY_WIDTH.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.TOOL_ID.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.GRIPPER_ID.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.GLUE_TYPE.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.PROGRAM.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.MATERIAL.value: {"visible": True, "mandatory": False}
 }
 
 class FormConfigManager:
@@ -84,12 +85,12 @@ class FormConfigManager:
 
     def is_field_visible(self, field):
         """Check if a field should be visible"""
-        field_key = field.value if isinstance(field, WorkpieceField) else field
+        field_key = field.value if isinstance(field, GlueWorkpieceField) else field
         return self.config.get(field_key, {}).get("visible", True)
 
     def is_field_mandatory(self, field):
         """Check if a field is mandatory"""
-        field_key = field.value if isinstance(field, WorkpieceField) else field
+        field_key = field.value if isinstance(field, GlueWorkpieceField) else field
         return self.config.get(field_key, {}).get("mandatory", False)
 
 class FieldConfigWidget(QWidget):
@@ -315,10 +316,10 @@ class CreateWorkpieceForm(Drawer,QFrame):
             elif hasattr(widget, 'setCurrentText'):  # QComboBox
                 # For enum fields, convert value to name if necessary
                 enum_mapping = {
-                    WorkpieceField.TOOL_ID.value: ToolID,
-                    WorkpieceField.GRIPPER_ID.value: Gripper,
-                    WorkpieceField.GLUE_TYPE.value: GlueType,
-                    WorkpieceField.PROGRAM.value: Program,
+                    GlueWorkpieceField.TOOL_ID.value: ToolID,
+                    GlueWorkpieceField.GRIPPER_ID.value: Gripper,
+                    GlueWorkpieceField.GLUE_TYPE.value: GlueType,
+                    GlueWorkpieceField.PROGRAM.value: Program,
                 }
                 if field_name in enum_mapping:
                     enum_class = enum_mapping[field_name]
@@ -401,12 +402,12 @@ class CreateWorkpieceForm(Drawer,QFrame):
         """Add all form widgets based on configuration"""
         # Input fields
         input_fields = [
-            (WorkpieceField.WORKPIECE_ID, "", WORKPIECE_ID_ICON_PATH),
-            (WorkpieceField.NAME, "", WORKPIECE_NAME_ICON_PATH),
-            (WorkpieceField.DESCRIPTION, "", DESCRIPTION_ICON_PATH),
+            (GlueWorkpieceField.WORKPIECE_ID, "", WORKPIECE_ID_ICON_PATH),
+            (GlueWorkpieceField.NAME, "", WORKPIECE_NAME_ICON_PATH),
+            (GlueWorkpieceField.DESCRIPTION, "", DESCRIPTION_ICON_PATH),
             # (WorkpieceField.OFFSET, "", OFFSET_ICON_PATH),
-            (WorkpieceField.HEIGHT, "", HEIGHT_ICON_PATH),
-            (WorkpieceField.GLUE_QTY, "g /m²", GLUE_QTY_ICON_PATH),
+            (GlueWorkpieceField.HEIGHT, "", HEIGHT_ICON_PATH),
+            (GlueWorkpieceField.GLUE_QTY, "g /m²", GLUE_QTY_ICON_PATH),
             # (WorkpieceField.SPRAY_WIDTH, "", SPRAY_WIDTH_ICON_PATH),
         ]
 
@@ -417,8 +418,8 @@ class CreateWorkpieceForm(Drawer,QFrame):
         # Dropdown fields
         dropdown_fields = [
             # (WorkpieceField.TOOL_ID, ToolID, TOOL_ID_ICON_PATH),
-            (WorkpieceField.GRIPPER_ID, Gripper, GRIPPER_ID_ICON_PATH),
-            (WorkpieceField.GLUE_TYPE, GlueType, GLUE_TYPE_ICON_PATH),
+            (GlueWorkpieceField.GRIPPER_ID, Gripper, GRIPPER_ID_ICON_PATH),
+            (GlueWorkpieceField.GLUE_TYPE, GlueType, GLUE_TYPE_ICON_PATH),
             # (WorkpieceField.PROGRAM, Program, PROGRAM_ICON_PATH),
             # (WorkpieceField.MATERIAL, ["Material1", "Material2", "Material3"], MATERIAL_ICON_PATH),
         ]
@@ -573,13 +574,13 @@ class CreateWorkpieceForm(Drawer,QFrame):
                     elif hasattr(widget, 'currentText'):  # QComboBox
                         current_text = widget.currentText()
                         # Special handling for enum dropdowns - convert name back to value
-                        if field_name in [WorkpieceField.TOOL_ID.value, WorkpieceField.GRIPPER_ID.value, WorkpieceField.GLUE_TYPE.value, WorkpieceField.PROGRAM.value]:
+                        if field_name in [GlueWorkpieceField.TOOL_ID.value, GlueWorkpieceField.GRIPPER_ID.value, GlueWorkpieceField.GLUE_TYPE.value, GlueWorkpieceField.PROGRAM.value]:
                             # Find the enum class for this field  
                             enum_mapping = {
-                                WorkpieceField.TOOL_ID.value: ToolID,
-                                WorkpieceField.GRIPPER_ID.value: Gripper, 
-                                WorkpieceField.GLUE_TYPE.value: GlueType,
-                                WorkpieceField.PROGRAM.value: Program,
+                                GlueWorkpieceField.TOOL_ID.value: ToolID,
+                                GlueWorkpieceField.GRIPPER_ID.value: Gripper,
+                                GlueWorkpieceField.GLUE_TYPE.value: GlueType,
+                                GlueWorkpieceField.PROGRAM.value: Program,
 
 
                             }
@@ -592,19 +593,19 @@ class CreateWorkpieceForm(Drawer,QFrame):
                             data[field_name] = current_text
 
         # Add default values for hidden fields that backend expects (using correct camelCase field names)
-        data[WorkpieceField.TOOL_ID.value] = "0"  # Default tool ID -> 'toolId'
-        data[WorkpieceField.PROGRAM.value] = "Trace"  # Default program -> 'program' 
-        data[WorkpieceField.MATERIAL.value] = "Material1"  # Default material -> 'material'
-        data[WorkpieceField.OFFSET.value] = "0"  # Default offset -> 'offset'
-        data[WorkpieceField.SPRAY_WIDTH.value] = "10"  # Default spray width -> 'spray_width'
-        data[WorkpieceField.HEIGHT.value] = getattr(self, f"{WorkpieceField.HEIGHT.value}_edit").text().strip() if hasattr(self, f"{WorkpieceField.HEIGHT.value}_edit") else ""
-        data[WorkpieceField.CONTOUR_AREA.value] = "0"  # Default contour area -> 'contour_area'
+        data[GlueWorkpieceField.TOOL_ID.value] = "0"  # Default tool ID -> 'toolId'
+        data[GlueWorkpieceField.PROGRAM.value] = "Trace"  # Default program -> 'program'
+        data[GlueWorkpieceField.MATERIAL.value] = "Material1"  # Default material -> 'material'
+        data[GlueWorkpieceField.OFFSET.value] = "0"  # Default offset -> 'offset'
+        data[GlueWorkpieceField.SPRAY_WIDTH.value] = "10"  # Default spray width -> 'spray_width'
+        data[GlueWorkpieceField.HEIGHT.value] = getattr(self, f"{GlueWorkpieceField.HEIGHT.value}_edit").text().strip() if hasattr(self, f"{GlueWorkpieceField.HEIGHT.value}_edit") else ""
+        data[GlueWorkpieceField.CONTOUR_AREA.value] = "0"  # Default contour area -> 'contour_area'
         # Add pickup point if it exists
         if hasattr(self, 'pickup_point') and self.pickup_point:
-            data[WorkpieceField.PICKUP_POINT.value] = self.pickup_point
+            data[GlueWorkpieceField.PICKUP_POINT.value] = self.pickup_point
             print(f"DEBUG: Including pickup_point in data: {self.pickup_point}")
         else:
-            data[WorkpieceField.PICKUP_POINT.value] = None
+            data[GlueWorkpieceField.PICKUP_POINT.value] = None
             print(f"DEBUG: No pickup_point found. hasattr: {hasattr(self, 'pickup_point')}, value: {getattr(self, 'pickup_point', 'N/A')}")
 
         print("ON SUBMIT DATA:", data)
@@ -653,8 +654,8 @@ class CreateWorkpieceForm(Drawer,QFrame):
 
     def setHeigh(self, value):
         """Set height field value"""
-        if hasattr(self, f"{WorkpieceField.HEIGHT.value}_edit"):
-            getattr(self, f"{WorkpieceField.HEIGHT.value}_edit").setText(str(value))
+        if hasattr(self, f"{GlueWorkpieceField.HEIGHT.value}_edit"):
+            getattr(self, f"{GlueWorkpieceField.HEIGHT.value}_edit").setText(str(value))
 
     def clear_form(self):
         """Clear all form fields"""

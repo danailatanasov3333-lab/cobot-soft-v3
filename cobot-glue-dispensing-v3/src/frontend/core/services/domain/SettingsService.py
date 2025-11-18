@@ -108,11 +108,10 @@ class SettingsService:
             self.logger.info("Retrieving all settings")
             
             # Call the controller
-            camera_settings, robot_settings, glue_settings = self.controller.handleGetSettings()
+            camera_settings, glue_settings = self.controller.handleGetSettings()
             
             settings_data = {
                 "camera": camera_settings,
-                "robot": robot_settings,
                 "glue": glue_settings
             }
             

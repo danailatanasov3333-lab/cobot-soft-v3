@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QFrame, QWidget, QApplication, QMessageBox, QDialog,
 from shapely import Polygon, LineString
 
 from applications.glue_dispensing_application.workpiece.GlueWorkpiece import GlueWorkpiece
+from applications.glue_dispensing_application.workpiece.GlueWorkpieceField import GlueWorkpieceField
 from frontend.contour_editor.widgets.TopbarWidget import TopBarWidget
 
 from .services.CaptureDataHandler import CaptureDataHandler
@@ -22,7 +23,6 @@ from .widgets.SlidingPanel import SlidingPanel
 from .utils.utils import shrink_contour_points, generate_spray_pattern
 from frontend.forms.CreateWorkpieceForm import CreateWorkpieceForm
 from frontend.dialogs.CustomFeedbackDialog import CustomFeedbackDialog, DialogType
-from modules.shared.core.workpiece.Workpiece import WorkpieceField
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
@@ -466,19 +466,19 @@ class MainApplicationFrame(QFrame):
 
         # Mock form data
         mock_data = {
-            WorkpieceField.WORKPIECE_ID.value: "WP123",
-            WorkpieceField.NAME.value: "Test Workpiece",
-            WorkpieceField.DESCRIPTION.value: "Sample description",
-            WorkpieceField.OFFSET.value: "10,20,30",
-            WorkpieceField.HEIGHT.value: "50",
-            WorkpieceField.GLUE_QTY.value: "100",
-            WorkpieceField.SPRAY_WIDTH.value: "5",
-            WorkpieceField.TOOL_ID.value: "0",
-            WorkpieceField.GRIPPER_ID.value: "0",
-            WorkpieceField.GLUE_TYPE.value: "Type A",
-            WorkpieceField.PROGRAM.value: "Trace",
-            WorkpieceField.MATERIAL.value: "Material1",
-            WorkpieceField.CONTOUR_AREA.value: "1000",
+            GlueWorkpieceField.WORKPIECE_ID.value: "WP123",
+            GlueWorkpieceField.NAME.value: "Test Workpiece",
+            GlueWorkpieceField.DESCRIPTION.value: "Sample description",
+            GlueWorkpieceField.OFFSET.value: "10,20,30",
+            GlueWorkpieceField.HEIGHT.value: "50",
+            GlueWorkpieceField.GLUE_QTY.value: "100",
+            GlueWorkpieceField.SPRAY_WIDTH.value: "5",
+            GlueWorkpieceField.TOOL_ID.value: "0",
+            GlueWorkpieceField.GRIPPER_ID.value: "0",
+            GlueWorkpieceField.GLUE_TYPE.value: "Type A",
+            GlueWorkpieceField.PROGRAM.value: "Trace",
+            GlueWorkpieceField.MATERIAL.value: "Material1",
+            GlueWorkpieceField.CONTOUR_AREA.value: "1000",
         }
 
         # Add pickup point if set
@@ -501,7 +501,7 @@ class MainApplicationFrame(QFrame):
             return
 
         # Validate spray pattern data
-        spray_pattern = complete_data.get(WorkpieceField.SPRAY_PATTERN.value, {})
+        spray_pattern = complete_data.get(GlueWorkpieceField.SPRAY_PATTERN.value, {})
         contour_data = spray_pattern.get("Contour", [])
         fill_data = spray_pattern.get("Fill", [])
 

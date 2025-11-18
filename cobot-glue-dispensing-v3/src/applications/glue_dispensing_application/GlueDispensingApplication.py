@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from applications.glue_dispensing_application.services.robot_service.GlueRobotService import RobotService
 from core.application.interfaces.robot_application_interface import RobotApplicationInterface, OperationMode
@@ -37,9 +37,9 @@ from applications.glue_dispensing_application.handlers.workpieces_to_spray_paths
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from applications.glue_dispensing_application.settings.GlueSettingsHandler import GlueSettingsHandler
 from modules.shared.tools.GlueCell import GlueCellsManagerSingleton, GlueDataFetcher
-from core.application.interfaces.application_settings_interface import settings_registry
 
-from modules.shared.core.workpiece.WorkpieceService import WorkpieceService
+
+from core.services.workpiece.WorkpieceService import WorkpieceService
 
 """
 ENDPOINTS
@@ -67,6 +67,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                  settings_manager: SettingsService,
                  workpiece_service: WorkpieceService,
                  robot_service: RobotService,
+                 settings_registry,
                  **kwargs
                  ):
 
@@ -76,13 +77,14 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         glue_fetcher = GlueDataFetcher()
         glue_fetcher.start()
         # Initialize the base class
-        super().__init__(vision_service, settings_manager, robot_service)
+        super().__init__(vision_service, settings_manager, robot_service,settings_registry)
 
         # Register application-specific settings after initialization
         self._register_settings()
 
         # Override the base managers with glue dispensing specific extensions
         self.workpiece_service=workpiece_service
+        print(f"GlueDispensingApplication: workpiece_service set: {self.workpiece_service}")
         self.message_publisher = GlueDispensingMessagePublisher(self.message_publisher)
         self.state_manager = GlueDispensingApplicationStateManager(self.state_manager)
         self.subscription_manager = GlueDispensingSubscriptionManager(self, self.subscription_manager)
@@ -107,12 +109,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         self.CONTOUR_MATCHING = True
         self.current_operation = None
 
-    def get_workpieces(self) -> List[Any]:
-        """
-        Get available workpieces.
-        Default implementation - can be overridden by specific applications.
-        """
-        return self.workpieceService.loadAllWorkpieces()
+
     # ========== BaseRobotApplication Abstract Methods Implementation ==========
     
     def get_initial_state(self) -> ApplicationState:
@@ -343,7 +340,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
     def load_workpiece(self, workpiece_id: str) -> Dict[str, Any]:
         """Load a workpiece for processing"""
         try:
-            workpiece = self.workpieceService.get_workpiece_by_id(workpiece_id)
+            workpiece = self.workpiece_service.get_workpiece_by_id(workpiece_id)
             if workpiece is None:
                 return {
                     "success": False,
@@ -395,7 +392,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
     def get_workpieces(self):
         """Legacy method for backward compatibility"""
         if self.preselected_workpiece is None:
-            workpieces = self.workpieceService.loadAllWorkpieces()
+            workpieces = self.workpiece_service.loadAllWorkpieces()
             print(f" Loaded workpieces: {len(workpieces)}")
         else:
             workpieces = [self.preselected_workpiece]
@@ -449,7 +446,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
             print(f"No preselected workpiece set for demo")
             return False, "No preselected workpiece set for demo"
 
-        workpiece = self.workpieceService.get_workpiece_by_id(self.preselected_workpiece)
+        workpiece = self.workpiece_service.get_workpiece_by_id(self.preselected_workpiece)
         if workpiece is None:
             print(f"Demo workpiece with ID {self.preselected_workpiece} not found.")
             return True, f"Demo workpiece with ID {self.preselected_workpiece} not found."
@@ -462,7 +459,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
     def handle_set_preselected_workpiece(self, wp_id):
 
         selected_workpiece = None
-        all_workpieces = self.workpieceService.loadAllWorkpieces()
+        all_workpieces = self.workpiece_service.loadAllWorkpieces()
         for wp in all_workpieces:
             if str(wp.workpieceId) == str(wp_id):
                 selected_workpiece = wp
@@ -491,8 +488,8 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
             glue_handler = GlueSettingsHandler()
             
             # Register both with the global registry
-            settings_registry.register_settings_type(glue_settings)
-            settings_registry.register_handler(glue_handler)
+            self.settings_registry.register_settings_type(glue_settings)
+            self.settings_registry.register_handler(glue_handler)
             
             self.logger.info("Glue application settings registered successfully")
             
@@ -502,7 +499,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
     def get_glue_settings(self):
         """Get glue settings object for this application"""
         try:
-            handler = settings_registry.get_handler("glue")
+            handler = self.settings_registry.get_handler("glue")
             return handler.get_settings_object()
         except Exception as e:
             self.logger.error(f"Failed to get glue settings: {e}")
