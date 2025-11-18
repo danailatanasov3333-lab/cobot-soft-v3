@@ -1,8 +1,8 @@
 
 from core.base_robot_application import ApplicationState
 from modules.VisionSystem.VisionSystem import VisionSystemState
-from modules.robot.robotService.enums.RobotServiceState import RobotServiceState
-from applications.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import \
+from core.services.robot_service.enums.RobotServiceState import RobotServiceState
+from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import \
     GlueProcessState
 
 
@@ -94,6 +94,11 @@ class GlueDispensingApplicationStateManager:
     def on_glue_process_state_update(self, state):
         """Handle glue process state updates"""
         print(f"Glue process state update received: {state}")
+
+        # check if state is GluePrecessState and map to ApplicationState
+        if not isinstance(state, GlueProcessState):
+            raise ValueError(f"Invalid state type: {type(state)}. Expected GlueProcessState.")
+
         if state == GlueProcessState.PAUSED:
             self.base_state_manager.update_state(ApplicationState.PAUSED)
         elif state == GlueProcessState.COMPLETED:
@@ -102,10 +107,5 @@ class GlueDispensingApplicationStateManager:
             self.base_state_manager.update_state(ApplicationState.ERROR)
         elif state == GlueProcessState.STOPPED:
             self.base_state_manager.update_state(ApplicationState.IDLE)
-        elif state in [
-            GlueProcessState.STARTING,
-            GlueProcessState.MOVING_TO_FIRST_POINT,
-            GlueProcessState.EXECUTING_PATH,
-            GlueProcessState.TRANSITION_BETWEEN_PATHS,
-        ]:
-            self.base_state_manager.update_state(ApplicationState.RUNNING)
+        else:
+            self.base_state_manager.update_state(ApplicationState.STARTED)

@@ -1,6 +1,7 @@
+from core.services.robot_service.IRobotService import IRobotService
 from modules.shared.v1 import Constants
 from modules.shared.v1.Response import Response
-from modules.robot.robotService.RobotService import RobotService
+
 from modules.robot.enums.axis import Direction, RobotAxis
 import modules.shared.v1.endpoints.robot_endpoints as robot_endpoints
 
@@ -13,7 +14,7 @@ class RobotController:
     delegating the actual execution to RobotService.
     """
 
-    def __init__(self, robotService: RobotService):
+    def __init__(self, robotService: IRobotService):
         self.robotService = robotService
 
     def handle(self, request, parts):
@@ -114,7 +115,7 @@ class RobotController:
 
 
     def _handleStop(self):
-        ret = self.robotService.stopRobot()
+        ret = self.robotService.stop_motion()
         return self._moveSuccess(ret, "Failed stopping robot", "Robot stopped successfully")
 
     def _handleReloadConfig(self):
@@ -128,7 +129,7 @@ class RobotController:
         return self._moveSuccess(ret, "Failed resetting robot errors", "Robot errors reset")
 
     def _handleGetCurrentPosition(self):
-        pos = self.robotService.getCurrentPosition()
+        pos = self.robotService.get_current_position()
         if pos is None:
             return Response(Constants.RESPONSE_STATUS_ERROR, "Failed retrieving current position", {}).to_dict()
         return Response(Constants.RESPONSE_STATUS_SUCCESS, "Current position retrieved", {"position": pos}).to_dict()
@@ -137,7 +138,7 @@ class RobotController:
         # /api/v1/robot/position/move-to/x/y/z/rx/ry/rz
         try:
             position = [float(p) for p in parts[-6:]]
-            ret = self.robotService.moveToPosition(position, 0, 0, 100, 30)
+            ret = self.robotService.move_to_position(position, 0, 0, 100, 30)
             return self._moveSuccess(ret, "Failed moving to position", "Success moving to position")
         except Exception:
             return Response(Constants.RESPONSE_STATUS_ERROR, "Invalid position format", {}).to_dict()
@@ -181,7 +182,7 @@ class RobotController:
         except Exception:
             return Response(Constants.RESPONSE_STATUS_ERROR, f"Invalid JOG axis: {axis}", {}).to_dict()
 
-        ret = self.robotService.startJog(axis_enum, direction, step)
+        ret = self.robotService.start_jog(axis_enum, direction, step)
         return self._moveSuccess(ret, "Failed JOG", "Success JOG")
 
     def _handleSlotOperation(self, request, parts):

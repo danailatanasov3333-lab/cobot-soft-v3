@@ -154,7 +154,7 @@ class ControlButtonsWidget(TranslatableWidget):
             self.is_paused = False
             self.pause_btn.setText(self.tr(TranslationKeys.Dashboard.PAUSE))
             
-        elif self.app_state == ApplicationState.RUNNING:
+        elif self.app_state == ApplicationState.STARTED:
             # When running, disable start and enable stop/pause
             self.start_btn.setEnabled(False)
             self.stop_btn.setEnabled(True)
@@ -183,7 +183,7 @@ class ControlButtonsWidget(TranslatableWidget):
             self.stop_btn.setEnabled(False)
             self.pause_btn.setEnabled(False)
             
-        elif self.app_state == ApplicationState.STOPPING:
+        elif self.app_state == ApplicationState.STOPPED:
             # All buttons disabled while stopping
             self.start_btn.setEnabled(False)
             self.stop_btn.setEnabled(False)

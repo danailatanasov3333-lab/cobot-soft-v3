@@ -355,13 +355,6 @@ class CameraSettings(Settings):
         """Get the capture position offset."""
         return self.get_value(CameraSettingKey.CAPTURE_POS_OFFSET.value)
 
-    def get_capture_pos_offset(self):
-        """Get the capture position offset."""
-        return self.get_value(CameraSettingKey.CAPTURE_POS_OFFSET.value)
-
-    def set_capture_pos_offset(self, offset):
-        """Set the capture position offset."""
-        self.set_value(CameraSettingKey.CAPTURE_POS_OFFSET.value, offset)
 
     # ======= CONTOUR & SHAPE DETECTION METHODS =======
     def get_threshold(self):

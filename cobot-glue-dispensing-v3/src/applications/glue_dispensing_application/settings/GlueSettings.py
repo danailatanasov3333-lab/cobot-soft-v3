@@ -2,10 +2,9 @@ from typing import Dict, Any, List
 from modules.shared.core.settings.BaseSettings import Settings
 from core.application.interfaces.application_settings_interface import ApplicationSettingsInterface
 from applications.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
-from applications.glue_dispensing_application.settings.GlueConstants import (
-    SETTINGS_GLUE_GET, SETTINGS_GLUE_SET, SETTINGS_GLUE_GET_LEGACY, SETTINGS_GLUE_SET_LEGACY
-)
+
 from modules.shared.tools.GlueCell import GlueType
+from modules.shared.v1.endpoints import glue_endpoints
 
 
 class GlueSettings(Settings, ApplicationSettingsInterface):
@@ -114,14 +113,14 @@ class GlueSettings(Settings, ApplicationSettingsInterface):
     def to_dict(self) -> Dict[str, Any]:
         """Convert settings to dictionary format."""
         return self.toDict()
-    
+
     def get_supported_endpoints(self) -> List[str]:
         """Get list of API endpoints this settings type supports."""
         return [
-            SETTINGS_GLUE_GET,
-            SETTINGS_GLUE_SET,
-            SETTINGS_GLUE_GET_LEGACY,
-            SETTINGS_GLUE_SET_LEGACY,
+            glue_endpoints.SETTINGS_GLUE_GET,
+            glue_endpoints.SETTINGS_GLUE_SET,
+            glue_endpoints.SETTINGS_GLUE_GET_LEGACY,
+            glue_endpoints.SETTINGS_GLUE_SET_LEGACY,
         ]
 
     # Glue-specific methods (existing interface)

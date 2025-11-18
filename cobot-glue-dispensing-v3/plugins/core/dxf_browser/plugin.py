@@ -47,16 +47,37 @@ class DxfBrowserPlugin(IPlugin):
         Args:
             controller_service: Main controller service for backend operations
         """
-        # self._widget_instance = DxfBrowserAppWidget(controller_service)
-        pass
+        try:
+            self.controller_service = controller_service
+            self._mark_initialized(True)
+            return True
+        except Exception as e:
+            print(f"Error initializing DXF Browser plugin: {e}")
+            return False
 
     def create_widget(self, parent: Optional[QWidget] = None) -> QWidget:
-        # """Create and return the DXF Browser widget instance"""
-        # from .ui.DxfBrowserAppWidget import DxfBrowserAppWidget
-        # if self._widget_instance is None:
-        #     self._widget_instance = DxfBrowserAppWidget(parent, controller_service=self.controller_service)
-        # return self._widget_instance
-        pass
+        """Create and return the DXF Browser widget instance"""
+        try:
+            from .ui.DxfBrowserAppWidget import DxfBrowserAppWidget
+            
+            controller = None
+            if self.controller_service:
+                controller = self.controller_service.get_controller()
+            
+            widget = DxfBrowserAppWidget(
+                parent=parent,
+                controller=controller,
+                controller_service=self.controller_service
+            )
+            return widget
+        except Exception as e:
+            print(f"Error creating DXF Browser widget: {e}")
+            # Return a fallback widget
+            import sys
+            import os
+            sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+            from frontend.core.shared.base_widgets.AppWidget import AppWidget
+            return AppWidget(app_name=f"DXF Browser Error: {e}")
 
     def cleanup(self) -> None:
         """Cleanup resources when the plugin is unloaded"""

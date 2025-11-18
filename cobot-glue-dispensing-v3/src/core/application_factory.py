@@ -12,12 +12,13 @@ import logging
 from .application.interfaces.robot_application_interface import RobotApplicationInterface
 from .base_robot_application import BaseRobotApplication, ApplicationType
 
-from backend.system.vision.VisionService import _VisionService
+from core.services.vision.VisionService import _VisionService
 from backend.system.settings.SettingsService import SettingsService
 from modules.shared.core.workpiece.WorkpieceService import WorkpieceService
-from modules.robot.robotService.RobotService import RobotService
 from applications.glue_dispensing_application.GlueDispensingApplication import GlueSprayingApplication
 from applications.example_painting_application.application import PaintingApplication
+from .services.robot_service.IRobotService import IRobotService
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +47,7 @@ class ApplicationFactory:
                  vision_service: _VisionService,
                  settings_service: SettingsService,
                  workpiece_service: WorkpieceService,
-                 robot_service: RobotService):
+                 robot_service: IRobotService):
         """
         Initialize the application factory with core services.
         
@@ -161,8 +162,8 @@ class ApplicationFactory:
             application = app_class(
                 vision_service=self.vision_service,
                 settings_manager=self.settings_service,
-                workpiece_service=self.workpiece_service,
-                robot_service=self.robot_service
+                robot_service=self.robot_service,
+                workpiece_service=self.workpiece_service  # optional for apps that use it
             )
             
             # Cache the instance if caching is enabled
@@ -374,7 +375,7 @@ def auto_register_applications(factory: ApplicationFactory) -> None:
 def create_application_factory(vision_service: _VisionService,
                              settings_service: SettingsService,
                              workpiece_service: WorkpieceService,
-                             robot_service: RobotService,
+                             robot_service: IRobotService,
                              auto_register: bool = True) -> ApplicationFactory:
     """
     Create and configure an ApplicationFactory with automatic application discovery.

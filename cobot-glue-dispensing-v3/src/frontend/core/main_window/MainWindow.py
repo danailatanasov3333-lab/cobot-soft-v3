@@ -18,7 +18,7 @@ from frontend.legacy_ui.windows.folders_page.FoldersPage import FoldersPage, Fol
 from frontend.legacy_ui.windows.login.LoginWindow import LoginWindow
 from frontend.core.main_window.WidgetFactory import WidgetType
 from frontend.core.main_window.PluginWidgetFactory import PluginWidgetFactory
-from frontend.legacy_ui.windows.mainWindow.managers.CreateWorkpieceManager import CreateWorkpieceManager
+from frontend.legacy_ui.controller.CreateWorkpieceManager import CreateWorkpieceManager
 from frontend.core.utils.DxfThumbnailLoader import DXFThumbnailLoader
 from frontend.core.utils.IconLoader import (DASHBOARD_ICON, CREATE_WORKPIECE_ICON, GALLERY_ICON,
                                                  SETTINGS_ICON, CALIBRATION_ICON, USER_MANAGEMENT_ICON,
@@ -101,9 +101,9 @@ class MainWindow(TranslatableWidget):
         
         # Try plugin-based widget factory first
         app_widget = self.plugin_widget_factory.create_widget(app_name)
-        
+        print(f"create_app Plugin factory returned widget: {app_widget}")
         if app_widget:
-            print(f"MainWindow: Successfully created plugin widget for '{app_name}'")
+            print(f"create_app MainWindow: Successfully created plugin widget for '{app_name}'")
             
             # Connect widget-specific signals (plugin-agnostic)
             self._connect_widget_signals(app_widget, app_name)
@@ -111,7 +111,7 @@ class MainWindow(TranslatableWidget):
             # Handle special setup cases
             self._setup_special_widgets(app_widget, app_name)
         else:
-            print(f"MainWindow: No plugin widget found for '{app_name}', using fallback")
+            print(f"create_app MainWindow: No plugin widget found for '{app_name}', using fallback")
             app_widget = AppWidget(app_name=f"Placeholder ({app_name})")
 
         return app_widget
@@ -173,8 +173,9 @@ class MainWindow(TranslatableWidget):
     def show_app(self, app_name):
         """Show the specified app in the stacked widget"""
         app_widget = self.create_app(app_name)
+        print(f"show_app Created app widget: {app_widget}")
         if not app_widget:
-            print(f"MainWindow: App '{app_name}' could not be created.")
+            print(f"show_app MainWindow: App '{app_name}' could not be created.")
             return None
 
         # Connect the app's close signal
@@ -184,14 +185,14 @@ class MainWindow(TranslatableWidget):
             # Remove existing app widget
             old_app = self.stacked_widget.widget(1)
             old_app.clean_up()  # Call cleanup if needed
-            print(f"MainWindow: Closing old app widget - {old_app}")
+            print(f"show_app MainWindow: Closing old app widget - {old_app}")
             self.stacked_widget.removeWidget(old_app)
             old_app.deleteLater()
 
         self.stacked_widget.addWidget(app_widget)
         # Switch to the app view (index 1)
         self.stacked_widget.setCurrentIndex(1)
-        print(f"App '{app_name}' is now running. Press ESC to close or click the back button.")
+        print(f"show_app App '{app_name}' is now running. Press ESC to close or click the back button.")
         return app_widget
 
     def close_current_app(self):

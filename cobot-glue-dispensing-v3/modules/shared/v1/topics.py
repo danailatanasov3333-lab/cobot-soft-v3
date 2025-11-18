@@ -34,6 +34,7 @@ class SystemTopics(TopicCategory):
     # Application state management
     SYSTEM_STATE = "system/state"
     SYSTEM_MODE_CHANGE = "system/mode-change"
+    CURRENT_PROCESS = "system/current-process"
 
 
 class RobotTopics(TopicCategory):

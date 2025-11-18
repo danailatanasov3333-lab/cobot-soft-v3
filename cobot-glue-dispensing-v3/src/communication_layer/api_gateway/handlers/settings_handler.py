@@ -7,12 +7,8 @@ Handles all settings-related requests including robot, camera, and glue system c
 from modules.shared.v1.Response import Response
 from modules.shared.v1 import Constants
 from modules.shared.v1.endpoints import settings_endpoints
-from applications.glue_dispensing_application.settings.GlueConstants import (
-    SETTINGS_GLUE_GET,
-    SETTINGS_GLUE_SET,
-    SETTINGS_GLUE_GET_LEGACY,
-    SETTINGS_GLUE_SET_LEGACY
-)
+from modules.shared.v1.endpoints import glue_endpoints
+
 
 
 class SettingsHandler:
@@ -56,9 +52,9 @@ class SettingsHandler:
             return self.handle_camera_settings(parts, request, data)
         elif request in [settings_endpoints.SETTINGS_CAMERA_SET]:
             return self.handle_camera_settings(parts, request, data)
-        elif request in [SETTINGS_GLUE_GET, SETTINGS_GLUE_GET_LEGACY]:
+        elif request in [glue_endpoints.SETTINGS_GLUE_GET]:
             return self.handle_glue_settings(parts, request, data)
-        elif request in [SETTINGS_GLUE_SET, SETTINGS_GLUE_SET_LEGACY]:
+        elif request in [glue_endpoints.SETTINGS_GLUE_SET]:
             return self.handle_glue_settings(parts, request, data)
         elif request in [settings_endpoints.SETTINGS_GET]:
             return self.handle_general_settings(parts, request, data)

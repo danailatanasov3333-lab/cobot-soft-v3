@@ -17,15 +17,9 @@ from modules.shared.v1.endpoints import (
     robot_endpoints,
     camera_endpoints,
     workpiece_endpoints,
-    settings_endpoints
+    settings_endpoints,
+    glue_endpoints
 )
-# Import glue application constants
-from applications.glue_dispensing_application.settings.GlueConstants import (
-    REQUEST_RESOURCE_GLUE,
-    SETTINGS_GLUE_GET,
-    SETTINGS_GLUE_SET
-)
-
 
 from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
@@ -206,7 +200,7 @@ class Controller:
     def handleGetSettings(self):
         robotSettingsRequest = settings_endpoints.SETTINGS_ROBOT_GET
         cameraSettingsRequest = settings_endpoints.SETTINGS_CAMERA_GET
-        glueSettingsRequest = SETTINGS_GLUE_GET
+        glueSettingsRequest = glue_endpoints.SETTINGS_GLUE_GET
 
         robotSettingsResponseDict = self.requestSender.sendRequest(robotSettingsRequest)
         robotSettingsResponse = Response.from_dict(robotSettingsResponseDict)
@@ -382,8 +376,8 @@ class Controller:
 
         elif className == GlueSettingsTabLayout.__name__:
             print("Updating Settings Glue", key, value)
-            resource = REQUEST_RESOURCE_GLUE
-            request = SETTINGS_GLUE_SET
+            resource = glue_endpoints.REQUEST_RESOURCE_GLUE
+            request = glue_endpoints.SETTINGS_GLUE_SET
         else:
             self.logger.error(f"{self.logTag}] Updating Unknown Settings {className} : {key} {value}")
             return

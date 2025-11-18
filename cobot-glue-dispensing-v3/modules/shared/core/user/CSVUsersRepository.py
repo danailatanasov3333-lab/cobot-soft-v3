@@ -1,6 +1,6 @@
 from modules.shared.core.user.User import UserField
 from modules.shared.core.user.User import Role
-from modules.shared.core.database.repositories.csvRepository.BaseCSVRepository import BaseCSVRepository
+from core.database.repositories.csvRepository.BaseCSVRepository import BaseCSVRepository
 from modules.shared.core.user.User import AbstractUser
 import traceback
 

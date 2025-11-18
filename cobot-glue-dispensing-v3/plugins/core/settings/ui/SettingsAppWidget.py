@@ -1,14 +1,13 @@
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 from plugins.core.settings.ui.SettingsContent import SettingsContent
 from modules.shared.v1.endpoints import camera_endpoints
-from frontend.core.services.ControllerService import ControllerService
 
 class SettingsAppWidget(AppWidget):
     """Settings application widget using clean service pattern"""
 
     def __init__(self, parent=None, controller=None, controller_service=None):
         self.controller = controller  # Keep for backward compatibility
-        self.controller_service = controller_service or ControllerService(controller)
+        self.controller_service = controller_service
         super().__init__("Settings", parent)
 
     def setup_ui(self):

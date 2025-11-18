@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import numpy as np
 
 def standardize_contour(contour, dtype=np.float32):
     """

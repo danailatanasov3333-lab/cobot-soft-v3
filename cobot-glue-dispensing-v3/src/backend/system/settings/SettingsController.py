@@ -5,7 +5,7 @@ from modules.shared.v1.Response import Response
 import modules.shared.v1.endpoints.settings_endpoints as settings_endpoints
 
 from backend.system.settings.SettingsService import SettingsService
-from backend.system.vision.VisionService import VisionServiceSingleton
+from core.services.vision.VisionService import VisionServiceSingleton
 from core.application.interfaces.application_settings_interface import settings_registry
 
 

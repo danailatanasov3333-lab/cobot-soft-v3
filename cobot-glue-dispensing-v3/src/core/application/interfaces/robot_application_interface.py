@@ -134,52 +134,8 @@ class RobotApplicationInterface(ABC):
         """
         pass
 
-    
-    # ========== Workpiece Handling ==========
-    
-    @abstractmethod
-    def load_workpiece(self, workpiece_id: str) -> Dict[str, Any]:
-        """
-        Load a workpiece for processing.
-        
-        Args:
-            workpiece_id: Unique identifier of the workpiece
-            
-        Returns:
-            Dict containing load result and workpiece info
-        """
-        pass
-    
-    @abstractmethod
-    def process_workpiece(self, workpiece_id: str, **parameters) -> Dict[str, Any]:
-        """
-        Process a workpiece with the robot application.
-        
-        Args:
-            workpiece_id: Unique identifier of the workpiece
-            **parameters: Application-specific processing parameters
-            
-        Returns:
-            Dict containing processing result and statistics
-        """
-        pass
-
 
     # ========== Tool and Hardware Control ==========
-    
-    @abstractmethod
-    def clean_tool(self, tool_id: str) -> Dict[str, Any]:
-        """
-        Clean a specific tool (e.g., nozzle cleaning).
-        
-        Args:
-            tool_id: Identifier of the tool to clean
-            
-        Returns:
-            Dict containing cleaning result
-        """
-        pass
-    
 
     @abstractmethod
     def home_robot(self) -> Dict[str, Any]:

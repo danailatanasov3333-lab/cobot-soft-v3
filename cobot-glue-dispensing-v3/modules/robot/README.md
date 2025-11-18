@@ -459,7 +459,7 @@ Motion planning includes collision checking with environment.
 
 ```python
 robotService.stopRobot()  # Immediate stop
-robotService.disableRobot()  # Emergency disable
+robotService.disable_robot()  # Emergency disable
 ```
 
 ### Error Recovery
@@ -480,10 +480,10 @@ robot = FairinoRobot("192.168.1.100")
 robotService = RobotService(robot, settingsService)
 
 # Move to position
-robotService.moveToPosition(x=100, y=200, z=300, rx=0, ry=0, rz=90)
+robotService.move_to_position(x=100, y=200, z=300, rx=0, ry=0, rz=90)
 
 # Get current position
-position = robotService.getCurrentPosition()
+position = robotService.get_current_position()
 print(f"Current position: {position}")
 ```
 
@@ -540,7 +540,7 @@ robotService.dropOffGripper(slot_number=1)
 All robot operations return result objects:
 
 ```python
-result = robotService.moveToPosition(x, y, z)
+result = robotService.move_to_position(x, y, z)
 
 if result['success']:
     print("Move successful")

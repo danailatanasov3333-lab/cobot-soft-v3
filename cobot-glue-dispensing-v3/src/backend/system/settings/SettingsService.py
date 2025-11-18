@@ -6,7 +6,7 @@ from modules.shared.core.settings.conreateSettings.CameraSettings import CameraS
 from modules.shared.core.settings.robotConfig.robotConfigModel import RobotConfig,get_default_config
 from modules.shared.v1 import Constants
 from modules.shared.core.settings.conreateSettings.enums.CameraSettingKey import CameraSettingKey
-from modules.shared.core.settings.conreateSettings.enums.RobotSettingKey import RobotSettingKey
+# from modules.shared.core.settings.conreateSettings.enums.RobotSettingKey import RobotSettingKey
 import logging
 
 from core.application.interfaces.application_settings_interface import settings_registry
@@ -201,12 +201,12 @@ class SettingsService:
                 # Use the existing _load_from_nested_data method that handles nested structure
                 settings_obj._load_from_nested_data(settings_data)
 
-            elif isinstance(settings_obj, RobotSettings):
-                settings_obj.set_robot_ip(settings_data.get(RobotSettingKey.IP_ADDRESS.value, "192.168.58.2"))
-                settings_obj.set_robot_velocity(settings_data.get(RobotSettingKey.VELOCITY.value, 100))
-                settings_obj.set_robot_acceleration(settings_data.get(RobotSettingKey.ACCELERATION.value, 30))
-                settings_obj.set_robot_tool(settings_data.get(RobotSettingKey.TOOL.value, 0))
-                settings_obj.set_robot_user(settings_data.get(RobotSettingKey.USER.value, 0))
+            # elif isinstance(settings_obj, RobotSettings):
+            #     settings_obj.set_robot_ip(settings_data.get(RobotSettingKey.IP_ADDRESS.value, "192.168.58.2"))
+            #     settings_obj.set_robot_velocity(settings_data.get(RobotSettingKey.VELOCITY.value, 100))
+            #     settings_obj.set_robot_acceleration(settings_data.get(RobotSettingKey.ACCELERATION.value, 30))
+            #     settings_obj.set_robot_tool(settings_data.get(RobotSettingKey.TOOL.value, 0))
+            #     settings_obj.set_robot_user(settings_data.get(RobotSettingKey.USER.value, 0))
 
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.logger.error(f"Error loading settings from {json_file}: {e}")
@@ -232,15 +232,15 @@ class SettingsService:
             if isinstance(settings_obj, CameraSettings):
                 # Use the new to_nested_json method to preserve proper structure
                 settings_data = settings_obj.to_nested_json()
-
-            elif isinstance(settings_obj, RobotSettings):
-                settings_data = {
-                    RobotSettingKey.IP_ADDRESS.value: settings_obj.get_robot_ip(),
-                    RobotSettingKey.VELOCITY.value: settings_obj.get_robot_velocity(),
-                    RobotSettingKey.ACCELERATION.value: settings_obj.get_robot_acceleration(),
-                    RobotSettingKey.TOOL.value: settings_obj.get_robot_tool(),
-                    RobotSettingKey.USER.value: settings_obj.get_robot_user()
-                }
+            #
+            # elif isinstance(settings_obj, RobotSettings):
+            #     settings_data = {
+            #         RobotSettingKey.IP_ADDRESS.value: settings_obj.get_robot_ip(),
+            #         RobotSettingKey.VELOCITY.value: settings_obj.get_robot_velocity(),
+            #         RobotSettingKey.ACCELERATION.value: settings_obj.get_robot_acceleration(),
+            #         RobotSettingKey.TOOL.value: settings_obj.get_robot_tool(),
+            #         RobotSettingKey.USER.value: settings_obj.get_robot_user()
+            #     }
 
             with open(json_file, 'w') as f:
                 json.dump(settings_data, f, indent=4)
@@ -266,27 +266,23 @@ class SettingsService:
         print(f"Settings keys: {list(settings.keys()) if isinstance(settings, dict) else 'Not a dict'}")
         
         if 'header' not in settings:
-            print(f"ERROR: No 'header' key found in settings: {settings}")
             raise ValueError("Settings dictionary must contain a 'header' key")
             
         header = settings['header']
-        print(f"Header value: '{header}' (type: {type(header)})")
-        print(f"Constants.REQUEST_RESOURCE_CAMERA: '{Constants.REQUEST_RESOURCE_CAMERA}' (type: {type(Constants.REQUEST_RESOURCE_CAMERA)})")
-        print(f"Header == Constants.REQUEST_RESOURCE_CAMERA: {header == Constants.REQUEST_RESOURCE_CAMERA}")
+
 
         # Handle core settings
-        if header == Constants.REQUEST_RESOURCE_ROBOT:
-            self.updateRobotSettings(settings)
-            return
-        elif header == Constants.REQUEST_RESOURCE_CAMERA:
+        # if header == Constants.REQUEST_RESOURCE_ROBOT:
+        #     self.updateRobotSettings(settings)
+        #     return
+        if header == Constants.REQUEST_RESOURCE_CAMERA:
             self.updateCameraSettings(settings)
             return
         
         # Handle application-specific settings through registry
         # Convert resource names to lowercase for registry lookup
         resource_map = {
-            "Glue": "glue",
-            "Weld": "weld"
+            "Glue": "glue"
         }
         
         settings_type = resource_map.get(header, header.lower())
@@ -303,27 +299,27 @@ class SettingsService:
             raise ValueError(f"Invalid or unsupported settings header: {header}")
 
 
-    def updateRobotSettings(self, settings: dict):
-        self.logger.info(f"Updating Robot Settings: {settings}")
-        """
-             Update robot-specific settings and persist them to file.
-
-             Args:
-                 settings (dict): Dictionary containing robot settings data.
-             """
-
-        if RobotSettingKey.IP_ADDRESS.value in settings:
-            self.robot_settings.set_robot_ip(settings.get(RobotSettingKey.IP_ADDRESS.value))
-        if RobotSettingKey.VELOCITY.value in settings:
-            self.robot_settings.set_robot_velocity(settings.get(RobotSettingKey.VELOCITY.value))
-        if RobotSettingKey.ACCELERATION.value in settings:
-            self.robot_settings.set_robot_acceleration(settings.get(RobotSettingKey.ACCELERATION.value))
-        if RobotSettingKey.TOOL.value in settings:
-            self.robot_settings.set_robot_tool(settings.get(RobotSettingKey.TOOL.value))
-        if RobotSettingKey.USER.value in settings:
-            self.robot_settings.set_robot_user(settings.get(RobotSettingKey.USER.value))
-
-        self.save_settings_to_json(self.settings_file_paths.get("robot_settings"), self.robot_settings)
+    # def updateRobotSettings(self, settings: dict):
+    #     self.logger.info(f"Updating Robot Settings: {settings}")
+    #     """
+    #          Update robot-specific settings and persist them to file.
+    #
+    #          Args:
+    #              settings (dict): Dictionary containing robot settings data.
+    #          """
+    #
+    #     if RobotSettingKey.IP_ADDRESS.value in settings:
+    #         self.robot_settings.set_robot_ip(settings.get(RobotSettingKey.IP_ADDRESS.value))
+    #     if RobotSettingKey.VELOCITY.value in settings:
+    #         self.robot_settings.set_robot_velocity(settings.get(RobotSettingKey.VELOCITY.value))
+    #     if RobotSettingKey.ACCELERATION.value in settings:
+    #         self.robot_settings.set_robot_acceleration(settings.get(RobotSettingKey.ACCELERATION.value))
+    #     if RobotSettingKey.TOOL.value in settings:
+    #         self.robot_settings.set_robot_tool(settings.get(RobotSettingKey.TOOL.value))
+    #     if RobotSettingKey.USER.value in settings:
+    #         self.robot_settings.set_robot_user(settings.get(RobotSettingKey.USER.value))
+    #
+    #     self.save_settings_to_json(self.settings_file_paths.get("robot_settings"), self.robot_settings)
 
     def updateCameraSettings(self, settings: dict):
         self.logger.info(f"Updating Camera Settings: {settings}")

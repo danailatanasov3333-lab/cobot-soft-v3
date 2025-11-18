@@ -4,6 +4,7 @@ import os
 
 from applications.glue_dispensing_application.workpiece.WorkPieceRepositorySingleton import WorkPieceRepositorySingleton
 from frontend.core.utils.localization import setup_localization
+from core.services.robot_service.RobotStateManager import RobotStateManager
 
 setup_localization()
 
@@ -16,7 +17,7 @@ from core.base_robot_application import ApplicationType
 from backend.system.SensorPublisher import SensorPublisher
 
 from modules.robot.RobotController import RobotController
-from modules.robot.robotService.RobotService import RobotService
+from applications.glue_dispensing_application.services.robot_service.GlueRobotService import RobotService
 # IMPORT CONTROLLERS
 from backend.system.settings.SettingsController import SettingsController
 
@@ -24,8 +25,8 @@ from backend.system.settings.SettingsController import SettingsController
 from backend.system.settings.SettingsService import SettingsService
 
 
-from backend.system.vision.CameraSystemController import CameraSystemController
-from backend.system.vision.VisionService import VisionServiceSingleton
+from core.controllers.vision.CameraSystemController import CameraSystemController
+from core.services.vision.VisionService import VisionServiceSingleton
 from applications.glue_dispensing_application.workpiece.WorkpieceController import WorkpieceController
 from backend.system.utils import PathResolver
 
@@ -76,7 +77,10 @@ if __name__ == "__main__":
     repository = WorkPieceRepositorySingleton().get_instance()
     workpieceService = WorkpieceService(repository=repository)
 
-    robotService = RobotService(robot, settingsService)
+    robot_state_manager_cycle_time = 0.03  # 30ms cycle time
+    robot_state_manager = RobotStateManager(robot_ip=robot_config.robot_ip,
+                                            cycle_time=robot_state_manager_cycle_time)
+    robotService = RobotService(robot, settingsService,robot_state_manager)
 
     # INIT CONTROLLERS
     settingsController = SettingsController(settingsService)

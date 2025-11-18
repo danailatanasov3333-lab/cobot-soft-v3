@@ -1,10 +1,10 @@
 # Action functions
 
-from applications.glue_dispensing_application.GlueDispensingApplicationState import GlueSprayApplicationState
 from applications.glue_dispensing_application.handlers.modes_handlers import \
     contour_matching_mode_handler, direct_trace_mode_handler
 
-from applications.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import GlueProcessState
+from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
+from core.base_robot_application import ApplicationState
 
 
 def start(application, contourMatching=True,nesting= False, debug=False):
@@ -21,7 +21,7 @@ def start(application, contourMatching=True,nesting= False, debug=False):
     # Only move to calibration position if robot service is not stopped/paused
     if application.glue_process_state_machine.state not in [GlueProcessState.STOPPED, GlueProcessState.PAUSED,GlueProcessState.ERROR]:
         application.move_to_spray_capture_position()
-    application.state = GlueSprayApplicationState.IDLE
+    application.state = ApplicationState.IDLE
     return result, message
 
 

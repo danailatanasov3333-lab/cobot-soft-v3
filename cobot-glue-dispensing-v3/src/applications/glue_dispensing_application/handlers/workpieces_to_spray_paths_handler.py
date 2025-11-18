@@ -1,10 +1,12 @@
 import numpy as np
 
 from applications.glue_dispensing_application.settings.enums import GlueSettingKey
-from modules.shared.core.Contour import Contour
+
 
 from backend.system.utils import utils
 from backend.system.utils.contours import flatten_and_convert_to_list
+from modules.shared.core.ContourStandartized import Contour
+
 
 class WorkpieceToSprayPathsGenerator:
     def __init__(self, application):

@@ -9,9 +9,9 @@ from applications.glue_dispensing_application.GlueDispensingMessagePublisher imp
     GlueDispensingMessagePublisher
 from applications.glue_dispensing_application.GlueDispensingSubscriptionManager import \
     GlueDispensingSubscriptionManager
-from modules.robot.robotService.RobotService import RobotService
+from applications.glue_dispensing_application.services.robot_service.GlueRobotService import RobotService
 from backend.system.settings.SettingsService import SettingsService
-from backend.system.vision.VisionService import _VisionService
+from core.services.vision.VisionService import _VisionService
 
 
 class PaintingApplication(BaseRobotApplication,RobotApplicationInterface):

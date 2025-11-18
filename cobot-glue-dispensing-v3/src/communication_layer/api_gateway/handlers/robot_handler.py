@@ -47,9 +47,9 @@ class RobotHandler:
         elif request in [robot_endpoints.ROBOT_EXECUTE_NOZZLE_CLEAN] or (len(parts) >= 3 and parts[1] == "move" and parts[2] == "clean"):
             return self.handle_clean_nozzle()
         elif request in [robot_endpoints.ROBOT_MOVE_TO_HOME_POS]:
-            return self.handle_home_position()
+            return self.handle_home_position(request)
         elif request in [robot_endpoints.ROBOT_STOP]:
-            return self.handle_robot_stop()
+            return self.handle_robot_stop(request)
         elif self._is_jog_command(request):
             return self.handle_jog_command(parts, request)
         elif self._is_slot_command(request):
@@ -118,13 +118,13 @@ class RobotHandler:
         ]
         return request in position_endpoints or "/position/" in request
     
-    def handle_home_position(self):
+    def handle_home_position(self,request):
         """Handle robot home position movement."""
         print("RobotHandler: Handling home position movement")
         
         try:
             # Delegate to robot controller
-            return self.robotController.handle("robot/move/home", ["robot", "move", "home"])
+            return self.robotController.handle(request, ["robot", "move", "home"])
         except Exception as e:
             print(f"RobotHandler: Error moving to home position: {e}")
             return Response(
@@ -132,13 +132,13 @@ class RobotHandler:
                 message=f"Error moving to home position: {e}"
             ).to_dict()
     
-    def handle_robot_stop(self):
+    def handle_robot_stop(self,request):
         """Handle robot stop command."""
         print("RobotHandler: Handling robot stop")
         
         try:
             # Delegate to robot controller
-            return self.robotController.handle("robot/stop", ["robot", "stop"])
+            return self.robotController.handle(request, ["robot", "stop"])
         except Exception as e:
             print(f"RobotHandler: Error stopping robot: {e}")
             return Response(

@@ -1,13 +1,15 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 
+from applications.glue_dispensing_application.services.robot_service.GlueRobotService import RobotService
 from core.application.interfaces.robot_application_interface import RobotApplicationInterface, OperationMode
-from modules.robot.robotService.RobotService import RobotService
+
+import logging
 
 from backend.system.settings.SettingsService import SettingsService
-from backend.system.system_handlers.camera_calibration_handler import \
+from core.operations_handlers.camera_calibration_handler import \
     calibrate_camera
-from backend.system.system_handlers.robot_calibration_handler import calibrate_robot
-from backend.system.vision.VisionService import _VisionService
+from core.operations_handlers.robot_calibration_handler import calibrate_robot
+from core.services.vision.VisionService import _VisionService
 # Import base classes
 from core.base_robot_application import BaseRobotApplication, ApplicationState
 from applications.glue_dispensing_application.GlueDispensingApplicationStateManager import \
@@ -16,11 +18,11 @@ from applications.glue_dispensing_application.GlueDispensingMessagePublisher imp
     GlueDispensingMessagePublisher
 from applications.glue_dispensing_application.GlueDispensingSubscriptionManager import \
     GlueDispensingSubscriptionManager
-from applications.glue_dispensing_application.glue_dispensing.glue_dispensing_operation import \
+from applications.glue_dispensing_application.glue_process.glue_dispensing_operation import \
     GlueDispensingOperation
-from applications.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessState import \
+from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import \
     GlueProcessState
-from applications.glue_dispensing_application.glue_dispensing.state_machine.GlueProcessStateMachine import \
+from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessStateMachine import \
     GlueProcessStateMachine
 from applications.glue_dispensing_application.handlers import spraying_handler, nesting_handler
 from applications.glue_dispensing_application.handlers.clean_nozzle_handler import clean_nozzle
@@ -64,21 +66,23 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                  vision_service: _VisionService,
                  settings_manager: SettingsService,
                  workpiece_service: WorkpieceService,
-                 robot_service: RobotService):
+                 robot_service: RobotService,
+                 **kwargs
+                 ):
 
         # Initialize logger first (before base class to avoid issues)
-        import logging
         self.logger = logging.getLogger(self.__class__.__name__)
         # register glue meters
         glue_fetcher = GlueDataFetcher()
         glue_fetcher.start()
         # Initialize the base class
-        super().__init__(vision_service, settings_manager, workpiece_service, robot_service)
+        super().__init__(vision_service, settings_manager, robot_service)
 
         # Register application-specific settings after initialization
         self._register_settings()
 
         # Override the base managers with glue dispensing specific extensions
+        self.workpiece_service=workpiece_service
         self.message_publisher = GlueDispensingMessagePublisher(self.message_publisher)
         self.state_manager = GlueDispensingApplicationStateManager(self.state_manager)
         self.subscription_manager = GlueDispensingSubscriptionManager(self, self.subscription_manager)
@@ -94,7 +98,6 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         # Initialize glue process state machine for operation control
 
         self.glue_process_state_machine = GlueProcessStateMachine(GlueProcessState.INITIALIZING)
-
         self.workpiece_matcher = WorkpieceMatcher()
 
         # Initialize glue dispensing operation with proper settings access
@@ -102,10 +105,14 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
 
         self.NESTING = True
         self.CONTOUR_MATCHING = True
-
-
         self.current_operation = None
 
+    def get_workpieces(self) -> List[Any]:
+        """
+        Get available workpieces.
+        Default implementation - can be overridden by specific applications.
+        """
+        return self.workpieceService.loadAllWorkpieces()
     # ========== BaseRobotApplication Abstract Methods Implementation ==========
     
     def get_initial_state(self) -> ApplicationState:
@@ -202,7 +209,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
     def stop(self, emergency: bool = False) -> Dict[str, Any]:
         """Stop the robot application operation"""
         try:
-            self.state_manager.update_state(ApplicationState.STOPPING)
+            self.state_manager.update_state(ApplicationState.STOPPED)
             result = self.glue_dispensing_operation.stop_operation()
             self.state_manager.update_state(ApplicationState.IDLE)
             return {

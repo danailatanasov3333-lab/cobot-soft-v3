@@ -11,12 +11,12 @@ class CalibrationRobotController:
 
 
     def move_to_position(self,position,blocking=False):
-        result = self.robot_service.moveToPosition(position=position,
-                                                   tool=self.robot_service.robot_config.robot_tool,
-                                                   workpiece=self.robot_service.robot_config.robot_user,
-                                                   velocity=30,
-                                                   acceleration=10,
-                                                   waitToReachPosition=blocking)
+        result = self.robot_service.move_to_position(position=position,
+                                                     tool=self.robot_service.robot_config.robot_tool,
+                                                     workpiece=self.robot_service.robot_config.robot_user,
+                                                     velocity=30,
+                                                     acceleration=10,
+                                                     waitToReachPosition=blocking)
 
         return result
 
@@ -72,7 +72,7 @@ class CalibrationRobotController:
         log_debug_message(self.logger_context,f"Making iterative movement: X+={move_x_mm:.3f}mm, Y+={move_y_mm:.3f}mm")
 
         # Move robot by small increment
-        current_pose = self.robot_service.getCurrentPosition()
+        current_pose = self.robot_service.get_current_position()
         x, y, z, rx, ry, rz = current_pose
         x += move_x_mm
         y += move_y_mm
@@ -83,36 +83,36 @@ class CalibrationRobotController:
         self.robot_service.moveToCalibrationPosition()
 
     def get_current_z_value(self):
-        return self.robot_service.getCurrentPosition()[2]
+        return self.robot_service.get_current_position()[2]
 
     def get_current_position(self):
-        return self.robot_service.getCurrentPosition()
+        return self.robot_service.get_current_position()
 
     def get_calibration_position(self):
         return self.robot_service.robot_config.getCalibrationPositionParsed()
 
     def move_y_relative(self,dy_mm,blocking=False):
-        current_pose = self.robot_service.getCurrentPosition()
+        current_pose = self.robot_service.get_current_position()
         x, y, z, rx, ry, rz = current_pose
         y += dy_mm
         new_position = [x, y, z, rx, ry, rz]
-        result = self.robot_service.moveToPosition(position=new_position,
-                                                   tool=self.robot_service.robot_config.robot_tool,
-                                                   workpiece=self.robot_service.robot_config.robot_user,
-                                                   velocity=30,
-                                                   acceleration=10,
-                                                   waitToReachPosition=blocking)
+        result = self.robot_service.move_to_position(position=new_position,
+                                                     tool=self.robot_service.robot_config.robot_tool,
+                                                     workpiece=self.robot_service.robot_config.robot_user,
+                                                     velocity=30,
+                                                     acceleration=10,
+                                                     waitToReachPosition=blocking)
         return result
 
     def move_x_relative(self,dx_mm,blocking=False):
-        current_pose = self.robot_service.getCurrentPosition()
+        current_pose = self.robot_service.get_current_position()
         x, y, z, rx, ry, rz = current_pose
         x += dx_mm
         new_position = [x, y, z, rx, ry, rz]
-        result = self.robot_service.moveToPosition(position=new_position,
-                                                   tool=self.robot_service.robot_config.robot_tool,
-                                                   workpiece=self.robot_service.robot_config.robot_user,
-                                                   velocity=30,
-                                                   acceleration=10,
-                                                   waitToReachPosition=blocking)
+        result = self.robot_service.move_to_position(position=new_position,
+                                                     tool=self.robot_service.robot_config.robot_tool,
+                                                     workpiece=self.robot_service.robot_config.robot_user,
+                                                     velocity=30,
+                                                     acceleration=10,
+                                                     waitToReachPosition=blocking)
         return result

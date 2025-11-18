@@ -1,48 +1,26 @@
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QLabel, QPushButton,
+    QWidget, QLabel, QPushButton,
     QGridLayout, QGroupBox, QVBoxLayout, QHBoxLayout, QScrollArea,
     QListWidget, QListWidgetItem, QMessageBox, QInputDialog, QFrame,
     QSizePolicy, QSpacerItem, QSlider, QComboBox, QDialog, QDialogButtonBox
 )
 from frontend.virtualKeyboard.VirtualKeyboard import FocusLineEdit,FocusSpinBox,FocusDoubleSpinBox
 from PyQt6.QtCore import QObject, pyqtSignal, Qt, QTimer
-import sys
+
 import json
 import os
 import copy
 from modules.shared.core.settings.robotConfig.robotConfigModel import RobotConfig, MovementGroup,get_default_config
 
 from modules.shared.v1.Response import Response
-from modules.shared.v1.DomesticRequestSender import DomesticRequestSender
 from modules.shared.v1.Constants import  RESPONSE_STATUS_ERROR
 from modules.shared.v1.endpoints import robot_endpoints
 from backend.system.utils import PathResolver
 
 from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout
 from frontend.core.utils.localization import TranslationKeys, get_app_translator
-class RequestHandler:
-
-    def handleRequest(self,request,data):
-        if request == robot_endpoints.HOME_ROBOT:
-            print(f"🏠 Executing {request}: {data}")
-        elif request == robot_endpoints.GO_TO_LOGIN_POS:
-            print(f"🔐 Executing {request}: {data}")
-        elif request == robot_endpoints.GO_TO_CALIBRATION_POS:
-            print(f"⚙️  Executing {request}: {data}")
-        elif request == robot_endpoints.ROBOT_MOVE_TO_POSITION:
-            print(f"📍 Executing {request}: {data}")
-        elif request == robot_endpoints.ROBOT_UPDATE_CONFIG:
-            print(f"💾 Executing UPDATE_CONFIG: {data}")
-        else:
-            print(f"Handling request: {request} with data {data}")
-
-
 
 # ========================= DATA CLASSES =========================
-
-
-
-
 # Simple JogSlider implementation
 class JogSlider(QWidget):
     """Simple jog slider implementation"""
@@ -1779,13 +1757,3 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
                         except:
                             pass  # Keep original text as fallback
 
-
-if __name__ == "__main__":
-    requestHandler = RequestHandler()
-    requestSender = DomesticRequestSender(requestHandler)
-    robotConfigController = RobotConfigController(requestSender)
-    app = QApplication(sys.argv)
-    window = RobotConfigUI(
-        robotConfigController=robotConfigController)
-    window.show()
-    sys.exit(app.exec())

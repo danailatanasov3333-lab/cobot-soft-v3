@@ -11,15 +11,14 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict, Any, List
 
+from core.services.robot_service.IRobotService import IRobotService
 from modules.shared.MessageBroker import MessageBroker
-from modules.shared.core.workpiece.WorkpieceService import WorkpieceService
 from modules.shared.v1.topics import SystemTopics
-from modules.robot.robotService.RobotService import RobotService
-from backend.system.vision.VisionService import _VisionService
+from core.services.vision.VisionService import _VisionService
 from backend.system.settings.SettingsService import SettingsService
 from backend.system.SystemStatePublisherThread import SystemStatePublisherThread
-from backend.system.system_handlers.robot_calibration_handler import calibrate_robot
-from backend.system.system_handlers.camera_calibration_handler import calibrate_camera
+from core.operations_handlers.robot_calibration_handler import calibrate_robot
+from core.operations_handlers.camera_calibration_handler import calibrate_camera
 
 
 
@@ -34,9 +33,9 @@ class ApplicationState(Enum):
     """Base application states that all robot applications should support"""
     INITIALIZING = "initializing"
     IDLE = "idle"
-    RUNNING = "running"
     PAUSED = "paused"
-    STOPPING = "stopping"
+    STOPPED = "stopped"
+    STARTED = "started"
     ERROR = "error"
     CALIBRATING = "calibrating"
 
@@ -47,7 +46,7 @@ class BaseMessagePublisher:
     def __init__(self, broker: MessageBroker):
         self.broker = broker
         self.state_topic = SystemTopics.SYSTEM_STATE
-    
+
     def publish_state(self, state: ApplicationState):
         """Publish application state"""
         self.broker.publish(self.state_topic, {
@@ -120,7 +119,7 @@ class BaseSubscriptionManager:
     
     def subscribe_robot_service_topics(self):
         """Subscribe to robot service topics"""
-        topic = self.application.robotService.state_topic
+        topic = self.application.robotService.get_state_topic()
         callback = self.application.state_manager.on_robot_service_state_update
         self.broker.subscribe(topic, callback)
         self.subscriptions[topic] = callback
@@ -151,24 +150,25 @@ class BaseRobotApplication(ABC):
     def __init__(self, 
                  vision_service: _VisionService,
                  settings_manager: SettingsService,
-                 workpiece_service: WorkpieceService,
-                 robot_service: RobotService):
+                 robot_service: IRobotService,
+                 **kwargs
+                 ):
         """
         Initialize the base robot application.
         
         Args:
             vision_service: Vision system service
             settings_manager: Settings management service
-            workpiece_service: Workpiece management service
             robot_service: Robot control service
         """
         
         # Core services
         self.visionService = vision_service
         self.settingsManager = settings_manager
-        self.workpieceService = workpiece_service
         self.robotService = robot_service
-        
+
+        # Optional services
+        self.workpieceService = kwargs.get("workpiece_service", None)
         # Message broker and communication
         self.broker = MessageBroker()
         self.message_publisher = BaseMessagePublisher(broker=self.broker)
@@ -199,8 +199,6 @@ class BaseRobotApplication(ABC):
         self.state_manager.start_state_publisher_thread()
         self.subscription_manager.subscribe_all()
         
-
-        
         # Keep initial state - let service callbacks determine when ready
         print(f"BaseRobotApplication initialized with state: {self.state_manager.state}")
     
@@ -211,42 +209,42 @@ class BaseRobotApplication(ABC):
     def get_initial_state(self) -> ApplicationState:
         """Return the initial state for this application"""
         return ApplicationState.INITIALIZING
-    
+
     @abstractmethod
     def start(self, **kwargs) -> Dict[str, Any]:
         """
         Start the robot application operation.
-        
+
         Returns:
             Dict containing operation result and any relevant data
         """
         pass
-    
+
     @abstractmethod
     def stop(self) -> Dict[str, Any]:
         """
         Stop the robot application operation.
-        
+
         Returns:
             Dict containing operation result
         """
         pass
-    
+
     @abstractmethod
     def pause(self) -> Dict[str, Any]:
         """
         Pause the robot application operation.
-        
+
         Returns:
             Dict containing operation result
         """
         pass
-    
+
     @abstractmethod
     def resume(self) -> Dict[str, Any]:
         """
         Resume the robot application operation.
-        
+
         Returns:
             Dict containing operation result
         """
@@ -266,18 +264,10 @@ class BaseRobotApplication(ABC):
         Default implementation - can be overridden by specific applications.
         """
         return calibrate_camera(self)
-
-    
-    def get_workpieces(self) -> List[Any]:
-        """
-        Get available workpieces.
-        Default implementation - can be overridden by specific applications.
-        """
-        return self.workpieceService.loadAllWorkpieces()
     
     def shutdown(self):
         """Shutdown the application and cleanup resources"""
-        self.state_manager.update_state(ApplicationState.STOPPING)
+        self.state_manager.update_state(ApplicationState.STOPPED)
         self.state_manager.stop_state_publisher_thread()
         self.subscription_manager.unsubscribe_all()
     
