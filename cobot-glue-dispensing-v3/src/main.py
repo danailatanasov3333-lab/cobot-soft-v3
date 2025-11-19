@@ -10,14 +10,16 @@ from applications.glue_dispensing_application.services.workpiece.glue_workpiece_
 from communication_layer.api_gateway.dispatch.main_router import RequestHandler
 from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 from core.controllers.vision.camera_system_controller import CameraSystemController
+from core.services.robot_service.impl.RobotStateManager import RobotStateManager
+
+from core.services.robot_service.impl.robot_monitor.fairino_monitor import FairinoRobotMonitor
 from frontend.core.utils.localization import setup_localization
-from core.services.robot_service.RobotStateManager import RobotStateManager
+
 
 setup_localization()
 
 
 from modules.shared.MessageBroker import MessageBroker
-from core.services.workpiece.BaseWorkpieceService import BaseWorkpieceService
 from communication_layer.api_gateway.DomesticRequestSender import DomesticRequestSender
 from core.application_factory import create_application_factory
 from core.base_robot_application import ApplicationType
@@ -86,8 +88,10 @@ if __name__ == "__main__":
     workpieceService = GlueWorkpieceService(repository=repository)
 
     robot_state_manager_cycle_time = 0.03  # 30ms cycle time
-    robot_state_manager = RobotStateManager(robot_ip=robot_config.robot_ip,
-                                            cycle_time=robot_state_manager_cycle_time)
+    # Attach monitor with callback
+    robot_monitor = FairinoRobotMonitor(robot_config.robot_ip, cycle_time=0.03)
+
+    robot_state_manager = RobotStateManager(robot_monitor=robot_monitor)
     robotService = GlueRobotService(robot, settings_service,robot_state_manager)
 
     # INIT CONTROLLERS

@@ -1,77 +1,15 @@
-import threading
-import time
-
-from backend.system.utils import robot_utils
-from communication_layer.api.v1.topics import RobotTopics
-from core.model.robot import fairino_robot
 from modules.shared.MessageBroker import MessageBroker
-
+from core.services.robot_service.impl.robot_monitor.base_robot_monitor import BaseRobotMonitor
 from core.services.robot_service.enums.RobotState import RobotState
-
-class RobotMonitor:
-    """
-    Continuously fetches robot position, computes velocity and acceleration,
-    and reports results via a callback to the manager.
-    """
-    def __init__(self, robot_ip, data_callback, cycle_time=0.03):
-        self.robot = fairino_robot.FairinoRobot(robot_ip)
-        self.data_callback = data_callback  # <-- sends (pos, vel, accel, timestamp)
-        self.cycle_time = cycle_time
-        self._stop_event = threading.Event()
-
-        self.prev_pos = None
-        self.prev_time = None
-        self.prev_velocity = None
-
-    def run(self):
-        """Continuous motion data collection loop."""
-        while not self._stop_event.is_set():
-            current_time = time.time()
-            try:
-                current_pos = self.robot.get_current_position()
-            except Exception as e:
-                print(f"ERROR: Failed to get robot position: {e}")
-                self.data_callback(None, None, None, current_time, error=True)
-                continue
-
-            if current_pos is None:
-                self.data_callback(None, None, None, current_time, error=True)
-            else:
-                velocity = 0.0
-                acceleration = 0.0
-
-                if self.prev_pos is not None:
-                    dt = current_time - self.prev_time
-                    velocity = robot_utils.calculate_velocity(current_pos, self.prev_pos, dt)
-                    if self.prev_velocity is not None:
-                        acceleration = robot_utils.calculate_acceleration(velocity, self.prev_velocity, dt, use_dt=False)
-
-                # Send motion data back to manager
-                self.data_callback(current_pos, velocity, acceleration, current_time)
-
-                self.prev_pos = current_pos
-                self.prev_time = current_time
-                self.prev_velocity = velocity
-
-            time.sleep(self.cycle_time)
-
-    def start(self):
-        self._thread = threading.Thread(target=self.run, daemon=True)
-        self._thread.start()
-
-    def stop(self):
-        self._stop_event.set()
-        self._thread.join()
+from communication_layer.api.v1.topics import RobotTopics
 
 class RobotStateManager:
     """
     Manages the robot state and communication based on motion data
     received from RobotMonitor.
     """
-    def __init__(self, robot_ip, cycle_time=0.03, velocity_threshold=1, acceleration_threshold=0.001):
+    def __init__(self, robot_monitor:BaseRobotMonitor, velocity_threshold=1, acceleration_threshold=0.001):
         self.broker = MessageBroker()
-        self.robot_ip = robot_ip
-
         self.velocity_threshold = velocity_threshold
         self.acceleration_threshold = acceleration_threshold
         self.trajectory_update = False
@@ -81,10 +19,9 @@ class RobotStateManager:
         self.velocity = 0.0
         self.acceleration = 0.0
         self.robotState = RobotState.STATIONARY
-        self.robotStateTopic = "robot/state"
-
-        # Attach monitor with callback
-        self.monitor = RobotMonitor(robot_ip, self.on_motion_data, cycle_time)
+        self.robotStateTopic = RobotTopics.ROBOT_STATE
+        self.monitor = robot_monitor
+        self.monitor.set_data_callback(self.on_motion_data)
 
     # ----------------------------
     # Callbacks and State Logic
@@ -121,7 +58,7 @@ class RobotStateManager:
         """Publish current robot state and motion data."""
         self.broker.publish(
             self.robotStateTopic,
-            {"state": self.robotState, "speed": self.velocity, "accel": self.acceleration}
+            {"state": self.robotState,"position": self.position, "speed": self.velocity, "accel": self.acceleration}
         )
 
     def send_trajectory_point(self, current_pos):
@@ -139,7 +76,7 @@ class RobotStateManager:
     # ----------------------------
 
     def start_monitoring(self):
-        self.monitor.start()
+        self.monitor.start(self.on_motion_data)
 
     def stop_monitoring(self):
         self.monitor.stop()

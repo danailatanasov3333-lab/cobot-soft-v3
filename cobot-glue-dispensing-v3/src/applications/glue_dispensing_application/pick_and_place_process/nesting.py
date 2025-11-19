@@ -4,12 +4,12 @@ import os
 from datetime import datetime
 from modules.shared.tools.Laser import Laser
 from modules.VisionSystem.heightMeasuring.LaserTracker import LaserTrackService
-from modules.shared.tools import Gripper
 from backend.system.utils.custom_logging import LoggingLevel, log_if_enabled, \
     setup_logger
 from backend.system.utils.contours import is_contour_inside_polygon
 from communication_layer.api.v1 import VisionTopics
 import time
+from modules.shared.tools.enums.Gripper import Gripper
 # import logging
 import cv2
 import numpy as np

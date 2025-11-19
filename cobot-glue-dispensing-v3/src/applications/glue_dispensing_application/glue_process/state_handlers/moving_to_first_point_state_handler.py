@@ -4,7 +4,7 @@ from applications.glue_dispensing_application.settings.enums import GlueSettingK
 
 
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
-from core.services.robot_service.base_robot_service import CancellationToken
+from core.services.robot_service.impl.base_robot_service import CancellationToken
 
 MovingResult = namedtuple(
     "MovingResult",

@@ -2,7 +2,7 @@ from typing import Dict, Any, Optional, List
 
 from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 from core.services.workpiece.BaseWorkpieceService import BaseWorkpieceService
-from core.services.robot_service.base_robot_service import BaseRobotService
+from core.services.robot_service.impl.base_robot_service import BaseRobotService
 from core.application.interfaces.robot_application_interface import RobotApplicationInterface, CalibrationStatus
 from core.base_robot_application import BaseRobotApplication, ApplicationType, ApplicationState
 from applications.glue_dispensing_application.GlueDispensingApplicationStateManager import \

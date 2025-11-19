@@ -50,11 +50,13 @@ class RobotTopics(TopicCategory):
     TRAJECTORY_UPDATE_IMAGE = "robot/trajectory/updateImage"
     TRAJECTORY_POINT = "robot/trajectory/point"
 
-    # Robot calibration
+    # Robot calibration -> feedback topics for the calibration process
+    # they do not start stop the calibration but provide feedback
     ROBOT_CALIBRATION_LOG = "robot/calibration/log"
     ROBOT_CALIBRATION_START = "robot/calibration/start"
     ROBOT_CALIBRATION_STOP = "robot/calibration/stop"
     ROBOT_CALIBRATION_IMAGE = "robot/calibration/image"
+    ROBOT_STATE = "robot/state" # example message -> {"state": self.robotState,"position": self.position, "speed": self.velocity, "accel": self.acceleration}
 
 
 class VisionTopics(TopicCategory):

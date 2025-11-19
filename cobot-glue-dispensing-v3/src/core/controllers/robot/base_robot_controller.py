@@ -5,7 +5,7 @@ from core.controllers.BaseController import BaseController
 
 from core.model.robot.enums.axis import Direction, RobotAxis
 import communication_layer.api.v1.endpoints.robot_endpoints as robot_endpoints
-from core.services.robot_service.base_robot_service import BaseRobotService
+from core.services.robot_service.impl.base_robot_service import BaseRobotService
 
 
 class BaseRobotController(BaseController):

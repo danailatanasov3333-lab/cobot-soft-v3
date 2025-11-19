@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Dict, Any, List
 
 from communication_layer.api.v1.topics import SystemTopics
-from core.services.robot_service.IRobotService import IRobotService
+from core.services.robot_service.interfaces.IRobotService import IRobotService
 from modules.shared.MessageBroker import MessageBroker
 from core.services.vision.VisionService import _VisionService
 from backend.system.settings.SettingsService import SettingsService

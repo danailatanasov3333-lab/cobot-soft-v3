@@ -69,10 +69,6 @@ class TestRobotWrapper(IRobot):
         return "TestRobot SDK v1.0"
 
 
-
-
-
-
 class FairinoRobot(IRobot):
     """
       A wrapper for the real robot controller, abstracting motion and I/O operations.

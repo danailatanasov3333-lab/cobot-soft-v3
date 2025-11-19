@@ -2,10 +2,11 @@ import threading
 import time
 
 from applications.glue_dispensing_application.settings import GlueSettingKey
-from core.model.robot import calculate_distance_between_points
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
 from backend.system.utils.custom_logging import log_debug_message
 from backend.system.utils.files import write_to_debug_file
+from backend.system.utils.robot_utils import calculate_distance_between_points
+
 
 # State Management Functions
 def is_point_reached(currentPos, targetPoint, threshold):

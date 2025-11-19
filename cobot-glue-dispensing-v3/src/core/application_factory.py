@@ -18,7 +18,7 @@ from backend.system.settings.SettingsService import SettingsService
 from core.services.workpiece.BaseWorkpieceService import BaseWorkpieceService
 from applications.glue_dispensing_application.GlueDispensingApplication import GlueSprayingApplication
 from applications.example_painting_application.application import PaintingApplication
-from .services.robot_service.IRobotService import IRobotService
+from core.services.robot_service.interfaces.IRobotService import IRobotService
 
 logger = logging.getLogger(__name__)
 

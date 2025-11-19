@@ -6,7 +6,7 @@ from applications.glue_dispensing_application.glue_process.glue_dispensing_opera
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
 from backend.system.settings.RobotConfigKey import RobotSettingKey
 from backend.system.utils.custom_logging import log_debug_message, log_error_message
-from core.services.robot_service.base_robot_service import CancellationToken
+from core.services.robot_service.impl.base_robot_service import CancellationToken
 
 HandlerResult = namedtuple(
     "HandlerResult",
