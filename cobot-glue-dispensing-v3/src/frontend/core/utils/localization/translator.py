@@ -5,6 +5,8 @@ Provides a clean interface between UI components and the localization system.
 from typing import Union, Any
 from PyQt6.QtCore import QObject, pyqtSignal
 
+from communication_layer.api.v1.topics import UITopics
+from modules.shared.MessageBroker import MessageBroker
 from  modules.shared.localization.LanguageResourceLoader import LanguageResourceLoader
 from  modules.shared.localization.enums.Language import Language
 from modules.shared.localization.enums.Message import Message
@@ -24,9 +26,7 @@ class AppTranslator(QObject):
         self._loader = LanguageResourceLoader()
         self._current_language = self._loader.language
         
-        # Subscribe to language changes from the underlying system
-        from modules.shared.MessageBroker import MessageBroker
-        from modules.shared.v1.topics import UITopics
+
         broker = MessageBroker()
         broker.subscribe(UITopics.LANGUAGE_CHANGED, self._on_language_changed)
     

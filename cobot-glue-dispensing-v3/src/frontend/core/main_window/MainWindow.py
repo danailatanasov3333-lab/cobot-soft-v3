@@ -7,12 +7,13 @@ from PyQt6.QtWidgets import (QVBoxLayout, QApplication)
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QMessageBox
 
+from applications.glue_dispensing_application.model.workpiece.GlueWorkpieceField import GlueWorkpieceField
+from communication_layer.api.v1.endpoints import workpiece_endpoints, operations_endpoints, robot_endpoints
 from frontend.contour_editor.utils.utils import create_light_gray_pixmap, qpixmap_to_cv
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 from frontend.core.utils.localization import TranslationKeys, TranslatableWidget
 from modules.shared.core.user.Session import SessionManager
 
-from modules.shared.v1.endpoints import operations_endpoints, robot_endpoints,workpiece_endpoints
 from frontend.widgets.Header import Header
 from frontend.legacy_ui.windows.folders_page.FoldersPage import FoldersPage, FolderConfig
 from frontend.legacy_ui.windows.login.LoginWindow import LoginWindow
@@ -27,9 +28,6 @@ from frontend.core.services.authorizationService import AuthorizationService , P
 from frontend.core.utils.FilePaths import DXF_DIRECTORY
 from modules.shared.core.dxf.DxfParser import DXFPathExtractor
 from modules.shared.core.dxf.utils import scale_contours
-
-
-
 
 class MainWindow(TranslatableWidget):
     """Demo application showing the Android folder widget with QStackedWidget for app management"""
@@ -130,7 +128,8 @@ class MainWindow(TranslatableWidget):
                 app_widget.pause_requested.connect(lambda: self.controller.handle(operations_endpoints.PAUSE))
                 app_widget.stop_requested.connect(lambda: self.controller.handle(operations_endpoints.STOP))
                 app_widget.clean_requested.connect(self.on_clean)
-                app_widget.reset_errors_requested.connect(lambda: self.controller.handle(robot_endpoints.ROBOT_RESET_ERRORS))
+                app_widget.reset_errors_requested.connect(lambda: self.controller.handle(
+                    robot_endpoints.ROBOT_RESET_ERRORS))
                 app_widget.start_demo_requested.connect(lambda: self.controller.handle(operations_endpoints.RUN_DEMO))
                 app_widget.stop_demo_requested.connect(lambda: self.controller.handle(operations_endpoints.STOP_DEMO))
                 app_widget.LOGOUT_REQUEST.connect(self.onLogout)
@@ -138,7 +137,7 @@ class MainWindow(TranslatableWidget):
             # Gallery signals
             if hasattr(app_widget, 'edit_requested'):
                 def on_edit_request(workpiece_id):
-                    result, workpiece = self.controller.getWorkpieceById(workpiece_id)
+                    result, workpiece = self.controller.get_workpiece_by_id(workpiece_id)
                     self.contour_editor = self.show_app(WidgetType.CONTOUR_EDITOR.value)
                     self.contour_editor.load_workpiece(workpiece)
                     create_wp_manager = CreateWorkpieceManager(self.contour_editor, self.controller)
@@ -381,7 +380,9 @@ class MainWindow(TranslatableWidget):
     def create_workpiece_via_camera_selected(self):
         """Handle camera selection for workpiece creation"""
         print("Create Workpiece via Camera selected")
-        result,message = self.controller.handle(workpiece_endpoints.WORKPIECE_CREATE_STEP_1)
+        controller_result = self.controller.handle(operations_endpoints.CREATE_WORKPIECE)
+        print(f"controller result in create_workpiece_via_camera_selected: {controller_result}")
+        result, message,data = controller_result
         if not result:
             # show warning message box
             QMessageBox.warning(self, "Camera Error", f"Failed to start camera:\n{message}")
@@ -513,8 +514,6 @@ class MainWindow(TranslatableWidget):
 
         sprayPatternsDict['Contour'] = wp_contours_data.get('Contour', [])
         sprayPatternsDict['Fill'] = wp_contours_data.get('Fill', [])
-
-        from core.model.workpiece.Workpiece import GlueWorkpieceField
 
         data[GlueWorkpieceField.SPRAY_PATTERN.value] = sprayPatternsDict
         data[GlueWorkpieceField.CONTOUR.value] = wp_contours_data.get('Workpiece', [])

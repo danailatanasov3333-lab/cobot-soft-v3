@@ -1,25 +1,18 @@
 from PyQt6.QtCore import QThread
 
-from applications.glue_dispensing_application.workpiece.GlueWorkpiece import GlueWorkpiece
-from modules.shared.v1.Response import Response
-from modules.shared.v1 import Constants
+from applications.glue_dispensing_application.model.workpiece import GlueWorkpiece
+
 from backend.system.settings.CameraSettings import CameraSettings
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettings
-
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+from communication_layer.api.v1.endpoints import camera_endpoints, robot_endpoints, workpiece_endpoints, \
+    settings_endpoints, auth_endpoints, operations_endpoints, glue_endpoints
 
 from frontend.legacy_ui.controller.RequestWorker import RequestWorker
 from frontend.feedback.FeedbackProvider import FeedbackProvider
 
-# Import new structured endpoints
-from modules.shared.v1.endpoints import (
-    auth_endpoints,
-    operations_endpoints,
-    robot_endpoints,
-    camera_endpoints,
-    workpiece_endpoints,
-    settings_endpoints,
-    glue_endpoints
-)
+
 
 from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
@@ -27,7 +20,7 @@ from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import Gl
 import logging
 
 
-class Controller:
+class UIController:
     def __init__(self, requestSender):
         self.logTag = self.__class__.__name__
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -77,11 +70,9 @@ class Controller:
             robot_endpoints.ROBOT_UPDATE_CONFIG: self.handleRobotUpdateConfig,
 
             # Workpiece endpoints
-            workpiece_endpoints.WORKPIECE_SAVE: self.saveWorkpiece,
+            workpiece_endpoints.WORKPIECE_SAVE: self.save_workpiece,
             workpiece_endpoints.WORKPIECE_SAVE_DXF: self.saveWorkpieceFromDXF,
-            workpiece_endpoints.WORKPIECE_CREATE: self.createWorkpieceAsync,
-            workpiece_endpoints.WORKPIECE_CREATE_STEP_1: self.handleCreateWorkpieceStep1,
-            workpiece_endpoints.WORKPIECE_CREATE_STEP_2: self.handleCreateWorkpieceStep2,
+            operations_endpoints.CREATE_WORKPIECE: self.handle_create_workpiece,
             workpiece_endpoints.WORKPIECE_GET_ALL: self.handleGetAllWorpieces,
 
             # Legacy special endpoints
@@ -90,7 +81,7 @@ class Controller:
 
     def handleRobotUpdateConfig(self):
         request = robot_endpoints.ROBOT_UPDATE_CONFIG
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error updating robot config:", response.message)
@@ -99,7 +90,7 @@ class Controller:
 
     def handleRunDemo(self):
         request = operations_endpoints.RUN_DEMO
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error starting demo:", response.message)
@@ -108,7 +99,7 @@ class Controller:
 
     def handleStopDemo(self):
         request = operations_endpoints.STOP_DEMO
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error stopping demo:", response.message)
@@ -117,7 +108,7 @@ class Controller:
 
     def handleResetErrors(self):
         request = robot_endpoints.ROBOT_RESET_ERRORS
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error resetting errors:", response.message)
@@ -127,7 +118,7 @@ class Controller:
     def handleCleanNozzle(self):
         print(f"UI Controller handle clean nozzle")
         request = robot_endpoints.ROBOT_EXECUTE_NOZZLE_CLEAN
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error cleaning nozzle:", response.message)
@@ -137,7 +128,7 @@ class Controller:
     def handleRawModeOn(self):
         print("Enabling raw mode")
         request = camera_endpoints.CAMERA_ACTION_RAW_MODE_ON
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error enabling raw mode:", response.message)
@@ -146,7 +137,7 @@ class Controller:
 
     def handleRawModeOff(self):
         request = camera_endpoints.CAMERA_ACTION_RAW_MODE_OFF
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error disabling raw mode:", response.message)
@@ -154,12 +145,12 @@ class Controller:
         return response.status
 
     def handleSetPreselectedWorkpiece(self, workpiece):
-        self.requestSender.sendRequest("handleSetPreselectedWorkpiece", workpiece)
+        self.requestSender.send_request("handleSetPreselectedWorkpiece", workpiece)
 
     def handleTestRun(self):
-        self.requestSender.sendRequest("test_run")
+        self.requestSender.send_request("test_run")
 
-    def handle(self, endpoint, *args):
+    def handle(self, endpoint, *args, **kwargs):
         if endpoint in self.endpointsMap:
             try:
                 # print(f"{self.logTag} Handling endpoint: '{endpoint}' with args: {args}")
@@ -172,23 +163,23 @@ class Controller:
 
     def handlePause(self):
         request = operations_endpoints.PAUSE
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
 
     def handleStop(self):
         request = operations_endpoints.STOP
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
 
     def handleStartContourDetection(self):
         requests = camera_endpoints.START_CONTOUR_DETECTION
-        self.requestSender.sendRequest(requests)
+        self.requestSender.send_request(requests)
 
     def handleStopContourDetection(self):
         request = camera_endpoints.STOP_CONTOUR_DETECTION
-        self.requestSender.sendRequest(request)
+        self.requestSender.send_request(request)
 
     def handleGetAllWorpieces(self):
         request = workpiece_endpoints.WORKPIECE_GET_ALL
-        res = self.requestSender.sendRequest(request)
+        res = self.requestSender.send_request(request)
         response = Response.from_dict(res)
         workpieces = response.data
         print(f"Received workpieces: {workpieces}")
@@ -202,13 +193,13 @@ class Controller:
         cameraSettingsRequest = settings_endpoints.SETTINGS_CAMERA_GET
         glueSettingsRequest = glue_endpoints.SETTINGS_GLUE_GET
 
-        robotSettingsResponseDict = self.requestSender.sendRequest(robotSettingsRequest)
+        robotSettingsResponseDict = self.requestSender.send_request(robotSettingsRequest)
         robotSettingsResponse = Response.from_dict(robotSettingsResponseDict)
 
-        cameraSettingsResponseDict = self.requestSender.sendRequest(cameraSettingsRequest)
+        cameraSettingsResponseDict = self.requestSender.send_request(cameraSettingsRequest)
         cameraSettingsResponse = Response.from_dict(cameraSettingsResponseDict)
         print(" get Camera settings response:", cameraSettingsResponse)
-        glueSettingsResponseDict = self.requestSender.sendRequest(glueSettingsRequest)
+        glueSettingsResponseDict = self.requestSender.send_request(glueSettingsRequest)
         glueSettingsResponse = Response.from_dict(glueSettingsResponseDict)
 
         robotSettingsDict = robotSettingsResponse.data if robotSettingsResponse.status == Constants.RESPONSE_STATUS_SUCCESS else {}
@@ -223,7 +214,7 @@ class Controller:
     def saveWorkpieceFromDXF(self, data):
 
         request = workpiece_endpoints.WORKPIECE_SAVE_DXF
-        responseDict = self.requestSender.sendRequest(request, data)
+        responseDict = self.requestSender.send_request(request, data)
         response = Response.from_dict(responseDict)
 
         if response.status == Constants.RESPONSE_STATUS_ERROR:
@@ -232,9 +223,9 @@ class Controller:
 
         return True, response.message
 
-    def saveWorkpiece(self, data):
+    def save_workpiece(self, data):
         request = workpiece_endpoints.WORKPIECE_SAVE
-        responseDict = self.requestSender.sendRequest(request, data)
+        responseDict = self.requestSender.send_request(request, data)
         response = Response.from_dict(responseDict)
 
         if response.status == Constants.RESPONSE_STATUS_ERROR:
@@ -246,21 +237,21 @@ class Controller:
     def handleSaveWorkAreaPoints(self, points):
         print("handleSaveWorkAreaPoints Saving work area points:", points)
         request = camera_endpoints.CAMERA_ACTION_SAVE_WORK_AREA_POINTS
-        self.requestSender.sendRequest(request, data=points)
+        self.requestSender.send_request(request, data=points)
 
     def handleTestCalibration(self):
         request = camera_endpoints.CAMERA_ACTION_TEST_CALIBRATION
-        self.requestSender.sendRequest(request)
+        self.requestSender.send_request(request)
 
     def handleCalibrateRobot(self):
         request = robot_endpoints.ROBOT_CALIBRATE
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         print("Robot calibration response:", response)
         self.logger.debug(f"{self.logTag}] Calibrate robot response: {response}")
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             request = camera_endpoints.CAMERA_ACTION_RAW_MODE_OFF
-            response = self.requestSender.sendRequest(request)
+            response = self.requestSender.send_request(request)
             response = Response.from_dict(response)
             FeedbackProvider.showMessage(response.message)
             return False, response.message
@@ -271,25 +262,25 @@ class Controller:
         """ MOVE ROBOT TO CALIBRATION POSITION"""
         print("Calibrating camera")
         request = robot_endpoints.ROBOT_MOVE_TO_CALIB_POS
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         if response.status != Constants.RESPONSE_STATUS_SUCCESS:
             self.logger.debug(f"{self.logTag}] [Method: handleCalibrate] Error moving to calib pos")
 
         request = camera_endpoints.CAMERA_ACTION_RAW_MODE_ON
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
 
         FeedbackProvider.showPlaceCalibrationPattern()
 
         request = camera_endpoints.CAMERA_ACTION_CALIBRATE
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
 
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             # FeedbackProvider.showMessage(response.message)
             request = camera_endpoints.CAMERA_ACTION_RAW_MODE_OFF
-            response = self.requestSender.sendRequest(request)
+            response = self.requestSender.send_request(request)
             response = Response.from_dict(response)
             return False, response.message
 
@@ -297,7 +288,7 @@ class Controller:
 
     def handleCaptureCalibrationImage(self):
         request = camera_endpoints.CAMERA_ACTION_CAPTURE_CALIBRATION_IMAGE
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
 
         if response.status == Constants.RESPONSE_STATUS_ERROR:
@@ -315,13 +306,13 @@ class Controller:
         # SEND ROBOT CALIBRATION REQUEST
 
         request = robot_endpoints.ROBOT_CALIBRATE
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         print("Robot calibration response:", response)
         self.logger.debug(f"{self.logTag}] Calibrate robot response: {response}")
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             request = camera_endpoints.CAMERA_ACTION_RAW_MODE_OFF
-            response = self.requestSender.sendRequest(request)
+            response = self.requestSender.send_request(request)
             response = Response.from_dict(response)
             FeedbackProvider.showMessage(response.message)
             return False, response.message
@@ -333,7 +324,7 @@ class Controller:
 
     def saveRobotCalibrationPoint(self):
         request = robot_endpoints.ROBOT_SAVE_POINT
-        responseDict = self.requestSender.sendRequest(request)
+        responseDict = self.requestSender.send_request(request)
         response = Response.from_dict(responseDict)
 
         if response.status == Constants.RESPONSE_STATUS_ERROR:
@@ -352,13 +343,13 @@ class Controller:
 
     def handleQrLogin(self):
         request = auth_endpoints.QR_LOGIN
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         # response = Response.from_dict(response)
         return response
 
     def handleLogin(self, username, password):
         request = auth_endpoints.LOGIN
-        response_dict = self.requestSender.sendRequest(request, data=[username, password])
+        response_dict = self.requestSender.send_request(request, data=[username, password])
         response = Response.from_dict(response_dict)
         print("Response: ", response)
 
@@ -384,14 +375,14 @@ class Controller:
         data = {"header": resource,
                 key: value}
 
-        self.requestSender.sendRequest(request, data)
+        self.requestSender.send_request(request, data)
 
     """ REFACTORED METHODS BELOW """
 
     def updateCameraFeed(self):
         # print("Controller.updateCameraFeed: Requesting latest camera frame")
         request = camera_endpoints.CAMERA_ACTION_GET_LATEST_FRAME
-        responseDict = self.requestSender.sendRequest(request)
+        responseDict = self.requestSender.send_request(request)
         response = Response.from_dict(responseDict)
         # print("Update camera feed response, ",response)
         if response.status != Constants.RESPONSE_STATUS_SUCCESS:
@@ -417,13 +408,13 @@ class Controller:
 
     def handleLoginPos(self):
         request = robot_endpoints.ROBOT_MOVE_TO_LOGIN_POS
-        response = self.requestSender.sendRequest(request)
+        response = self.requestSender.send_request(request)
         response = Response.from_dict(response)
         return response.status
 
     def handleMoveToCalibrationPos(self):
         request = robot_endpoints.ROBOT_MOVE_TO_CALIB_POS
-        self.requestSender.sendRequest(request)
+        self.requestSender.send_request(request)
 
     def homeRobot(self, asyncParam=True):
         request = robot_endpoints.ROBOT_MOVE_TO_HOME_POS
@@ -441,7 +432,7 @@ class Controller:
         if asyncParam:
             self._runAsyncRequest(request, onSuccess, onError)
         else:
-            resp = self.requestSender.sendRequest(request)
+            resp = self.requestSender.send_request(request)
             resp = Response.from_dict(resp)
             if resp.status == Constants.RESPONSE_STATUS_ERROR:
                 FeedbackProvider.showMessage(resp.message)
@@ -465,7 +456,7 @@ class Controller:
     def getWorkpieceById(self, workpieceId):
         request = workpiece_endpoints.WORKPIECE_GET_BY_ID
         data = {"workpieceId": workpieceId}
-        responseDict = self.requestSender.sendRequest(request, data)
+        responseDict = self.requestSender.send_request(request, data)
         response = Response.from_dict(responseDict)
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error fetching workpiece:", response.message)
@@ -474,7 +465,7 @@ class Controller:
         # Convert the response data to a Workpiece object
         try:
             if isinstance(response.data, dict):
-                workpiece = GlueWorkpiece.fromDict(response.data)
+                workpiece = GlueWorkpiece.from_dict(response.data)
                 return True, workpiece
             else:
                 # response.data is already a Workpiece object
@@ -486,48 +477,40 @@ class Controller:
     def handleDeleteWorkpiece(self,workpieceId):
         request = workpiece_endpoints.WORKPIECE_DELETE
         data = {"workpieceId": workpieceId}
-        responseDict = self.requestSender.sendRequest(request, data)
+        responseDict = self.requestSender.send_request(request, data)
         response = Response.from_dict(responseDict)
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error deleting workpiece:", response.message)
             return False, response.message
         return True, response.message
 
-    def handleCreateWorkpieceStep1(self):
-        request = workpiece_endpoints.WORKPIECE_CREATE_STEP_1
-        responseDict = self.requestSender.sendRequest(request)
+    def handle_create_workpiece(self,data=None):
+        request = operations_endpoints.CREATE_WORKPIECE
+        responseDict = self.requestSender.send_request(request,data)
         response = Response.from_dict(responseDict)
+        has_data= response.data is not None
+        print(f"Received create workpiece response: {response.status}, message {response.message} has_data: {has_data}")
         if response.status == Constants.RESPONSE_STATUS_ERROR:
             print("Error in CreateWorkpieceStep1:", response.message)
-            return False, response.message
-        return True, response.message
+            return False, response.message,response.data
+        return True, response.message,response.data
 
-    def handleCreateWorkpieceStep2(self):
-        request = workpiece_endpoints.WORKPIECE_CREATE_STEP_2
-        responseDict = self.requestSender.sendRequest(request)
-        response = Response.from_dict(responseDict)
-        if response.status == Constants.RESPONSE_STATUS_ERROR:
-            print("Error in CreateWorkpieceStep2:", response.message)
-            return False, response.message,None
-
-        return True, response.message, response.data
-
-    def createWorkpieceAsync(self, onSuccess, onError=None):
-        request = workpiece_endpoints.WORKPIECE_CREATE
-        print("CreateWorkpieceAsync request:", request)
-
-        def successCallback(req, resp):
-            if resp.status == Constants.RESPONSE_STATUS_ERROR:
-                print("CreateWorkpieceAsync error response:", resp)
-                if onError:
-                    onError(req, resp.message)
-            else:
-                print("CreateWorkpieceAsync success response:", resp)
-                frame = resp.data['image']
-                contours = resp.data['contours']
-                onSuccess(frame, contours, resp.data)
-
-        self._runAsyncRequest(request, successCallback, onError)
+    # def createWorkpieceAsync(self, onSuccess, onError=None):
+    #     request = workpiece_endpoints.WORKPIECE_CREATE
+    #     print("CreateWorkpieceAsync request:", request)
+    #
+    #     def successCallback(req, resp):
+    #         if resp.status == Constants.RESPONSE_STATUS_ERROR:
+    #             print("CreateWorkpieceAsync error response:", resp)
+    #             if onError:
+    #                 onError(req, resp.message)
+    #         else:
+    #             print("CreateWorkpieceAsync success response:", resp)
+    #             frame = resp.data['image']
+    #             contours = resp.data['contours']
+    #             onSuccess(frame, contours, resp.data)
+    #
+    #     self._runAsyncRequest(request, successCallback, onError)
 
     def _runAsyncRequest(self, request, onSuccess, onError=None):
         thread = QThread()
@@ -559,4 +542,4 @@ class Controller:
 
 
     def handleExecuteFromGallery(self, workpiece):
-        self.requestSender.sendRequest("handleExecuteFromGallery", workpiece)
+        self.requestSender.send_request("handleExecuteFromGallery", workpiece)

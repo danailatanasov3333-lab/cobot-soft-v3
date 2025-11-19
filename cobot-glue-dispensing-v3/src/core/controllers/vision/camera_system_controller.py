@@ -1,7 +1,8 @@
-from modules.shared.v1 import Constants
-from modules.shared.v1.Response import Response
-from modules.shared.v1.endpoints import camera_endpoints, auth_endpoints
 import re
+
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+from communication_layer.api.v1.endpoints import auth_endpoints, camera_endpoints
 from core.controllers.BaseController import BaseController
 
 

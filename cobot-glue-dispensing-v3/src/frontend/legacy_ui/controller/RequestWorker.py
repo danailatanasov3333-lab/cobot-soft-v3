@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QObject, pyqtSignal
-from modules.shared.v1.Response import Response
+from communication_layer.api.v1.Response import Response
 class RequestWorker(QObject):
     finished = pyqtSignal(object, object)  # request, response
     error = pyqtSignal(object, object)     # request, error
@@ -11,7 +11,7 @@ class RequestWorker(QObject):
 
     def run(self):
         try:
-            response_dict = self.requestSender.sendRequest(self.request)
+            response_dict = self.requestSender.send_request(self.request)
             response = Response.from_dict(response_dict)
             self.finished.emit(self.request, response)
         except Exception as e:

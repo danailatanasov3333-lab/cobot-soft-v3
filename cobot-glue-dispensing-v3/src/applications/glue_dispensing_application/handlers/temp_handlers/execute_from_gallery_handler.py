@@ -82,9 +82,9 @@ def execute_from_gallery(application,workpiece,z_offset_for_calibration_pattern)
                 robotPaths.append([finalContour, contour_arr_settings])
                 print(f"Added {pattern_type} path with {len(finalContour)} points")
 
-    application.robotService.moveToCalibrationPosition(z_offset=z_offset_for_calibration_pattern)
+    application.robotService.move_to_calibration_position(z_offset=z_offset_for_calibration_pattern)
     # self.robotService.cleanNozzle()
-    application.robotService.moveToCalibrationPosition(z_offset=z_offset_for_calibration_pattern)
+    application.robotService.move_to_calibration_position(z_offset=z_offset_for_calibration_pattern)
     # self.robotService._waitForRobotToReachPosition(self.robotService.calibrationPosition, 1, delay=0)
     # print(f"    handleExecuteFromGallery: paths to trace: {robotPaths}")
     try:

@@ -7,6 +7,10 @@ All endpoints follow the RESTful pattern: /api/v1/operations/{action}
 
 # === MAIN OPERATIONS ===
 
+# create workpiece operation
+CREATE_WORKPIECE = "/api/v1/operations/createWorkpiece"
+
+
 # Core system operations
 START = "/api/v1/operations/start"
 STOP = "/api/v1/operations/stop"

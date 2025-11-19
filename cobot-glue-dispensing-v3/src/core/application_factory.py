@@ -15,13 +15,12 @@ from .base_robot_application import BaseRobotApplication, ApplicationType
 
 from core.services.vision.VisionService import _VisionService
 from backend.system.settings.SettingsService import SettingsService
-from core.services.workpiece.WorkpieceService import WorkpieceService
+from core.services.workpiece.BaseWorkpieceService import BaseWorkpieceService
 from applications.glue_dispensing_application.GlueDispensingApplication import GlueSprayingApplication
 from applications.example_painting_application.application import PaintingApplication
 from .services.robot_service.IRobotService import IRobotService
 
 logger = logging.getLogger(__name__)
-
 
 class ApplicationRegistryError(Exception):
     """Raised when there are issues with application registration"""
@@ -47,7 +46,7 @@ class ApplicationFactory:
     def __init__(self, 
                  vision_service: _VisionService,
                  settings_service: SettingsService,
-                 workpiece_service: WorkpieceService,
+                 workpiece_service: BaseWorkpieceService,
                  robot_service: IRobotService,
                  settings_registry=ApplicationSettingsRegistry):
         """
@@ -378,7 +377,7 @@ def auto_register_applications(factory: ApplicationFactory) -> None:
 
 def create_application_factory(vision_service: _VisionService,
                              settings_service: SettingsService,
-                             workpiece_service: WorkpieceService,
+                             workpiece_service: BaseWorkpieceService,
                              robot_service: IRobotService,
                                 settings_registry=ApplicationSettingsRegistry,
                              auto_register: bool = True) -> ApplicationFactory:

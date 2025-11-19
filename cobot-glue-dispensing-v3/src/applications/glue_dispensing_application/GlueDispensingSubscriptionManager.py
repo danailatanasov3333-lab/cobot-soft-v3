@@ -1,4 +1,4 @@
-from modules.shared.v1.topics import GlueTopics, SystemTopics
+from communication_layer.api.v1.topics import GlueTopics, SystemTopics
 
 
 class GlueDispensingSubscriptionManager:

@@ -7,6 +7,8 @@ from PyQt6.QtWidgets import (QVBoxLayout, QLabel, QWidget, QApplication, QHBoxLa
                              QSizePolicy, QComboBox,
                              QScrollArea, QGroupBox, QGridLayout)
 
+from communication_layer.api.v1.topics import GlueTopics
+from modules.shared.MessageBroker import MessageBroker
 from modules.shared.tools.GlueCell import UPDATE_SCALE_ENDPOINT, GET_CONFIG_ENDPOINT, \
     GlueCellsManagerSingleton, GlueDataFetcher, UPDATE_OFFSET_ENDPOINT, TARE_ENDPOINT
 from backend.system.utils import PathResolver
@@ -14,13 +16,13 @@ from frontend.widgets.MaterialButton import MaterialButton
 from frontend.core.utils.localization import get_app_translator
 from frontend.widgets.SwitchButton import QToggle
 from frontend.widgets.ToastWidget import ToastWidget
+from PyQt6.QtWidgets import QLineEdit
 from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout
 
 import random
 import json
 from pathlib import Path
-from modules.shared.MessageBroker import MessageBroker
-from modules.shared.v1.topics import GlueTopics
+
 
 class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
     value_changed_signal = pyqtSignal(str, object, str)  # key, value, className
@@ -275,7 +277,7 @@ class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         label = QLabel("URL:")
         label.setWordWrap(True)
         layout.addWidget(label, row, 0, Qt.AlignmentFlag.AlignLeft)
-        from PyQt6.QtWidgets import QLineEdit
+
         self.url_input = QLineEdit("http://192.168.222.143/weight1")
         self.url_input.setMinimumHeight(40)
         layout.addWidget(self.url_input, row, 1)

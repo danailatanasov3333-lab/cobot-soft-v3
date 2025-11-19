@@ -4,7 +4,9 @@ from frontend.contour_editor.services.CaptureDataHandler import CaptureDataHandl
 from frontend.contour_editor.services.SaveWorkpieceHandler import SaveWorkpieceHandler
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 from frontend.dialogs.CustomFeedbackDialog import CustomFeedbackDialog, DialogType
-from modules.shared.v1.endpoints import camera_endpoints, workpiece_endpoints
+from communication_layer.api.v1.endpoints import workpiece_endpoints, operations_endpoints
+from communication_layer.api.v1.endpoints import camera_endpoints
+
 
 class ContourEditorAppWidget(AppWidget):
     """Specialized widget for User Management application"""
@@ -73,7 +75,9 @@ class ContourEditorAppWidget(AppWidget):
         it goes through the proper ContourEditorData pipeline.
         """
         print("Camera capture requested from Contour Editor")
-        result, message, data = self.controller.handle(workpiece_endpoints.WORKPIECE_CREATE_STEP_2)
+        controller_result = self.controller.handle(operations_endpoints.CREATE_WORKPIECE)
+        print(f"Controller result from WORKPIECE_CREATE: len controller_result = {len(controller_result)} {controller_result}")
+        result, message,data = controller_result
 
         if not result:
             # show error message box
@@ -88,10 +92,10 @@ class ContourEditorAppWidget(AppWidget):
             warning_dialog.show()
             return
 
-        print(f"CREATE_WORKPIECE_STEP_2 result: {result}, message: {message}, data keys: {list(data.keys())}")
+        print(f"CREATE_WORKPIECE_STEP_2 result: {result}, message: {message}")
 
         # Handle image update
-        image = data.get("image")
+        image = data.image
         if image is not None:
             print("Updating Contour Editor with new image")
             # pause the camera feed update timer

@@ -4,17 +4,18 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QScroller,QWidget
 from PyQt6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QSizePolicy, QComboBox, QScrollArea, QGroupBox, QGridLayout)
+
+from communication_layer.api.v1.topics import VisionTopics
 from frontend.widgets.ClickableLabel import ClickableLabel
 from frontend.widgets.MaterialButton import MaterialButton
 from backend.system.settings.CameraSettings import CameraSettings
 from backend.system.settings.enums.CameraSettingKey import CameraSettingKey
 from frontend.widgets.SwitchButton import QToggle
 from frontend.widgets.ToastWidget import ToastWidget
+from modules.shared.MessageBroker import MessageBroker
 from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout
 import cv2
 from frontend.core.utils.localization import TranslationKeys, get_app_translator
-from modules.shared.MessageBroker import MessageBroker
-from modules.shared.v1.topics import VisionTopics
 
 class CameraSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
     # Unified signal for all value changes - eliminates callback duplication

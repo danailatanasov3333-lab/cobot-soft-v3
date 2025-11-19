@@ -9,6 +9,9 @@ from backend.system.settings.robotConfig.GlobalMotionSettings import GlobalMotio
 from backend.system.settings.robotConfig.MovementGroup import MovementGroup
 from backend.system.settings.robotConfig.SafetyLimits import SafetyLimits
 from backend.system.settings.robotConfig.robotConfigModel import get_default_config, RobotConfig
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+from communication_layer.api.v1.endpoints import robot_endpoints
 from frontend.virtualKeyboard.VirtualKeyboard import FocusLineEdit,FocusSpinBox,FocusDoubleSpinBox
 from PyQt6.QtCore import QObject, pyqtSignal, Qt, QTimer
 
@@ -17,9 +20,6 @@ import os
 import copy
 
 
-from modules.shared.v1.Response import Response
-from modules.shared.v1.Constants import  RESPONSE_STATUS_ERROR
-from modules.shared.v1.endpoints import robot_endpoints
 from backend.system.utils import PathResolver
 
 from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout
@@ -743,10 +743,10 @@ class RobotConfigController:
             point_name = current_item.text()
             x, y, z, rx, ry, rz = [s.strip() for s in point_name.strip('[]').split(',')]
             print(f"Parsed coordinates: x={x}, y={y}, z={z}, rx={rx}, ry={ry}, rz={rz}")
-            req = robot_endpoints.ROBOT_MOVE_TO_POSITION.format(position = f"{x}/{y}/{z}/{rx}/{ry}/{rz}")
+            req = robot_endpoints.ROBOT_MOVE_TO_POSITION.format(position =f"{x}/{y}/{z}/{rx}/{ry}/{rz}")
             vel_acc_info = self._get_velocity_acceleration_info(group_name)
             print(f"Moving to point: {point_name} in group: {group_name}{vel_acc_info}")
-            self.requestSender.sendRequest(req, "")
+            self.requestSender.send_request(req, "")
         else:
             QMessageBox.information(self.ui, "No Selection", "Please select a point to move to.") # TODO TRANSLATE
 
@@ -787,13 +787,13 @@ class RobotConfigController:
             # Send appropriate movement request based on group name
             if self.requestSender:
                 if group_name == "HOME_POS":
-                    self.requestSender.sendRequest(robot_endpoints.ROBOT_MOVE_TO_HOME_POS, position_text)
+                    self.requestSender.send_request(robot_endpoints.ROBOT_MOVE_TO_HOME_POS, position_text)
                     print(f"🤖 ROBOT_MOVE_TO_HOME_POS request sent: {position_text}")
                 elif group_name == "LOGIN_POS":
-                    self.requestSender.sendRequest(robot_endpoints.ROBOT_MOVE_TO_LOGIN_POS, position_text)
+                    self.requestSender.send_request(robot_endpoints.ROBOT_MOVE_TO_LOGIN_POS, position_text)
                     print(f"🤖 ROBOT_MOVE_TO_LOGIN_POS request sent: {position_text}")
                 elif group_name == "CALIBRATION_POS":
-                    self.requestSender.sendRequest(robot_endpoints.ROBOT_MOVE_TO_CALIB_POS, position_text)
+                    self.requestSender.send_request(robot_endpoints.ROBOT_MOVE_TO_CALIB_POS, position_text)
                     print(f"🤖 ROBOT_MOVE_TO_CALIB_POS request sent: {position_text}")
                 else:
                     # For other positions, just print the movement info
@@ -823,7 +823,7 @@ class RobotConfigController:
         """Handle jog request from jog widget"""
         print(f"Jog request: {command} {axis} {direction} {step}")
         request = f"robot/jog/{axis}/{direction}/{step}"
-        self.requestSender.sendRequest(request)
+        self.requestSender.send_request(request)
 
     def on_jog_started(self, direction):
         """Handle jog start"""
@@ -836,10 +836,10 @@ class RobotConfigController:
     def on_save_current_position_as_point(self, group_name):
         """Handle saving current robot position to a specific group"""
         print(f"Saving current position to {group_name}")
-        response = self.requestSender.sendRequest(robot_endpoints.ROBOT_GET_CURRENT_POSITION)
+        response = self.requestSender.send_request(robot_endpoints.ROBOT_GET_CURRENT_POSITION)
         response = Response.from_dict(response)
         status = response.status
-        if status == RESPONSE_STATUS_ERROR:
+        if status == Constants.RESPONSE_STATUS_ERROR:
             message = response.message
             # show error message
             QMessageBox.critical(self.ui, "Error", f"Failed to get current position: {message}") # TODO TRANSLATE
@@ -904,7 +904,7 @@ class RobotConfigController:
                 elif group_name == "NOZZLE CLEAN":
                     request = robot_endpoints.ROBOT_EXECUTE_NOZZLE_CLEAN
 
-                self.requestSender.sendRequest(request)
+                self.requestSender.send_request(request)
 
         else:
             print(f"❌ Group {group_name} not found!")
@@ -1180,7 +1180,7 @@ class RobotConfigController:
 
             # Send UPDATE_CONFIG request after successful save
             if self.requestSender:
-                self.requestSender.sendRequest(robot_endpoints.ROBOT_UPDATE_CONFIG)
+                self.requestSender.send_request(robot_endpoints.ROBOT_UPDATE_CONFIG)
                 print(f"🔄 ROBOT_UPDATE_CONFIG request sent for file: {self.config_file}")
                 print(f"   └── Configuration has been updated and saved")
             else:

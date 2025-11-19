@@ -2,10 +2,9 @@ import traceback
 
 from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 from core.controllers.BaseController import BaseController
-from core.controllers.BaseSettingsController import BaseSettingsController
-from modules.shared.v1 import Constants
-from modules.shared.v1.Response import Response
-import modules.shared.v1.endpoints.settings_endpoints as settings_endpoints
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+import communication_layer.api.v1.endpoints.settings_endpoints as settings_endpoints
 
 from backend.system.settings.SettingsService import SettingsService
 from core.services.vision.VisionService import VisionServiceSingleton
@@ -169,26 +168,6 @@ class SettingsController(BaseController):
         except Exception as e:
             traceback.print_exc()
             return Response(Constants.RESPONSE_STATUS_ERROR, message=f"Error retrieving {resource} settings: {e}").to_dict()
-    #
-    # def _handleSet(self, resource, data):
-    #     """
-    #     Set/update settings for a given domain.
-    #     """
-    #     try:
-    #         print(f"SettingsController._handleSet: resource={resource}, data={data}")
-    #         self.settingsService.updateSettings(data)
-    #
-    #         # Update camera settings separately
-    #         if resource == "camera":
-    #             result, message = VisionServiceSingleton().get_instance().updateCameraSettings(data)
-    #             if not result:
-    #                 return Response(Constants.RESPONSE_STATUS_ERROR, message=f"Error saving camera settings: {message}").to_dict()
-    #
-    #         return Response(Constants.RESPONSE_STATUS_SUCCESS, message=f"{resource.capitalize()} settings saved successfully").to_dict()
-    #
-    #     except Exception as e:
-    #         traceback.print_exc()
-    #         return Response(Constants.RESPONSE_STATUS_ERROR, message=f"Error saving {resource} settings: {e}").to_dict()
 
     def _handleSet(self, resource, data):
         """

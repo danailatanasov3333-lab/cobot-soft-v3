@@ -3,15 +3,13 @@ Settings Handler - API Gateway
 
 Handles all settings-related requests including robot, camera, and glue system configuration.
 """
-
-from modules.shared.v1.Response import Response
-from modules.shared.v1 import Constants
-from modules.shared.v1.endpoints import settings_endpoints
-from modules.shared.v1.endpoints import glue_endpoints
-
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+from communication_layer.api.v1.endpoints import glue_endpoints, settings_endpoints
+from communication_layer.api_gateway.interfaces.dispatch import IDispatcher
 
 
-class SettingsDispatch:
+class SettingsDispatch(IDispatcher):
     """
     Handles settings operations for the API gateway.
     
@@ -27,7 +25,7 @@ class SettingsDispatch:
         """
         self.settingsController = settingsController
     
-    def handle(self, parts, request, data=None):
+    def dispatch(self, parts: list, request: str, data: dict = None) -> dict:
         """
         Route settings requests to appropriate handlers.
         

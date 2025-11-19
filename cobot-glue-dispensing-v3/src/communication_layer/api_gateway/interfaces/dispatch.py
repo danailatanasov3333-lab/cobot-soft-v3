@@ -4,6 +4,6 @@ class IDispatcher(ABC):
     """Interface for all API dispatchers."""
 
     @abstractmethod
-    def handle(self, parts: list, request: str, data: dict = None) -> dict:
+    def dispatch(self, parts: list, request: str, data: dict = None) -> dict:
         """Handle a request and return a response dict."""
         pass

@@ -4,13 +4,14 @@ Operations Handler - API Gateway
 Handles main system operations including start, stop, pause, demos, and test runs.
 """
 
-from modules.shared.v1.Response import Response
-from modules.shared.v1 import Constants
-from modules.shared.v1.endpoints import operations_endpoints
 import traceback
 
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+from communication_layer.api.v1.endpoints import operations_endpoints
+from communication_layer.api_gateway.interfaces.dispatch import IDispatcher
 
-class OperationsDispatch():
+class OperationsDispatch(IDispatcher):
     """
     Handles main system operations for the API gateway.
     
@@ -29,11 +30,12 @@ class OperationsDispatch():
         self.application = application
         self.application_factory = application_factory
     
-    def handle(self, request, data=None):
+    def dispatch(self, parts: list, request: str, data: dict = None) -> dict:
         """
         Route operation requests to appropriate handlers.
         
         Args:
+            parts (list): Parsed request parts
             request (str): Operation request type
             data: Request data
             
@@ -45,6 +47,8 @@ class OperationsDispatch():
         # Handle both new RESTful endpoints and legacy endpoints
         if request in [operations_endpoints.START]:
             return self.handle_start()
+        elif request in [operations_endpoints.CREATE_WORKPIECE]:
+            return self.handle_create_workpiece()
         elif request in [operations_endpoints.STOP]:
             return self.handle_stop()
         elif request in [operations_endpoints.PAUSE]:
@@ -268,4 +272,28 @@ class OperationsDispatch():
             return Response(
                 Constants.RESPONSE_STATUS_ERROR, 
                 message=f"Error executing from gallery: {e}"
+            ).to_dict()
+
+    def handle_create_workpiece(self):
+        """
+        Handle workpiece creation operation.
+
+        Returns:
+            dict: Response indicating success or failure of workpiece creation
+        """
+        print("OperationsHandler: Handling create workpiece operation")
+
+        try:
+            result= self.application.create_workpiece()
+            status = Constants.RESPONSE_STATUS_SUCCESS if result.success else Constants.RESPONSE_STATUS_ERROR
+
+            return Response(status=status, message=result.message,data=result.data).to_dict()
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"OperationsHandler: Error creating workpiece: {e}")
+            return Response(
+                Constants.RESPONSE_STATUS_ERROR,
+                message=f"Error creating workpiece: {e}"
             ).to_dict()

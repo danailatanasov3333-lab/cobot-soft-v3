@@ -2,15 +2,16 @@ import queue
 import time
 import numpy as np
 import cv2
+import threading
 # from system.robot.RobotCalibrationService import CAMERA_TO_ROBOT_MATRIX_PATH
 from backend.system.utils import utils
+from communication_layer.api.v1.topics import VisionTopics
 from modules.VisionSystem.VisionSystem import VisionSystem
 import os
 from modules.shared.MessageBroker import MessageBroker
-import threading
+
 CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), '..','..','..','backend', 'system','storage', 'settings', 'camera_settings.json')
 
-from modules.shared.v1.topics import VisionTopics
 # PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = '/home/ilv/Cobot-Glue-Nozzle/VisionSystem/calibration/cameraCalibration/storage/calibration_result/pickupCamToRobotMatrix.npy'
 PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__),'..','..', '..', 'VisionSystem', 'calibration', 'cameraCalibration', 'storage', 'calibration_result', 'pickupCamToRobotMatrix.npy')
 

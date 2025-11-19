@@ -8,8 +8,8 @@ from PyQt6.QtCore import (
 from PyQt6.QtWidgets import QFrame, QWidget, QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout
 from shapely import Polygon, LineString
 
-from applications.glue_dispensing_application.workpiece.GlueWorkpiece import GlueWorkpiece
-from applications.glue_dispensing_application.workpiece.GlueWorkpieceField import GlueWorkpieceField
+from applications.glue_dispensing_application.model.workpiece import GlueWorkpiece
+from applications.glue_dispensing_application.model.workpiece import GlueWorkpieceField
 from frontend.contour_editor.widgets.TopbarWidget import TopBarWidget
 
 from .services.CaptureDataHandler import CaptureDataHandler
@@ -521,7 +521,7 @@ class MainApplicationFrame(QFrame):
             return
 
         # Create and execute workpiece
-        wp = GlueWorkpiece.fromDict(complete_data)
+        wp = GlueWorkpiece.from_dict(complete_data)
         print("Workpiece created:", wp)
         print("Start button pressed: CONTOUR EDITOR ")
         self.parent.controller.handleExecuteFromGallery(wp)

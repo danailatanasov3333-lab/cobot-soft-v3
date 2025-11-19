@@ -3,14 +3,13 @@ Authentication Handler - API Gateway
 
 Handles all authentication-related requests including login, logout, and session management.
 """
-
-from modules.shared.v1.Response import Response
-from modules.shared.v1 import Constants
-from modules.shared.v1.endpoints import auth_endpoints
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+from communication_layer.api.v1.endpoints import auth_endpoints
+from communication_layer.api_gateway.interfaces.dispatch import IDispatcher
 import os
 
-
-class AuthDispatch:
+class AuthDispatch(IDispatcher):
     """
     Handles authentication operations for the API gateway.
     
@@ -20,12 +19,13 @@ class AuthDispatch:
     def __init__(self):
         """Initialize the AuthHandler."""
         pass
-    
-    def handle(self, request, data=None):
+
+    def dispatch(self, parts: list, request: str, data: dict = None) -> dict:
         """
         Route authentication requests to appropriate handlers.
         
         Args:
+            parts (list): Parsed request parts
             request (str): The authentication request type
             data: Request data (username/password for login)
             
@@ -41,8 +41,8 @@ class AuthDispatch:
             return self.handle_qr_login(data)
         else:
             raise ValueError(f"Unknown request: {request}")
-            return Response(Constants.RESPONSE_STATUS_ERROR, 
-                          message=f"Unknown authentication request: {request}").to_dict()
+            return Response(Constants.RESPONSE_STATUS_ERROR,
+                            message=f"Unknown authentication request: {request}").to_dict()
     
     def handle_login(self, data):
         """
@@ -57,8 +57,8 @@ class AuthDispatch:
         print("AuthHandler: Handling login")
         
         if not data or len(data) < 2:
-            return Response(Constants.RESPONSE_STATUS_ERROR, 
-                          message="Username and password required").to_dict()
+            return Response(Constants.RESPONSE_STATUS_ERROR,
+                            message="Username and password required").to_dict()
         
         user_id = data[0]
         password = data[1]
@@ -106,8 +106,8 @@ class AuthDispatch:
             print(f"AuthHandler: Login error: {e}")
             import traceback
             traceback.print_exc()
-            return Response(Constants.RESPONSE_STATUS_ERROR, 
-                          message=f"Login error: {str(e)}").to_dict()
+            return Response(Constants.RESPONSE_STATUS_ERROR,
+                            message=f"Login error: {str(e)}").to_dict()
     
     def handle_qr_login(self, data=None):
         """
@@ -126,14 +126,14 @@ class AuthDispatch:
         
         try:
             # For now, return success - actual QR implementation would go here
-            response = Response(Constants.RESPONSE_STATUS_SUCCESS, 
-                              message="QR login not yet implemented")
+            response = Response(Constants.RESPONSE_STATUS_SUCCESS,
+                                message="QR login not yet implemented")
             return response.to_dict()
             
         except Exception as e:
             print(f"AuthHandler: QR login error: {e}")
-            return Response(Constants.RESPONSE_STATUS_ERROR, 
-                          message=f"QR login error: {str(e)}").to_dict()
+            return Response(Constants.RESPONSE_STATUS_ERROR,
+                            message=f"QR login error: {str(e)}").to_dict()
     
     def handle_logout(self, data=None):
         """
@@ -151,11 +151,11 @@ class AuthDispatch:
             from modules.shared.core.user.Session import SessionManager
             SessionManager.logout()
             
-            response = Response(Constants.RESPONSE_STATUS_SUCCESS, 
-                              message="Logged out successfully")
+            response = Response(Constants.RESPONSE_STATUS_SUCCESS,
+                                message="Logged out successfully")
             return response.to_dict()
             
         except Exception as e:
             print(f"AuthHandler: Logout error: {e}")
-            return Response(Constants.RESPONSE_STATUS_ERROR, 
-                          message=f"Logout error: {str(e)}").to_dict()
+            return Response(Constants.RESPONSE_STATUS_ERROR,
+                            message=f"Logout error: {str(e)}").to_dict()

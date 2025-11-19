@@ -2,10 +2,14 @@
 import logging
 import os
 
-from applications.glue_dispensing_application.workpiece.GlueWorkPieceRepositorySingleton import \
+from applications.glue_dispensing_application.controllers.glue_robot_controller import GlueRobotController
+from applications.glue_dispensing_application.controllers.glue_workpiece_controller import GlueWorkpieceController
+from applications.glue_dispensing_application.repositories.workpiece.GlueWorkPieceRepositorySingleton import \
     GlueWorkPieceRepositorySingleton
+from applications.glue_dispensing_application.services.workpiece.glue_workpiece_service import GlueWorkpieceService
 from communication_layer.api_gateway.dispatch.main_router import RequestHandler
 from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
+from core.controllers.vision.camera_system_controller import CameraSystemController
 from frontend.core.utils.localization import setup_localization
 from core.services.robot_service.RobotStateManager import RobotStateManager
 
@@ -13,14 +17,14 @@ setup_localization()
 
 
 from modules.shared.MessageBroker import MessageBroker
-from core.services.workpiece.WorkpieceService import WorkpieceService
-from modules.shared.v1.DomesticRequestSender import DomesticRequestSender
+from core.services.workpiece.BaseWorkpieceService import BaseWorkpieceService
+from communication_layer.api_gateway.DomesticRequestSender import DomesticRequestSender
 from core.application_factory import create_application_factory
 from core.base_robot_application import ApplicationType
 from backend.system.SensorPublisher import SensorPublisher
 
-from applications.glue_dispensing_application.controllers.RobotController import RobotController
-from applications.glue_dispensing_application.services.robot_service.GlueRobotService import RobotService
+
+from applications.glue_dispensing_application.services.robot_service.glue_robot_service import GlueRobotService
 # IMPORT CONTROLLERS
 from backend.system.settings.SettingsController import SettingsController
 
@@ -28,9 +32,9 @@ from backend.system.settings.SettingsController import SettingsController
 from backend.system.settings.SettingsService import SettingsService
 
 
-from applications.glue_dispensing_application.controllers.CameraSystemController import CameraSystemController
+
 from core.services.vision.VisionService import VisionServiceSingleton
-from applications.glue_dispensing_application.workpiece.WorkpieceController import WorkpieceController
+
 from backend.system.utils import PathResolver
 
 
@@ -79,19 +83,19 @@ if __name__ == "__main__":
     cameraService = VisionServiceSingleton().get_instance()
 
     repository = GlueWorkPieceRepositorySingleton().get_instance()
-    workpieceService = WorkpieceService(repository=repository)
+    workpieceService = GlueWorkpieceService(repository=repository)
 
     robot_state_manager_cycle_time = 0.03  # 30ms cycle time
     robot_state_manager = RobotStateManager(robot_ip=robot_config.robot_ip,
                                             cycle_time=robot_state_manager_cycle_time)
-    robotService = RobotService(robot, settings_service,robot_state_manager)
+    robotService = GlueRobotService(robot, settings_service,robot_state_manager)
 
     # INIT CONTROLLERS
     settingsController = SettingsController(settings_service,settings_registry)
     cameraSystemController = CameraSystemController(cameraService)
 
-    workpieceController = WorkpieceController(workpieceService)
-    robotController = RobotController(robotService)
+    workpieceController = GlueWorkpieceController(workpieceService)
+    robotController = GlueRobotController(robotService)
 
     # INIT APPLICATION FACTORY
     
@@ -127,8 +131,8 @@ if __name__ == "__main__":
     # INIT MAIN WINDOW
 
     if API_VERSION == 1:
-        from frontend.core.controller.Controller import Controller
-        controller = Controller(domesticRequestSender)
+        from frontend.core.ui_controller.UIController import UIController
+        controller = UIController(domesticRequestSender)
     else:
         raise ValueError("Unsupported API_VERSION. Please set to 1")
 

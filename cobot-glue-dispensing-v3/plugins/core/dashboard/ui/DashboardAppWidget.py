@@ -1,7 +1,7 @@
 from PyQt6.QtCore import pyqtSignal
 
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
-from modules.shared.v1.endpoints import camera_endpoints
+from communication_layer.api.v1.endpoints import camera_endpoints
 from modules.shared.tools.GlueCell import GlueCellsManagerSingleton
 
 
@@ -30,7 +30,8 @@ class DashboardAppWidget(AppWidget):
             from plugins.core.dashboard.ui.DashboardWidget import DashboardWidget
 
             # Remove the placeholder content
-            self.content_widget = DashboardWidget(updateCameraFeedCallback=lambda: self.controller.handle(camera_endpoints.UPDATE_CAMERA_FEED))
+            self.content_widget = DashboardWidget(updateCameraFeedCallback=lambda: self.controller.handle(
+                camera_endpoints.UPDATE_CAMERA_FEED))
             self.content_widget.start_requested.connect(self.start_requested.emit)
             self.content_widget.pause_requested.connect(self.pause_requested.emit)
             self.content_widget.stop_requested.connect(self.stop_requested.emit)

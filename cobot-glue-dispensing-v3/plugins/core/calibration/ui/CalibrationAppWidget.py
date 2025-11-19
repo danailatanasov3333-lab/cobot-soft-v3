@@ -1,6 +1,5 @@
 from PyQt6.QtWidgets import QWidget
 
-from modules.shared.v1.endpoints import camera_endpoints,robot_endpoints
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 from plugins.core.calibration.ui.CalibrationSettingsTab import CalibrationServiceTabLayout
 

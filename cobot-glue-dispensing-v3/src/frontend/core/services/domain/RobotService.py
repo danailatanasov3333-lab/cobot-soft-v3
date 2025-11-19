@@ -9,13 +9,13 @@ import logging
 from typing import TYPE_CHECKING
 from enum import Enum
 
+from communication_layer.api.v1.endpoints import robot_endpoints
 from ..types.ServiceResult import ServiceResult
 
 # Import endpoint constants
-from modules.shared.v1.endpoints import robot_endpoints
 
 if TYPE_CHECKING:
-    from frontend.core.controller.Controller import Controller
+    from frontend.core.ui_controller.Controller import Controller
 
 
 class RobotAxis(Enum):

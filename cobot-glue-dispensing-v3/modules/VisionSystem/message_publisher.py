@@ -1,5 +1,5 @@
+from communication_layer.api.v1.topics import VisionTopics
 from modules.shared.MessageBroker import MessageBroker
-from modules.shared.v1.topics import VisionTopics
 class MessagePublisher:
     def __init__(self):
         self.broker= MessageBroker()

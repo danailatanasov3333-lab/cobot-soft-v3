@@ -1,7 +1,7 @@
 import threading
 from typing import Optional, Tuple
 
-from core.services.robot_service.base_robot_service import BaseRobotService
+
 from modules.shared.tools.ToolChanger import ToolChanger
 
 
@@ -11,7 +11,7 @@ class ToolManager:
     RobotService delegates tool operations to this manager.
     """
 
-    def __init__(self, tool_changer: ToolChanger, robot_service: BaseRobotService):
+    def __init__(self, tool_changer: ToolChanger, robot_service):
         self.tool_changer = tool_changer
         self.robot_service = robot_service
         self.current_gripper: Optional[int] = None

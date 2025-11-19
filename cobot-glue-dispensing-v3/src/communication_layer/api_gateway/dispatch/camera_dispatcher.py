@@ -3,13 +3,12 @@ Camera Handler - API Gateway
 
 Handles all camera and vision-related requests including calibration, image capture, and vision operations.
 """
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+from communication_layer.api.v1.endpoints import camera_endpoints
+from communication_layer.api_gateway.interfaces.dispatch import IDispatcher
 
-from modules.shared.v1.Response import Response
-from modules.shared.v1 import Constants
-from modules.shared.v1.endpoints import camera_endpoints
-
-
-class CameraDispatch:
+class CameraDispatch(IDispatcher):
     """
     Handles camera and vision operations for the API gateway.
     
@@ -21,13 +20,13 @@ class CameraDispatch:
         Initialize the CameraHandler.
         
         Args:
-            application: Main GlueSprayingApplication instance
+            application: Main Application instance
             cameraSystemController: Camera system controller instance
         """
         self.application = application
         self.cameraSystemController = cameraSystemController
     
-    def handle(self, parts, request, data=None):
+    def dispatch(self, parts: list, request: str, data: dict = None) -> dict:
         """
         Route camera requests to appropriate handlers.
         
@@ -46,7 +45,7 @@ class CameraDispatch:
             return self.handle_camera_calibration()
         elif request in [camera_endpoints.CAMERA_ACTION_SAVE_WORK_AREA_POINTS] or (len(parts) > 1 and parts[1] == "saveWorkAreaPoints"):
             return self.handle_save_work_area_points(data)
-        elif request in [camera_endpoints.CAMERA_ACTION_GET_LATEST_FRAME,]:
+        elif request in [camera_endpoints.CAMERA_ACTION_GET_LATEST_FRAME, ]:
             return self.handle_frame_request(parts, request, data)
         elif request in [camera_endpoints.CAMERA_ACTION_RAW_MODE_ON]:
             return self.handle_mode_change(parts, request, data)

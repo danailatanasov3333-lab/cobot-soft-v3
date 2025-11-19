@@ -1,13 +1,14 @@
-from applications.glue_dispensing_application.services.robot_service.GlueRobotService import RobotService
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
 from core.controllers.BaseController import BaseController
-from modules.shared.v1 import Constants
-from modules.shared.v1.Response import Response
+
 
 from core.model.robot.enums.axis import Direction, RobotAxis
-import modules.shared.v1.endpoints.robot_endpoints as robot_endpoints
+import communication_layer.api.v1.endpoints.robot_endpoints as robot_endpoints
+from core.services.robot_service.base_robot_service import BaseRobotService
 
 
-class RobotController(BaseController):
+class BaseRobotController(BaseController):
     """
     RobotController handles high-level robot actions based on API-style or legacy requests.
 
@@ -15,7 +16,7 @@ class RobotController(BaseController):
     delegating the actual execution to RobotService.
     """
 
-    def __init__(self, robot_service: RobotService):
+    def __init__(self, robot_service: BaseRobotService):
         self.robot_service = robot_service
         self._dynamic_handler_resolver = self._resolve_dynamic_handler
         super().__init__()
@@ -71,7 +72,7 @@ class RobotController(BaseController):
         return self._moveSuccess(ret, "Failed moving to login position", "Success moving to login position")
 
     def _handle_move_to_calib_pose(self):
-        ret = self.robot_service.moveToCalibrationPosition()
+        ret = self.robot_service.move_to_calibration_position()
         return self._moveSuccess(ret, "Failed moving to calibration pose", "Success moving to calibration pose")
 
     def _handle_stop(self):
@@ -161,8 +162,8 @@ class RobotController(BaseController):
             return Response(Constants.RESPONSE_STATUS_ERROR, f"Invalid slot request {request}: {e}", {}).to_dict()
 
     def _handleSaveCalibrationPoint(self):
-        ret = self.robot_service.saveCalibrationPoint()
-        return self._moveSuccess(ret, "Failed saving calibration point", "Calibration point saved")
+        # ret = self.robot_service.saveCalibrationPoint()
+        return self._moveSuccess(False, "Not Implemented", "Calibration point saved")
 
     # === Utility ===
     def _moveSuccess(self, ret, fail_msg, success_msg):

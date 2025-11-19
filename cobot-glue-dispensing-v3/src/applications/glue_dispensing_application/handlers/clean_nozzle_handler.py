@@ -1,12 +1,12 @@
-from applications.glue_dispensing_application.services.robot_service.GlueRobotService import RobotService
+from applications.glue_dispensing_application.services.robot_service.glue_robot_service import GlueRobotService
 
 
-def clean_nozzle(robot_service:RobotService):
+def clean_nozzle(robot_service:GlueRobotService):
     pos1, pos2 = robot_service.robot_config.getNozzleCleanPointsParsed()
     config = robot_service.robot_config.getNozzleCleanConfig()
 
     def move_to_nozzle_clean_point(robot_service, point):
-        robot_service.robot.moveCart(position=point,
+        robot_service.robot.move_cartesian(position=point,
                                      vel=30,
                                      acc=10,
                                      tool=robot_service.robot_config.robot_tool,
@@ -26,7 +26,7 @@ def clean_nozzle(robot_service:RobotService):
 
     move_to_nozzle_clean_point(robot_service,pos2)
 
-    robot_service.moveToCalibrationPosition()
+    robot_service.move_to_calibration_position()
     robot_service._waitForRobotToReachPosition(robot_service.robot_config.getCalibrationPositionParsed(),1,0)
     ret = 0
     return ret

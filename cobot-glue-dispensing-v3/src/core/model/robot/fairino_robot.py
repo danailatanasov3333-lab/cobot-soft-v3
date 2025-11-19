@@ -1,10 +1,12 @@
-import logging
 import platform
 import logging
 import time
 
 from backend.system.utils.custom_logging import LoggingLevel, log_if_enabled, \
     setup_logger, LoggerContext, log_info_message, log_error_message, log_debug_message
+from core.model.robot.IRobot import IRobot
+from core.model.robot.enums.axis import Direction
+from frontend.core.services.domain.RobotService import RobotAxis
 
 if platform.system() == "Windows":
     from libs.fairino.windows import Robot
@@ -22,7 +24,7 @@ if ENABLE_LOGGING:
 else:
     robot_logger = None
 
-class TestRobotWrapper:
+class TestRobotWrapper(IRobot):
     """
        A full mock of the Fairino Robot interface.
        Implements every method used by FairinoRobot and returns safe dummy values.
@@ -32,19 +34,19 @@ class TestRobotWrapper:
         print("⚙️  TestRobot initialized (mock robot).")
 
     # --- Motion commands ---
-    def MoveCart(self, position, tool, user, vel=100, acc=30):
+    def move_cartesian(self, position, tool=0, user=0, vel=100, acc=30,blendR=0):
         print(f"[MOCK] MoveCart -> pos={position}, tool={tool}, user={user}, vel={vel}, acc={acc}")
         return 0
 
-    def MoveL(self, position, tool, user, vel=100, acc=30, blendR=0):
+    def move_liner(self, position, tool=0, user=0, vel=100, acc=30, blendR=0):
         print(f"[MOCK] MoveL -> pos={position}, tool={tool}, user={user}, vel={vel}, acc={acc}, blendR={blendR}")
         return 0
 
-    def StartJOG(self, ref, nb, dir, vel, acc, max_dis):
-        print(f"[MOCK] StartJOG -> ref={ref}, nb={nb}, dir={dir}, vel={vel}, acc={acc}, max_dis={max_dis}")
+    def start_jog(self,axis:RobotAxis,direction:Direction,step,vel,acc):
+        print(f"[MOCK] StartJOG -> axis={axis}, direction={direction}, step={step}, vel={vel}, acc={acc}")
         return 0
 
-    def StopMotion(self):
+    def stop_motion(self):
         print("[MOCK] StopMotion called")
         return 0
 
@@ -53,12 +55,12 @@ class TestRobotWrapper:
         return 0
 
     # --- State queries ---
-    def GetActualTCPPose(self):
+    def get_current_position(self):
         # print("[MOCK] GetActualTCPPose called")
         # Returning tuple to match expected structure (status, pose)
         return (0, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    def GetActualTCPCompositeSpeed(self):
+    def get_current_velocity(self):
         print("[MOCK] GetActualTCPCompositeSpeed called")
         return (0, [0.0])  # mimic real return: (status, [speed])
 
@@ -66,17 +68,12 @@ class TestRobotWrapper:
         print("[MOCK] GetSDKVersion called")
         return "TestRobot SDK v1.0"
 
-    # --- Control ---
-    def RobotEnable(self, flag):
-        print(f"[MOCK] RobotEnable({flag}) called")
-        return 0
-
-    def SetDO(self, portId, value):
-        print(f"[MOCK] SetDO -> port={portId}, value={value}")
-        return 0
 
 
-class FairinoRobot:
+
+
+
+class FairinoRobot(IRobot):
     """
       A wrapper for the real robot controller, abstracting motion and I/O operations.
       """
@@ -106,11 +103,12 @@ class FairinoRobot:
 
 
 
-    def moveCart(self,position, tool, user, vel=100, acc=30):
+    def move_cartesian(self,position, tool=0, user=0, vel=30, acc=30,blendR=0):
         """
               Moves the robot in Cartesian space.
 
               Args:
+                  blendR
                   position (list): Target Cartesian position.
                   tool (int): Tool frame ID.
                   user (int): User frame ID.
@@ -120,24 +118,12 @@ class FairinoRobot:
               Returns:
                   list: Result from robot move command.
               """
-        # print position elements type
-
-        # names = ["x", "y", "z", "rx", "ry", "rz"]
-        # if position is None:
-        #     print("position is None")
-        # else:
-        #     try:
-        #         for i, name in enumerate(names):
-        #             val = position[i] if i < len(position) else None
-        #             print(f"{name}: value={val}, type={type(val).__name__}")
-        #     except Exception as e:
-        #         print(f"Error inspecting position: {e}")
 
         result = self.robot.MoveCart(position, tool, user, vel=vel, acc=acc)
         log_debug_message(self.logger_context, f"MoveCart to {position} with tool {tool}, user {user}, vel {vel}, acc {acc} -> result: {result}")
         return result
 
-    def moveL(self,position, tool, user, vel, acc, blendR):
+    def move_liner(self,position, tool=0, user=0, vel=30, acc=30, blendR=0):
         """
               Executes a linear movement with blending.
 
@@ -157,7 +143,7 @@ class FairinoRobot:
         log_debug_message(self.logger_context, f"MoveL to {position} with tool {tool}, user {user}, vel {vel}, acc {acc}, blendR {blendR} -> result: {result}")
         return result
 
-    def getCurrentPosition(self):
+    def get_current_position(self):
         """
               Retrieves the current TCP (tool center point) position.
 
@@ -167,7 +153,7 @@ class FairinoRobot:
         try:
             currentPose = self.robot.GetActualTCPPose()
         except Exception as e:
-            log_error_message(self.logger_context, f"GetCurrentPosition failed: {e}")
+            log_error_message(self.logger_context, f"get_current_position failed: {e}")
             return None
         # print(f"GetCurrentPosition raw -> {currentPose}")
         # check if int
@@ -178,22 +164,11 @@ class FairinoRobot:
         # log_debug_message(self.logger_context, f"GetCurrentPosition -> {currentPose}")
         return currentPose
 
-    def getCurrentLinerSpeed(self):
-        """
-               Retrieves the current linear speed of the TCP.
+    def get_current_velocity(self):
+        pass
 
-               Returns:
-                   float: TCP composite speed.
-               """
-        res = self.robot.GetActualTCPCompositeSpeed()
-        # result = res[0]
-        # compSpeed = res[1]
-        # linSpeed = compSpeed[0]
-        # linSpeed = res[1][0]
-        # print(f"result {result}  comp Speed {compSpeed} linSpeed {linSpeed}")
-        # return linSpeed
-        return res
-
+    def get_current_acceleration(self):
+        pass
 
     def enable(self):
         """
@@ -249,7 +224,7 @@ class FairinoRobot:
         log_debug_message(self.logger_context, f"StartJog axis {axis} direction {direction} step {step} vel {vel} acc {acc} -> result: {result}")
         return result
 
-    def stopMotion(self):
+    def stop_motion(self):
         """
                Stops all current robot motion.
 

@@ -10,7 +10,7 @@ from PyQt6.QtGui import QPixmap, QIcon, QPalette, QColor
 from PyQt6.QtWidgets import QFrame, QSizePolicy, QSpacerItem, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, \
     QCheckBox, QWidget, QMessageBox, QDialog, QScrollArea, QStyleFactory, QListView
 
-from applications.glue_dispensing_application.workpiece.GlueWorkpieceField import GlueWorkpieceField
+from applications.glue_dispensing_application.model.workpiece.GlueWorkpieceField import GlueWorkpieceField
 from frontend.core.utils.styles.CreateWorkpieceStyles import getStyles
 from frontend.core.utils.styles.CreateWorkpieceStyles import get_input_field_styles
 from frontend.core.utils.styles.CreateWorkpieceStyles import get_popup_view_styles

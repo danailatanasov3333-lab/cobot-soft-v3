@@ -2,9 +2,9 @@ import threading
 import time
 
 from backend.system.utils import robot_utils
+from communication_layer.api.v1.topics import RobotTopics
 from core.model.robot import fairino_robot
 from modules.shared.MessageBroker import MessageBroker
-from modules.shared.v1.topics import RobotTopics
 
 from core.services.robot_service.enums.RobotState import RobotState
 
@@ -28,7 +28,7 @@ class RobotMonitor:
         while not self._stop_event.is_set():
             current_time = time.time()
             try:
-                current_pos = self.robot.getCurrentPosition()
+                current_pos = self.robot.get_current_position()
             except Exception as e:
                 print(f"ERROR: Failed to get robot position: {e}")
                 self.data_callback(None, None, None, current_time, error=True)

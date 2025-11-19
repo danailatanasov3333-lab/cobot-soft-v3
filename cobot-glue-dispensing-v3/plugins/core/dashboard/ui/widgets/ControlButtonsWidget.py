@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QSizePolicy
 from PyQt6.QtCore import Qt, pyqtSignal, QMetaObject, pyqtSlot
 
+from communication_layer.api.v1.topics import SystemTopics
 from modules.shared.MessageBroker import MessageBroker
-from modules.shared.v1.topics import SystemTopics
 from frontend.widgets.MaterialButton import MaterialButton
 from frontend.core.utils.localization import TranslationKeys, TranslatableWidget
 from core.base_robot_application import ApplicationState

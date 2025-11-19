@@ -7,7 +7,7 @@ Description:
 from core.model.workpiece.Workpiece import BaseWorkpiece
 
 
-class WorkpieceService:
+class BaseWorkpieceService:
     """
        A service class for managing workpieces through a singleton repository instance.
 
@@ -17,6 +17,7 @@ class WorkpieceService:
            BASE_DIR (str): Directory path for storing workpieces JSON files.
            WORKPIECE_FILE_SUFFIX (str): Suffix used for naming saved workpieces files.
        """
+
     DATE_FORMAT = "%Y-%m-%d"
     TIMESTAMP_FORMAT = "%Y-%m-%d_%H-%M-%S-%f"
     BASE_DIR = "system/storage/workpieces"
@@ -30,7 +31,7 @@ class WorkpieceService:
         self.repository = repository
 
 
-    def saveWorkpiece(self, workpiece: BaseWorkpiece):
+    def save_workpiece(self, workpiece: BaseWorkpiece):
         """
                 Saves a given workpieces using the repository.
 
@@ -41,9 +42,9 @@ class WorkpieceService:
                     tuple: (bool, str) indicating success status and a message.
                 """
         print(f"WorkpieceService saving workpiece with ID: {workpiece.workpieceId}")
-        return self.repository.saveWorkpiece(workpiece)
+        return self.repository.save_workpiece(workpiece)
 
-    def loadAllWorkpieces(self):
+    def load_all(self):
         """
             Loads all previously saved workpieces from the repository.
 
@@ -53,7 +54,7 @@ class WorkpieceService:
         data = self.repository.data
         return data
 
-    def deleteWorkpiece(self, workpieceId):
+    def delete_workpiece_by_id(self, workpieceId):
         """
             Deletes a workpiece by its ID using the repository.
 
@@ -64,7 +65,7 @@ class WorkpieceService:
                 tuple: (bool, str) indicating success status and a message.
             """
 
-        result = self.repository.deleteWorkpiece(workpieceId)
+        result = self.repository.delete_workpiece_by_id(workpieceId)
 
         return result
 

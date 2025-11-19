@@ -1175,7 +1175,7 @@ Spray Pattern: {len(workpiece.sprayPattern.get('Contour', [])) if hasattr(workpi
         thumbnail = list(self.selected_thumbnails)[0]
         filename = getattr(thumbnail, 'filename', 'Unknown')
         workpieceId = getattr(thumbnail, 'workpieceId', None)
-        result, workpiece = self.controller.getWorkpieceById(workpieceId)
+        result, workpiece = self.controller.get_workpiece_by_id(workpieceId)
         self.edit_requested.emit(workpieceId)
         if not result:
             # show warning dialog

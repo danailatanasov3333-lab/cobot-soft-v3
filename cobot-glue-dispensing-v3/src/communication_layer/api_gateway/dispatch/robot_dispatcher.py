@@ -3,13 +3,12 @@ Robot Handler - API Gateway
 
 Handles all robot-related requests including movement, calibration, and robot operations.
 """
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+from communication_layer.api.v1.endpoints import robot_endpoints
+from communication_layer.api_gateway.interfaces.dispatch import IDispatcher
 
-from modules.shared.v1.Response import Response
-from modules.shared.v1 import Constants
-from modules.shared.v1.endpoints import robot_endpoints
-
-
-class RobotDispatch:
+class RobotDispatch(IDispatcher):
     """
     Handles robot operations for the API gateway.
     
@@ -21,13 +20,13 @@ class RobotDispatch:
         Initialize the RobotHandler.
         
         Args:
-            application: Main GlueSprayingApplication instance
+            application: Main Application instance
             robotController: Robot controller instance
         """
         self.application = application
         self.robotController = robotController
     
-    def handle(self, parts, request, data=None):
+    def dispatch(self, parts: list, request: str, data: dict = None) -> dict:
         """
         Route robot requests to appropriate handlers.
         

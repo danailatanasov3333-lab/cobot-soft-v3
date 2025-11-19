@@ -4,7 +4,7 @@ from core.application.interfaces.application_settings_interface import Applicati
 from applications.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
 
 from modules.shared.tools.GlueCell import GlueType
-from modules.shared.v1.endpoints import glue_endpoints
+from communication_layer.api.v1.endpoints import glue_endpoints
 
 
 class GlueSettings(Settings, ApplicationSettingsInterface):

@@ -3,14 +3,15 @@ Workpiece Handler - API Gateway
 
 Handles all workpiece-related requests including CRUD operations, creation workflow, and DXF import.
 """
-from applications.glue_dispensing_application.workpiece.GlueWorkpieceField import GlueWorkpieceField
-from modules.shared.v1.Response import Response
-from modules.shared.v1 import Constants
-from modules.shared.v1.endpoints import workpiece_endpoints
+
 import traceback
 
+from communication_layer.api.v1 import Constants
+from communication_layer.api.v1.Response import Response
+from communication_layer.api.v1.endpoints import workpiece_endpoints
+from communication_layer.api_gateway.interfaces.dispatch import IDispatcher
 
-class WorkpieceDispatch:
+class WorkpieceDispatch(IDispatcher):
     """
     Handles workpiece operations for the API gateway.
     
@@ -22,13 +23,13 @@ class WorkpieceDispatch:
         Initialize the WorkpieceHandler.
         
         Args:
-            application: Main GlueSprayingApplication instance
+            application: Application instance
             workpieceController: Workpiece controller instance
         """
         self.application = application
         self.workpieceController = workpieceController
-    
-    def handle(self, parts, request, data=None):
+
+    def dispatch(self, parts: list, request: str, data: dict = None) -> dict:
         """
         Route workpiece requests to appropriate handlers.
         
@@ -40,19 +41,13 @@ class WorkpieceDispatch:
         Returns:
             dict: Response dictionary with operation result
         """
-        print(f"WorkpieceHandler: Handling request: {request} with parts: {parts}")
+        print(f"WorkpieceHandler: Handling request: {request} with parts: {parts} data {data}")
         
         # Handle both new RESTful endpoints and legacy endpoints
         if request in [workpiece_endpoints.WORKPIECE_SAVE] or (len(parts) > 1 and parts[1] == "save"):
             return self.handle_save_workpiece(request, parts, data)
         elif request in [workpiece_endpoints.WORKPIECE_SAVE_DXF] or (len(parts) > 1 and parts[1] == "dxf"):
             return self.handle_save_workpiece_from_dxf(data)
-        elif request in [workpiece_endpoints.WORKPIECE_CREATE] or (len(parts) > 1 and parts[1] == "create"):
-            return self.handle_create_workpiece()
-        elif request in [workpiece_endpoints.WORKPIECE_CREATE_STEP_1] or (len(parts) > 1 and parts[1] == "create_step_1"):
-            return self.handle_create_workpiece_step_1()
-        elif request in [workpiece_endpoints.WORKPIECE_CREATE_STEP_2] or (len(parts) > 1 and parts[1] == "create_step_2"):
-            return self.handle_create_workpiece_step_2()
         elif request in [workpiece_endpoints.WORKPIECE_GET_ALL] or (len(parts) > 1 and parts[1] == "getall"):
             return self.handle_get_all_workpieces()
         elif request in [workpiece_endpoints.WORKPIECE_DELETE] or (len(parts) > 1 and parts[1] == "delete"):
@@ -78,32 +73,9 @@ class WorkpieceDispatch:
         print("WorkpieceHandler: Handling save workpiece")
         
         try:
-            # Extract and transform spray pattern
-            sprayPattern = data.get(GlueWorkpieceField.SPRAY_PATTERN.value, {})
-            contours = sprayPattern.get("Contour")
-            fill = sprayPattern.get("Fill")
-            
-            # Handle external contours
-            externalContours = data.get(GlueWorkpieceField.CONTOUR.value, [])
-            print(f"WorkpieceHandler: Original contours: {externalContours}")
-            
-            if externalContours is None or len(externalContours) == 0:
-                externalContour = []
-            else:
-                # externalContours should be in dict format {"contour": points, "settings": {...}}
-                externalContour = externalContours
-            
-            data[GlueWorkpieceField.CONTOUR.value] = externalContour
-            
-            # Update spray pattern
-            sprayPattern['Contour'] = contours
-            sprayPattern['Fill'] = fill
-            data[GlueWorkpieceField.SPRAY_PATTERN.value] = sprayPattern
-            
-            print(f"WorkpieceHandler: Data after transform: {data}")
             
             # Save workpiece
-            result = self.workpieceController._saveWorkpiece(data)
+            result = self.workpieceController._save_workpiece(data)
             
             if result:
                 return Response(
@@ -117,7 +89,7 @@ class WorkpieceDispatch:
                 ).to_dict()
                 
         except Exception as e:
-            print(f"WorkpieceHandler: Error saving workpiece: {e}")
+            print(f"WorkpieceDispatcher: Error saving workpiece: {e}")
             traceback.print_exc()
             return Response(
                 Constants.RESPONSE_STATUS_ERROR, 
@@ -157,144 +129,6 @@ class WorkpieceDispatch:
                 message=f"Error saving workpiece from DXF: {e}"
             ).to_dict()
     
-    def handle_create_workpiece(self):
-        """
-        Handle workpiece creation workflow.
-        
-        Returns:
-            dict: Response with workpiece creation data
-        """
-        print("WorkpieceHandler: Handling create workpiece")
-        
-        try:
-            result, data = self.application.createWorkpiece()
-            
-            if not result:
-                return Response(Constants.RESPONSE_STATUS_ERROR, message=data).to_dict()
-            
-            height, contourArea, contour, scaleFactor, image, message, originalContours = data
-            
-            # Temporary workaround: force height to 4
-            if height is None:
-                height = 4
-            if height < 4 or height > 4:
-                height = 4
-            
-            # Cache data in the workpiece controller
-            self.workpieceController.cacheInfo = {
-                GlueWorkpieceField.HEIGHT.value: height,
-                GlueWorkpieceField.CONTOUR_AREA.value: contourArea,
-            }
-            self.workpieceController.scaleFactor = scaleFactor
-            
-            originalContour = []
-            if originalContours is not None and len(originalContours) > 0:
-                originalContour = originalContours[0]
-            
-            dataDict = {
-                GlueWorkpieceField.HEIGHT.value: height,
-                "image": image,
-                "contours": originalContour
-            }
-            
-            return Response(
-                Constants.RESPONSE_STATUS_SUCCESS, 
-                message=message, 
-                data=dataDict
-            ).to_dict()
-            
-        except Exception as e:
-            print(f"WorkpieceHandler: Uncaught exception in create workpiece: {e}")
-            traceback.print_exc()
-            return Response(
-                Constants.RESPONSE_STATUS_ERROR, 
-                message=f"Uncaught exception: {e}"
-            ).to_dict()
-    
-    def handle_create_workpiece_step_1(self):
-        """
-        Handle workpiece creation step 1.
-        
-        Returns:
-            dict: Response indicating success or failure of step 1
-        """
-        print("WorkpieceHandler: Handling create workpiece step 1")
-        
-        try:
-            result, message = self.application.create_workpiece_step_1()
-            
-            if result:
-                return Response(
-                    Constants.RESPONSE_STATUS_SUCCESS, 
-                    message=message
-                ).to_dict()
-            else:
-                return Response(
-                    Constants.RESPONSE_STATUS_ERROR, 
-                    message=message
-                ).to_dict()
-                
-        except Exception as e:
-            print(f"WorkpieceHandler: Error in create workpiece step 1: {e}")
-            return Response(
-                Constants.RESPONSE_STATUS_ERROR, 
-                message=f"Error in create workpiece step 1: {e}"
-            ).to_dict()
-    
-    def handle_create_workpiece_step_2(self):
-        """
-        Handle workpiece creation step 2.
-        
-        Returns:
-            dict: Response with step 2 data
-        """
-        print("WorkpieceHandler: Handling create workpiece step 2")
-        
-        try:
-            result, data = self.application.create_workpiece_step_2()
-            
-            if not result:
-                return Response(Constants.RESPONSE_STATUS_ERROR, message=data).to_dict()
-            
-            height, contourArea, contour, scaleFactor, image, message, originalContours = data
-            
-            # Temporary workaround: force height to 4
-            if height is None:
-                height = 4
-            if height < 4 or height > 4:
-                height = 4
-            
-            # Cache data in the workpiece controller
-            self.workpieceController.cacheInfo = {
-                GlueWorkpieceField.HEIGHT.value: height,
-                GlueWorkpieceField.CONTOUR_AREA.value: contourArea,
-            }
-            self.workpieceController.scaleFactor = scaleFactor
-            
-            originalContour = []
-            if originalContours is not None and len(originalContours) > 0:
-                originalContour = originalContours[0]
-            
-            dataDict = {
-                GlueWorkpieceField.HEIGHT.value: height,
-                "image": image,
-                "contours": originalContour
-            }
-            
-            return Response(
-                Constants.RESPONSE_STATUS_SUCCESS, 
-                message=message, 
-                data=dataDict
-            ).to_dict()
-            
-        except Exception as e:
-            print(f"WorkpieceHandler: Error in create workpiece step 2: {e}")
-            traceback.print_exc()
-            return Response(
-                Constants.RESPONSE_STATUS_ERROR, 
-                message=f"Error in create workpiece step 2: {e}"
-            ).to_dict()
-    
     def handle_get_all_workpieces(self):
         """
         Handle getting all workpieces.
@@ -305,7 +139,7 @@ class WorkpieceDispatch:
         print("WorkpieceHandler: Handling get all workpieces")
         
         try:
-            return self.workpieceController._getAllWorkpieces()
+            return self.workpieceController._get_all_workpieces()
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -334,11 +168,11 @@ class WorkpieceDispatch:
                     message="Workpiece ID not provided"
                 ).to_dict()
             
-            workpiece = self.workpieceController.getWorkpieceById(workpieceId)
+            workpiece = self.workpieceController.get_workpiece_by_id(workpieceId)
             
             if workpiece:
                 # Convert workpiece object to dictionary for serialization
-                workpiece_dict = workpiece.toDict()
+                workpiece_dict = workpiece.to_dict()
                 return Response(
                     Constants.RESPONSE_STATUS_SUCCESS, 
                     data=workpiece_dict
@@ -376,7 +210,7 @@ class WorkpieceDispatch:
                     message="Workpiece ID not provided"
                 ).to_dict()
             
-            result = self.workpieceController.deleteWorkpiece(workpieceId)
+            result = self.workpieceController.delete_workpiece_by_id(workpieceId)
             
             if result:
                 return Response(

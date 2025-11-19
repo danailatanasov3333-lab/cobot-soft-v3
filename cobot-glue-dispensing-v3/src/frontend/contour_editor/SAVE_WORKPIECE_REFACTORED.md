@@ -94,13 +94,14 @@ self.save_workpiece_requested.emit(complete_data)
 ```
 
 #### onStart() (line 454)
+
 ```python
 # NEW - Uses SaveWorkpieceHandler for quick testing
 complete_data = SaveWorkpieceHandler.prepare_workpiece_data(
     workpiece_manager=self.contourEditor.workpiece_manager,
     form_data=mock_data
 )
-wp = Workpiece.fromDict(complete_data)
+wp = Workpiece.from_dict(complete_data)
 self.parent.controller.handleExecuteFromGallery(wp)
 ```
 

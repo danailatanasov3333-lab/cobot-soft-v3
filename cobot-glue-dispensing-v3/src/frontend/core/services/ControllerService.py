@@ -18,7 +18,7 @@ from .domain.AuthService import AuthService
 
 if TYPE_CHECKING:
     # Avoid circular imports while maintaining type hints
-    from frontend.core.controller.Controller import Controller
+    from frontend.core.ui_controller.Controller import Controller
 
 
 class ControllerService:

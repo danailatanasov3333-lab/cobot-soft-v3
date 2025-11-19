@@ -19,7 +19,7 @@ from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLa
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
 
 if TYPE_CHECKING:
-    from frontend.core.controller.Controller import Controller
+    from frontend.core.ui_controller.Controller import Controller
 
 
 class SettingComponentType(Enum):

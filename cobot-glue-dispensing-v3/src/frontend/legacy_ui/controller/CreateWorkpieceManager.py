@@ -1,4 +1,5 @@
-from modules.shared.v1.endpoints import workpiece_endpoints
+from applications.glue_dispensing_application.model.workpiece.GlueWorkpieceField import GlueWorkpieceField
+from communication_layer.api.v1.endpoints import workpiece_endpoints
 class CreateWorkpieceManager:
 
 
@@ -6,9 +7,9 @@ class CreateWorkpieceManager:
         self.contour_editor = contour_editor
         self.controller = controller
 
-    def via_camera(self):
+    def via_camera(self, operation_endpoints=None):
         print("Invoking via_camera in CreateWorkpieceManager")
-        self.controller.handle(workpiece_endpoints.WORKPIECE_CREATE,
+        self.controller.handle(operation_endpoints.CREATE_WORKPIECE,
                                self.via_camera_success,
                                self.via_camera_failure)
 
@@ -24,7 +25,6 @@ class CreateWorkpieceManager:
         sprayPatternsDict['Contour'] = wp_contours_data.get('Contour')
         sprayPatternsDict['Fill'] = wp_contours_data.get('Fill')
 
-        from core.model.workpiece.Workpiece import GlueWorkpieceField
         data[GlueWorkpieceField.SPRAY_PATTERN.value] = sprayPatternsDict
         data[GlueWorkpieceField.CONTOUR.value] = wp_contours_data.get('Workpiece')
         data[GlueWorkpieceField.CONTOUR_AREA] = "0"

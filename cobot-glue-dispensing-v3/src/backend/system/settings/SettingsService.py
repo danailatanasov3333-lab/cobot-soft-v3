@@ -1,4 +1,3 @@
-import json
 import os
 
 
@@ -8,7 +7,7 @@ from backend.system.settings.robotConfig.robotConfigModel import RobotConfig, ge
 
 from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 
-from modules.shared.v1 import Constants
+from communication_layer.api.v1 import Constants
 from backend.system.settings.enums.CameraSettingKey import CameraSettingKey
 import logging
 

@@ -1,7 +1,9 @@
 from typing import Dict, Any, Optional, List
 
+from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
+from core.services.workpiece.BaseWorkpieceService import BaseWorkpieceService
+from core.services.robot_service.base_robot_service import BaseRobotService
 from core.application.interfaces.robot_application_interface import RobotApplicationInterface, CalibrationStatus
-from core.services.workpiece.WorkpieceService import WorkpieceService
 from core.base_robot_application import BaseRobotApplication, ApplicationType, ApplicationState
 from applications.glue_dispensing_application.GlueDispensingApplicationStateManager import \
     GlueDispensingApplicationStateManager
@@ -9,7 +11,6 @@ from applications.glue_dispensing_application.GlueDispensingMessagePublisher imp
     GlueDispensingMessagePublisher
 from applications.glue_dispensing_application.GlueDispensingSubscriptionManager import \
     GlueDispensingSubscriptionManager
-from applications.glue_dispensing_application.services.robot_service.GlueRobotService import RobotService
 from backend.system.settings.SettingsService import SettingsService
 from core.services.vision.VisionService import _VisionService
 
@@ -19,10 +20,11 @@ class PaintingApplication(BaseRobotApplication,RobotApplicationInterface):
     def __init__(self,
                  vision_service: _VisionService,
                  settings_manager: SettingsService,
-                 workpiece_service: WorkpieceService,
-                 robot_service: RobotService):
+                 workpiece_service: BaseWorkpieceService,
+                 robot_service: BaseRobotService,
+                 settings_registry:ApplicationSettingsRegistry):
 
-        super().__init__(vision_service, settings_manager, workpiece_service, robot_service)
+        super().__init__(vision_service, settings_manager, robot_service,settings_registry)
 
         self.message_publisher = GlueDispensingMessagePublisher(self.message_publisher)
         self.state_manager = GlueDispensingApplicationStateManager(self.state_manager)

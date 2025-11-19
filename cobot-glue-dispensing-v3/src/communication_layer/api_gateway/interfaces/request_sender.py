@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 
+from communication_layer.api_gateway.interfaces.request_handler_interface import IRequestHandler
+
+
 class RequestSender(ABC):
     """
     Abstract base class defining the interface for sending requests.
@@ -15,8 +18,12 @@ class RequestSender(ABC):
         sendRequest(request): Abstract method that must be implemented to handle
                               sending a request.
     """
+
+    def __init__(self,request_handler: IRequestHandler):
+        self.request_handler = request_handler
+
     @abstractmethod
-    def sendRequest(self, request):
+    def send_request(self, request):
         """
               Sends a request to a specific target.
 

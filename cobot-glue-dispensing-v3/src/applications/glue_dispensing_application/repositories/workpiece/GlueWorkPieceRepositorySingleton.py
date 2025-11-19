@@ -1,7 +1,7 @@
-
-from applications.glue_dispensing_application.workpiece.GlueWorkpiece import GlueWorkpiece
-from applications.glue_dispensing_application.workpiece.GlueWorkpieceField import GlueWorkpieceField
-from applications.glue_dispensing_application.workpiece.GlueWorkpieceJsonRepository import GlueWorkpieceJsonRepository
+from applications.glue_dispensing_application.repositories.workpiece.glue_workpiece_json_repository import \
+    GlueWorkpieceJsonRepository
+from applications.glue_dispensing_application.model.workpiece.GlueWorkpiece import GlueWorkpiece
+from applications.glue_dispensing_application.model.workpiece.GlueWorkpieceField import GlueWorkpieceField
 
 from backend.system.utils.PathResolver import PathType
 

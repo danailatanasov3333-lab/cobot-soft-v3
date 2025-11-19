@@ -13,7 +13,7 @@ from ..types.ServiceResult import ServiceResult
 # Import endpoint constants
 
 if TYPE_CHECKING:
-    from frontend.core.controller.Controller import Controller
+    from frontend.core.ui_controller.Controller import Controller
 
 
 class CameraService:

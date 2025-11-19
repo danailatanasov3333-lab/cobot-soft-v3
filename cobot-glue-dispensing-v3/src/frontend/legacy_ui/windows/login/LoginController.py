@@ -1,7 +1,8 @@
 from typing import Any, Tuple
 
 from frontend.core.utils.localization import TranslationKeys, TranslatableObject
-from modules.shared.v1.endpoints import camera_endpoints
+from communication_layer.api.v1.endpoints import camera_endpoints
+
 
 class LoginController(TranslatableObject):
     def __init__(self, controller: Any) -> None:

@@ -4,6 +4,8 @@ from typing import Optional
 
 from backend.system.utils.custom_logging import log_info_message, log_debug_message, setup_logger, LoggerContext
 from backend.system.utils import robot_utils
+from communication_layer.api.v1.topics import RobotTopics, VisionTopics
+from core.model.robot.IRobot import IRobot
 from core.services.robot_service.IRobotService import IRobotService
 from frontend.core.services.domain.RobotService import RobotAxis
 
@@ -12,6 +14,9 @@ from core.services.robot_service.enums.RobotState import RobotState
 from modules.shared.MessageBroker import MessageBroker
 from backend.system.SystemStatePublisherThread import SystemStatePublisherThread
 from core.services.robot_service.enums.RobotServiceState import RobotServiceState
+from modules.shared.tools.ToolChanger import ToolChanger
+from modules.shared.tools.ToolManager import ToolManager
+
 ENABLE_ROBOT_SERVICE_LOGGING = True
 
 
@@ -51,10 +56,6 @@ class CancellationToken:
     def get_cancellation_timestamp(self) -> Optional[float]:
         """Get the timestamp when cancellation occurred."""
         return self._timestamp
-
-
-
-from modules.shared.v1.topics import RobotTopics, VisionTopics
 
 class RobotServiceMessagePublisher:
     def __init__(self,broker):
@@ -128,7 +129,7 @@ class RobotServiceStateManager:
 
 
 class BaseRobotService(IRobotService):
-    def __init__(self, robot, settings_service, robot_state_manager):
+    def __init__(self, robot:IRobot, settings_service, robot_state_manager):
         self.robot = robot
         self.settings_service = settings_service
         self.robot_config = self.settings_service.robot_config
@@ -139,12 +140,113 @@ class BaseRobotService(IRobotService):
         self.message_publisher = RobotServiceMessagePublisher(self.broker)
         self.state_manager = RobotServiceStateManager(RobotServiceState.INITIALIZING, self.message_publisher, self)
         self.robot_state_manager.start_monitoring()
+        self.toolChanger = ToolChanger()
+        self.tool_manager = ToolManager(self.toolChanger,self)
         if self.enable_logging:
             self.logger = setup_logger("RobotService")
         else:
             self.logger = None
         self.logger_context = LoggerContext(enabled=self.enable_logging,
                                             logger=self.logger)
+
+    @property
+    def current_tool(self):
+        return self.tool_manager.current_gripper
+
+    def moveToStartPosition(self, z_offset=0):
+        """Move robot to start position"""
+        try:
+            position = self.robot_config.getHomePositionParsed()
+            print(f"Position before z offset: {position}")
+            # apply the z offset to account for the calibration pattern thickness
+            position[2] += z_offset
+            print(f"Position with z offset: {position}")
+            config = self.robot_config.getHomePosConfig()
+
+            ret = self.robot.move_cartesian(
+                position=position,
+                tool=self.robot_config.robot_tool,
+                user=self.robot_config.robot_user,
+                vel=config.velocity,
+                acc=config.acceleration
+            )
+
+            print(f"Moving to start position, result: {ret}")
+            self.message_publisher.publish_threshold_region_topic("pickup")
+            return ret
+
+        except Exception as e:
+            print(f"Error moving to start position: {e}")
+            return -1
+
+    def pickupGripper(self, gripper_id, callback=None):
+        """Delegate pickup to ToolManager"""
+        success, message = self.tool_manager.pickup_gripper(gripper_id)
+        if callback:
+            callback(success, message)
+        return success, message
+
+    def dropOffGripper(self, gripper_id, callback=None):
+        """Delegate drop off to ToolManager"""
+        success, message = self.tool_manager.drop_off_gripper(gripper_id)
+        if callback:
+            callback(success, message)
+        return success, message
+
+    def moveToLoginPosition(self):
+        ret = None
+        currentPos = self.get_current_position()
+        x, y, z, rx, ry, rz = currentPos
+
+        if y > 350:
+            ret = self.move_to_calibration_position()
+            if ret != 0:
+                return ret
+
+            ret = self.moveToStartPosition()
+            if ret != 0:
+                return ret
+        else:
+            ret = self.moveToStartPosition()
+            if ret != 0:
+                return ret
+
+        position = self.robot_config.getLoginPositionParsed()  # This already handles None case
+        loginPositionConfig = self.robot_config.getLoginPosConfig()
+        velocity = loginPositionConfig.velocity
+        acceleration = loginPositionConfig.acceleration
+        ret = self.robot.move_cartesian(position=position,
+                                  tool=self.robot_config.robot_tool,
+                                  user=self.robot_config.robot_user,
+                                  vel=velocity,
+                                  acc=acceleration)
+        return ret
+
+    def move_to_calibration_position(self,z_offset=0):
+        """Move robot to calibration position"""
+        try:
+            position = self.robot_config.getCalibrationPositionParsed()
+            # apply the z offset to account for the calibration pattern thickness
+            position[2] += z_offset
+            config = self.robot_config.getCalibrationPosConfig()
+
+            ret = self.robot.move_cartesian(
+                position=position,
+                tool=self.robot_config.robot_tool,
+                user=self.robot_config.robot_user,
+                vel=config.velocity,
+                acc=config.acceleration
+            )
+
+            self.message_publisher.publish_threshold_region_topic("spray")
+            return ret
+
+        except Exception as e:
+            print(f"Error moving to calibration position: {e}")
+            return -1
+
+    def reload_config(self):
+        self.robot_config = self.settings_service.reload_robot_config()
 
     def stop_motion(self)-> bool:
         """Stop robot motion safely"""
@@ -153,7 +255,7 @@ class BaseRobotService(IRobotService):
             max_attempts = 5
             for attempt in range(max_attempts):
                 try:
-                    result = self.robot.stopMotion()
+                    result = self.robot.stop_motion()
                     log_info_message(self.logger_context, message=f"Robot motion stopped, result: {result}")
                     result = True
                     break
@@ -229,12 +331,12 @@ class BaseRobotService(IRobotService):
         if not result:
             return False
 
-        ret = self.robot.moveCart(position, tool, workpiece, vel=velocity, acc=acceleration)
+        ret = self.robot.move_cartesian(position, tool, workpiece, vel=velocity, acc=acceleration)
 
         if waitToReachPosition:  # TODO comment out when using test robot
             self._waitForRobotToReachPosition(position, 2, delay=0.1)
 
-        # self.robot.moveL(position, tool, workpieces, vel=velocity, acc=acceleration,blendR=20)
+        # self.robot.move_liner(position, tool, workpieces, vel=velocity, acc=acceleration,blendR=20)
         return ret
 
     def _waitForRobotToReachPosition(self, endPoint, threshold, delay, timeout=1, cancellation_token=None):

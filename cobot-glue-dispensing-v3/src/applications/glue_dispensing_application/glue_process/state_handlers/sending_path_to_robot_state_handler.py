@@ -1,12 +1,12 @@
 from collections import namedtuple
 
-from core.services.robot_service.robotService import CancellationToken
-from backend.system.settings.enums import RobotSettingKey
+
 from applications.glue_dispensing_application.glue_process.glue_dispensing_operation import \
     glue_dispensing_logger_context
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
+from backend.system.settings.RobotConfigKey import RobotSettingKey
 from backend.system.utils.custom_logging import log_debug_message, log_error_message
-
+from core.services.robot_service.base_robot_service import CancellationToken
 
 HandlerResult = namedtuple(
     "HandlerResult",
@@ -52,7 +52,7 @@ def handle_send_path_to_robot(context):
 
         try:
             # Send move command (non-blocking)
-            ret = context.robot_service.robot.moveL(
+            ret = context.robot_service.robot.move_liner(
                 position=point,
                 tool=context.robot_service.robot_config.robot_tool,
                 user=context.robot_service.robot_config.robot_user,

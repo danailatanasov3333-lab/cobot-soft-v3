@@ -8,7 +8,7 @@ from modules.shared.tools import Gripper
 from backend.system.utils.custom_logging import LoggingLevel, log_if_enabled, \
     setup_logger
 from backend.system.utils.contours import is_contour_inside_polygon
-from modules.shared.v1.topics import VisionTopics
+from communication_layer.api.v1 import VisionTopics
 import time
 # import logging
 import cv2
@@ -680,7 +680,7 @@ def execute_pick_and_place_sequence(robot_service, pickup_positions, drop_off_po
     ret = execute_place_sequence(robot_service, drop_off_position1, drop_off_position2)
     if ret != 0:
         return ret
-    ret = robot_service.moveToCalibrationPosition(z_offset=Z_OFFSET_FOR_CALIBRATION_PATTERN)
+    ret = robot_service.move_to_calibration_position(z_offset=Z_OFFSET_FOR_CALIBRATION_PATTERN)
     return ret
 
 

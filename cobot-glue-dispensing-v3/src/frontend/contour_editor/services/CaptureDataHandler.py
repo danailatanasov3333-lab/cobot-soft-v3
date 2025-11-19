@@ -52,7 +52,7 @@ class CaptureDataHandler:
             ContourEditorData instance that was loaded, or None on failure
         """
         # Extract contours from capture data
-        contours = capture_data.get("contours")
+        contours = capture_data.workpiece_contour
         if contours is None or (isinstance(contours, (list, np.ndarray)) and len(contours) == 0):
             print("⚠️ CaptureDataHandler: No contours in capture data")
             return None
@@ -61,7 +61,7 @@ class CaptureDataHandler:
         editor_data = cls.from_capture_data(
             contours=contours,
             metadata={
-                "height": capture_data.get("height"),
+                "height": capture_data.estimatedHeight,
                 "source": "camera_capture"
             }
         )

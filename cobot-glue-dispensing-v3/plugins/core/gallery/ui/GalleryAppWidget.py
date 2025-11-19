@@ -1,6 +1,6 @@
 from PyQt6.QtCore import pyqtSignal
 
-from modules.shared.v1.endpoints import workpiece_endpoints
+from communication_layer.api.v1.endpoints import workpiece_endpoints
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 
 

@@ -49,8 +49,6 @@ class GlueWorkpieceJsonRepository:
         if not issubclass(dataClass, JsonSerializable):
             raise TypeError("dataClass must be a subclass of JsonSerializable")
 
-
-
         self.directory = directory
         self.dataClass = dataClass
         self.fields = fields
@@ -61,7 +59,6 @@ class GlueWorkpieceJsonRepository:
         if not os.path.exists(self.directory):
             print(f"Directory {self.directory} does not exist.")
             raise FileNotFoundError(f"Directory {self.directory} not found.")
-
 
     def loadData(self):
         """
@@ -98,8 +95,7 @@ class GlueWorkpieceJsonRepository:
 
         return objects
 
-
-    def saveWorkpiece(self, workpiece):
+    def save_workpiece(self, workpiece):
         """
         Saves a workpiece object as a JSON file. If a workpiece with the same ID exists,
         update it in-memory and overwrite the existing file on disk. Otherwise create
@@ -182,10 +178,10 @@ class GlueWorkpieceJsonRepository:
 
         Args:
             workpieceId (str): The ID of the workpiece to delete.
-            
+
         Returns:
             tuple: (bool, str) where bool indicates success, and str contains a message.
-            
+
         Raises:
             Exception: If workpiece not found or deletion fails.
         """
@@ -195,17 +191,17 @@ class GlueWorkpieceJsonRepository:
             # Find the workpiece in the data list
             workpiece_to_delete = None
             workpiece_index = None
-            
+
             for i, workpiece in enumerate(self.data):
                 if hasattr(workpiece, 'workpieceId') and str(workpiece.workpieceId) == str(workpieceId):
                     workpiece_to_delete = workpiece
                     workpiece_index = i
                     print(f"Workpiece found in memory: {workpiece}")
                     break
-            
+
             if workpiece_to_delete is None:
                 return False, f"Workpiece with ID '{workpieceId}' not found."
-            
+
             # Find and delete the corresponding file/directory on filesystem
             file_deleted = False
             for root, dirs, files in os.walk(self.directory):
@@ -223,7 +219,7 @@ class GlueWorkpieceJsonRepository:
                                     parent_dir = os.path.dirname(file_path)
                                     shutil.rmtree(parent_dir)
                                     print(f"Deleted workpiece directory: {parent_dir}")
-                                    
+
                                     # Check if the date directory is also empty and delete it
                                     try:
                                         date_dir = os.path.dirname(parent_dir)
@@ -233,24 +229,24 @@ class GlueWorkpieceJsonRepository:
                                     except OSError:
                                         # Directory not empty or other issues, that's fine
                                         pass
-                                    
+
                                     file_deleted = True
                                     break
                         except Exception as e:
                             print(f"Error checking file {file_path}: {e}")
                             continue
-                
+
                 if file_deleted:
                     break
-            
+
             if not file_deleted:
                 return False, f"Workpiece file for ID '{workpieceId}' not found on filesystem."
-            
+
             # Remove from in-memory data
             self.data.pop(workpiece_index)
-            
+
             return True, f"Workpiece '{workpieceId}' deleted successfully."
-            
+
         except Exception as e:
             print(f"Error deleting workpiece {workpieceId}: {e}")
             return False, f"Error deleting workpiece: {str(e)}"

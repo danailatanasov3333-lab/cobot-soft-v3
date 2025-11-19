@@ -11,9 +11,9 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict, Any, List
 
+from communication_layer.api.v1.topics import SystemTopics
 from core.services.robot_service.IRobotService import IRobotService
 from modules.shared.MessageBroker import MessageBroker
-from modules.shared.v1.topics import SystemTopics
 from core.services.vision.VisionService import _VisionService
 from backend.system.settings.SettingsService import SettingsService
 from backend.system.SystemStatePublisherThread import SystemStatePublisherThread
@@ -206,7 +206,6 @@ class BaseRobotApplication(ABC):
     
     # Abstract methods that must be implemented by specific applications
 
-    
     @abstractmethod
     def get_initial_state(self) -> ApplicationState:
         """Return the initial state for this application"""

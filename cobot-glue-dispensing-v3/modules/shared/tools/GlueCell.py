@@ -1,20 +1,17 @@
 # from system.tools.enums.GlueType import GlueType
-import statistics
 from enum import Enum
-from collections import deque
 import requests
 import json
 import threading
 from backend.system.SensorPublisher import Sensor
+from communication_layer.api.v1.topics import GlueTopics
 from modules.shared.MessageBroker import MessageBroker
-from modules.shared.v1.topics import GlueTopics
-from backend.system.utils.PathResolver import PathResolver
 from backend.system.utils.custom_logging import ColoredFormatter, LoggingLevel
 from pathlib import Path
 from backend.system.utils import PathResolver
-import time
 import logging
 import inspect
+import time
 """
    Enum representing the types of glue used in the application.
 

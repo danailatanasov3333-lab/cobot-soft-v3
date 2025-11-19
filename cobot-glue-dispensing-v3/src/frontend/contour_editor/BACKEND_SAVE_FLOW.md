@@ -380,11 +380,17 @@ User sees: "✅ Workpiece saved successfully" or "❌ Failed to save"
 ### Transformation 3: Dict → Workpiece Object
 
 **Processing:**
+
 ```python
-Workpiece.fromDict(data)
-- String enums → Enum objects
-- Optional fields → Defaults
-- Numpy arrays preserved
+Workpiece.from_dict(data)
+- String
+enums → Enum
+objects
+- Optional
+fields → Defaults
+- Numpy
+arrays
+preserved
 ```
 
 ### Transformation 4: Workpiece → JSON

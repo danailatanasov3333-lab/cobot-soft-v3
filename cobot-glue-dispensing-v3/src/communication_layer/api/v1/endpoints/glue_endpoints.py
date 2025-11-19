@@ -4,7 +4,6 @@ Glue Application Constants
 This module defines constants specific to the glue dispensing application,
 including request resources and endpoint definitions.
 """
-from modules.shared.v1.topics import TopicCategory
 
 # === GLUE APPLICATION RESOURCES ===
 REQUEST_RESOURCE_GLUE = "Glue"                    # Glue dispensing system resource

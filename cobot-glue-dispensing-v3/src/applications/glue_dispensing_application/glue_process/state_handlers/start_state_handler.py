@@ -35,7 +35,7 @@ def move_to_first_point(context,path):
 
     for attempt in range(max_attempts):
         try:
-            ret = robot.moveCart(
+            ret = robot.move_cartesian(
                 position=path[0],
                 tool=cfg.robot_tool,
                 user=cfg.robot_user,

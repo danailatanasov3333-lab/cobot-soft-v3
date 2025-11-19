@@ -8,7 +8,7 @@ code duplication across the application.
 
 from typing import Dict, Any
 
-from applications.glue_dispensing_application.workpiece.GlueWorkpieceField import GlueWorkpieceField
+from applications.glue_dispensing_application.model.workpiece.GlueWorkpieceField import GlueWorkpieceField
 from frontend.dialogs.CustomFeedbackDialog import CustomFeedbackDialog, DialogType
 from frontend.contour_editor.adapters.WorkpieceAdapter import WorkpieceAdapter
 from frontend.contour_editor.EditorDataModel import ContourEditorData
@@ -76,7 +76,7 @@ class SaveWorkpieceHandler:
             print("SaveWorkpieceHandler: Sending to controller...")
             # from pl_ui.Endpoints import SAVE_WORKPIECE
             # result = controller.handle(SAVE_WORKPIECE, complete_data)
-            result = controller.saveWorkpiece(complete_data)
+            result = controller.save_workpiece(complete_data)
             if result:
                 if isinstance(result, tuple):
                     success, message = result

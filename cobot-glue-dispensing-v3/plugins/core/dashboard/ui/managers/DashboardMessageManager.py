@@ -1,6 +1,6 @@
+from communication_layer.api.v1.topics import RobotTopics, VisionTopics, SystemTopics
 from modules.shared.MessageBroker import MessageBroker
 from typing import List, Tuple, Callable
-from modules.shared.v1.topics import RobotTopics, VisionTopics, GlueTopics, SystemTopics
 
 
 class DashboardMessageManager:

@@ -4,11 +4,12 @@ from PyQt6.QtCore import Qt, QSize, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout
 
-from modules.shared.v1 import Constants
+from communication_layer.api.v1 import Constants
 from frontend.core.utils.localization import TranslationKeys, TranslatableWidget
 from frontend.widgets.CameraFeed import CameraFeed,CameraFeedConfig
 from frontend.widgets.MaterialButton import MaterialButton
-from modules.shared.v1.endpoints import camera_endpoints,auth_endpoints
+from communication_layer.api.v1.endpoints import auth_endpoints
+from communication_layer.api.v1.endpoints import camera_endpoints
 
 
 class QRLoginTab(TranslatableWidget):

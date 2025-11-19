@@ -1,6 +1,7 @@
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 from plugins.core.settings.ui.SettingsContent import SettingsContent
-from modules.shared.v1.endpoints import camera_endpoints
+from communication_layer.api.v1.endpoints import camera_endpoints
+
 
 class SettingsAppWidget(AppWidget):
     """Settings application widget using clean service pattern"""

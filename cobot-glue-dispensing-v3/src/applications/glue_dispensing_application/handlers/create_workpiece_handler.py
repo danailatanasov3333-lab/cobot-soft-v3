@@ -1,40 +1,79 @@
+from dataclasses import dataclass
+
 import cv2
 
 from core.base_robot_application import ApplicationState
 from modules.VisionSystem.VisionSystem import VisionSystemState
 
+@dataclass
+class CreateWorkpieceData:
+    estimatedHeight: float
+    contourArea: float
+    workpiece_contour: list
+    scaleFactor: float
+    image: object
+    message: str
+    originalContours: list
+
+
+@dataclass
+class CrateWorkpieceResult:
+    success: bool
+    message: str
+    data: object
+
+    def to_dict(self):
+        return {
+            "success": self.success,
+            "message": self.message,
+            "data": self.data
+        }
+
 class CreateWorkpieceHandler:
     def __init__(self, application):
         self.application = application
+        self.workpiece_step = 1
 
-    def create_workpiece_step_1(self):
+    def create_workpiece(self) -> CrateWorkpieceResult:
+        if self.workpiece_step == 1:
+            result = self.create_workpiece_step_1()
+            if result.success:
+                self.workpiece_step = 2
+
+            return result
+
+        elif self.workpiece_step == 2:
+            result = self.create_workpiece_step_2()
+            if result.success:
+                self.workpiece_step = 2
+
+            return result
+        else:
+            raise ValueError(f"Invalid workpiece creation step: {self.workpiece_step}")
+
+    def create_workpiece_step_1(self)->CrateWorkpieceResult:
         # if robot service is not in idle state, return error
         if self.application.state_manager.state != ApplicationState.IDLE:
-            print(f"current_state: {self.application.state_manager.state}")
-            print("Application not in IDLE state, cannot create workpiece")
-            return False, f"Application  not in IDLE state, Current state: {self.application.state_manager.state}"
+            return CrateWorkpieceResult(success=False, message="Application not in IDLE state", data=None)
 
         ret = self.application.move_to_spray_capture_position()
         if ret != 0:
-            print("Failed to move to calibration position")
-            return False, "Failed to move to calibration position"
+            return CrateWorkpieceResult(success=False, message="Failed to move to spray capture position", data=None)
 
-        return True,  ""
+        return CrateWorkpieceResult(success=True, message="", data=None)
 
-    def create_workpiece_step_2(self):
+    def create_workpiece_step_2(self) -> CrateWorkpieceResult:
         # if robot service is not in idle state, return error
         if self.application.state_manager.state != ApplicationState.IDLE:
-            print("Application not in IDLE state, cannot create workpiece")
-            return False, "Application  not in IDLE state"
+            return CrateWorkpieceResult(success=False, message="Application not in IDLE state", data=None)
 
         # if vision service is not running, return error
         if self.application.state_manager.visonServiceState != VisionSystemState.RUNNING:
-            print("Vision service not in RUNNING state, cannot create workpiece")
-            return False, "Vision service not in RUNNING state"
+            return CrateWorkpieceResult(success=False, message="Vision service not in RUNNING state", data=None)
         self.create_workpiece_step_1()
         # Store original contours for later use
         originalContours = self.application.visionService.contours
-        print("Original Contours: ", originalContours)
+
         externalContour = []
         if originalContours is not None and len(originalContours) > 0:
             contour = originalContours[0]
@@ -46,7 +85,6 @@ class CreateWorkpieceHandler:
             contour = []
             centroid = [0, 0]
             contourArea = 0
-            print("No contours found, setting defaults for manual editing")
 
         # Capture image for workpiece creation
         createWpImage = self.application.visionService.captureImage()
@@ -64,19 +102,19 @@ class CreateWorkpieceHandler:
             message = "No contours found - opening contour editor for manual setup"
 
         # Prepare return data
-        data = (
-            estimatedHeight,
-            contourArea,
-            externalContour,
-            scaleFactor,
-            createWpImage,
-            message,
-            originalContours
+        data = CreateWorkpieceData(
+            estimatedHeight=estimatedHeight,
+            contourArea=contourArea,
+            workpiece_contour=externalContour,
+            scaleFactor=scaleFactor,
+            image=createWpImage,
+            message=message,
+            originalContours=originalContours
         )
-        print("CREATE WP DEBUG: data: ", data)
+
 
         # Always return True to allow contour editor to open, even if no contours found
-        return True, data
+        return CrateWorkpieceResult(success=True, message=message, data=data)
 
     def measure_workpiece_height(self):
         return 40  # Default height in mm

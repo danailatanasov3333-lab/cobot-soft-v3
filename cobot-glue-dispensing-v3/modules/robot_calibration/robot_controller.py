@@ -80,7 +80,7 @@ class CalibrationRobotController:
         return iterative_position
 
     def move_to_calibration_position(self):
-        self.robot_service.moveToCalibrationPosition()
+        self.robot_service.move_to_calibration_position()
 
     def get_current_z_value(self):
         return self.robot_service.get_current_position()[2]
