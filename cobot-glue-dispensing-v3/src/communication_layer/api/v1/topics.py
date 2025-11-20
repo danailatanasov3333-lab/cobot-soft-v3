@@ -87,6 +87,8 @@ class GlueTopics(TopicCategory):
     GLUE_METER_1_VALUE = "GlueMeter_1/VALUE"
     GLUE_METER_2_VALUE = "GlueMeter_2/VALUE" 
     GLUE_METER_3_VALUE = "GlueMeter_3/VALUE"
+    PROCESS_STATE = "glue-process/state"
+    GLUE_DISPENSING_LOG = "glue-dispensing/log"
 
 class UITopics(TopicCategory):
     """User interface specific topics"""

@@ -1,5 +1,5 @@
 # core/services/robot_service/impl/robot_monitor/subscription_manager.py
-from frontend.core.services.domain import RobotService
+from core.services.robot_service.impl.base_robot_service import RobotService
 
 
 class BaseSubscriptionManager:

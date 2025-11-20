@@ -95,6 +95,8 @@ class BaseRobotApplication(ABC):
         self.tool_manager = ToolManager(self.toolChanger, self)
         self.pump = VacuumPump()
         self.laser = Laser()
+        self.tool_manager.add_tool("laser", self.laser)
+        self.tool_manager.add_tool("vacuum_pump", self.pump)
         self.robotService.tool_manager = self.tool_manager
 
 
@@ -116,7 +118,7 @@ class BaseRobotApplication(ABC):
 
     def on_system_state_update(self, state):
         self.system_state = state
-
+        self.state_manager = self.system_state
     
     @staticmethod
     @abstractmethod

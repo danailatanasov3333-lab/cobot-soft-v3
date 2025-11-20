@@ -21,6 +21,10 @@ class ToolManager:
     def add_tool(self,name,tool):
         self.tools[name] = tool
 
+    def get_tool(self,name):
+        tool = self.tools.get(name)
+        return tool
+
     def pickup_gripper(self, gripper_id: int) -> Tuple[bool, Optional[str]]:
         """Pick up a gripper/tool from its slot."""
         with self._lock:

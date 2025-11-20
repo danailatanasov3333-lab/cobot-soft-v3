@@ -95,6 +95,8 @@ class ApplicationStateManager:
         self.current_state = ApplicationState.INITIALIZING
         self._services_ready = False  # Flag to indicate when both services are ready
         self.state_publisher = None
+        self.system_state = None
+        self.process_state = None
 
     def update_state(self, state):
         """Update the application state"""
@@ -116,6 +118,8 @@ class ApplicationStateManager:
         elif process_state == ProcessState.ERROR:
             return ApplicationState.ERROR
         elif process_state == ProcessState.STOPPED:
+            return ApplicationState.IDLE
+        elif process_state == ProcessState.IDLE:
             return ApplicationState.IDLE
         else:
             return ApplicationState.STARTED

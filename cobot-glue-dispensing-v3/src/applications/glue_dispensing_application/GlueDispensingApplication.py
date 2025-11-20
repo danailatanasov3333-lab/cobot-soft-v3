@@ -10,7 +10,7 @@ from core.application.interfaces.robot_application_interface import RobotApplica
 import logging
 
 from backend.system.settings.SettingsService import SettingsService
-from core.application_state_management import SubscriptionManger
+from core.application_state_management import SubscriptionManger, ProcessState
 from core.operations_handlers.camera_calibration_handler import \
     calibrate_camera
 from core.operations_handlers.robot_calibration_handler import calibrate_robot
@@ -104,7 +104,8 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         # self.service_registry.register_service(self.glue_service.service_id,"glue-service/state",ServiceState.UNKNOWN)
         # print(f"Registed Services in Glue App: {service_registry.get_registered_services()}")
         # Initialize glue dispensing operation with proper settings access
-        self.glue_dispensing_operation = GlueDispensingOperation(self.robot_service, self)
+        self.glue_dispensing_operation = GlueDispensingOperation(self.robot_service, self.glue_service,self)
+        self.broker.publish(SystemTopics.PROCESS_STATE, ProcessState.IDLE)
 
         self.NESTING = True
         self.CONTOUR_MATCHING = True

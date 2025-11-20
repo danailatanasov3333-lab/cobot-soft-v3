@@ -275,6 +275,7 @@ def start_nesting(visionService, robotService,preselected_workpiece,z_offset_for
     log_if_enabled(ENABLE_LOGGING,nesting_logger,LoggingLevel.DEBUG, f"Plane configuration: {plane.xMin}-{plane.xMax} x {plane.yMin}-{plane.yMax}")
 
     laser = robotService.tool_manager.laser
+    laser = robotService.tool_manager.get_tool("laser")
     laserTrackingService = LaserTrackService()
     # === FUNCTIONALITY ===
     while True:
