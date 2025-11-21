@@ -1,11 +1,11 @@
 {
-    "Spray Width": 5.0,
+    "Spray Width": 6.0,
     "Spraying Height": 10.0,
-    "Fan Speed": 100.0,
+    "Fan Speed": 50.0,
     "Generator-Glue Delay": 1,
-    "Pump Speed": 1000.0,
-    "Pump Reverse Time": 0.5,
-    "Pump Speed Reverse": 2000.0,
+    "Pump Speed": 10000.0,
+    "Pump Reverse Time": 1.0,
+    "Pump Speed Reverse": 1000.0,
     "RZ Angle": 0,
     "Glue Type": "Type A",
     "Generator Timeout": 5.0,
@@ -13,9 +13,9 @@
     "Reach Start Threshold": 3.0,
     "Time Before Stop": 1,
     "Reach End Threshold": 1,
-    "Initial Ramp Speed": 3000.0,
+    "Initial Ramp Speed": 5000.0,
     "Forward Ramp Steps": 1,
     "Reverse Ramp Steps": 1,
     "Initial Ramp Speed Duration": 0.5,
-    "Spray On": true
+    "Spray On": false
 }

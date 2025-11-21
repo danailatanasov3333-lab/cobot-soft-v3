@@ -37,7 +37,7 @@ class SettingsDispatch(IDispatcher):
         Returns:
             dict: Response dictionary with operation result
         """
-        print(f"SettingsHandler: Handling request: {request} with parts: {parts}")
+        print(f"SettingsDispatch: Handling request: {request} with parts: {parts} and data: {data}")
         
         # Handle both new RESTful endpoints and legacy endpoints
         # Robot settings
@@ -74,7 +74,7 @@ class SettingsDispatch(IDispatcher):
         Returns:
             dict: Response with robot settings data or operation result
         """
-        print(f"SettingsHandler: Handling robot settings: {request}")
+        print(f"SettingsHandler: Handling robot settings: {request} with data: {data}")
         
         return self.settingsController.handle(request, parts, data)
     
@@ -108,10 +108,20 @@ class SettingsDispatch(IDispatcher):
         Returns:
             dict: Response with glue settings data or operation result
         """
-        print(f"SettingsHandler: Handling glue settings: {request}")
-        
-        return self.settingsController.handle(request, parts, data)
-    
+
+        try:
+            print(f"handle_glue_settings: Handling glue settings: {request} with data: {data}")
+            response = self.settingsController.handle(request, parts, data)
+            print(f"SettingsHandler: Glue settings response: {response}")
+            return response
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"SettingsHandler: Error handling glue settings: {e}")
+            return Response(
+                Constants.RESPONSE_STATUS_ERROR,
+                message=f"Error handling glue settings: {e}"
+            ).to_dict()
     def handle_general_settings(self, parts, request, data=None):
         """
         Handle general system settings operations.

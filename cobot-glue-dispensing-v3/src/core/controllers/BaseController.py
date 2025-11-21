@@ -1,3 +1,4 @@
+import inspect
 import traceback
 from abc import abstractmethod
 
@@ -21,11 +22,11 @@ class BaseController(IController):
         """
         pass
 
+    import inspect
+
     def handle(self, request, parts=None, data=None):
-        # First try static handlers
         handler = self._handlers.get(request)
 
-        # If no static handler, fallback to dynamic registry
         if handler is None and hasattr(self, "_dynamic_handler_resolver"):
             handler = self._dynamic_handler_resolver(request)
 
@@ -33,10 +34,12 @@ class BaseController(IController):
             raise ValueError(f"No handler registered for: {request}")
 
         try:
-            if handler.__code__.co_argcount == 1:
-                return handler()
+            sig = inspect.signature(handler)
+            # Check if the handler has a 'data' parameter
+            if len(sig.parameters) == 0:
+                return handler()  # no arguments expected
             else:
-                return handler(data)
+                return handler(data)  # pass data (can be None)
         except Exception as e:
             import traceback
             traceback.print_exc()

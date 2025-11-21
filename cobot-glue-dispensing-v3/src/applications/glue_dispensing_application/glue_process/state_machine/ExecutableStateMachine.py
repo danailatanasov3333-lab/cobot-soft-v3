@@ -6,6 +6,7 @@ import time
 from applications.glue_dispensing_application.glue_process.ExecutionContext import Context
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import \
     GlueProcessTransitionRules, GlueProcessState
+from communication_layer.api.v1.topics import GlueTopics
 from modules.shared.MessageBroker import MessageBroker
 from backend.system.utils.custom_logging import log_if_enabled, LoggingLevel, setup_logger
 
@@ -15,7 +16,7 @@ ENABLE_STATE_MACHINE_LOGGING = True
 state_machine_logger = setup_logger("ExecutableStateMachine") if ENABLE_STATE_MACHINE_LOGGING else None
 
 # ---------------------- State Class ----------------------
-class State(ABC):
+class State:
     def __init__(
         self,
         state: Enum,
@@ -28,9 +29,22 @@ class State(ABC):
         self.on_enter = on_enter
         self.on_exit = on_exit
 
-    def execute(self, context: Context):
-        if self.handler:
-            self.handler(context)
+    def execute(self, context: Context) -> Optional[Enum]:
+        """
+        Execute the state handler and return the next state (if any)
+        """
+        if not self.handler:
+            return None
+        try:
+            return self.handler(context)
+        except Exception as e:
+            log_if_enabled(
+                ENABLE_STATE_MACHINE_LOGGING,
+                state_machine_logger,
+                f"Error in {self.state}.handler: {e}",
+                LoggingLevel.ERROR
+            )
+            return None
 
 # ---------------------- State Registry ----------------------
 class StateRegistry:
@@ -57,7 +71,8 @@ class ExecutableStateMachine(Generic[TState]):
         transition_rules: Dict[TState, set],
         state_registry: StateRegistry,
         broker: Optional[MessageBroker] = None,
-        context: Optional[Context] = None
+        context: Optional[Context] = None,
+            state_topic: Optional[str] = None
     ):
         self.current_state: TState = initial_state
         self.transition_rules = transition_rules
@@ -65,6 +80,7 @@ class ExecutableStateMachine(Generic[TState]):
         self.broker: MessageBroker = broker or MessageBroker()
         self.context: Context = context or Context()
         self._stop_requested = False
+        self.state_topic = state_topic or "STATE MACHINE"
 
         log_if_enabled(
             ENABLE_STATE_MACHINE_LOGGING,
@@ -115,7 +131,7 @@ class ExecutableStateMachine(Generic[TState]):
 
     # ------------------ Hooks ------------------
     def on_transition_success(self, new_state: TState):
-        self.broker.publish("STATE_MACHINE_STATE", new_state)
+        self.broker.publish(self.state_topic, new_state)
 
     def on_invalid_transition_attempt(self, attempted_state: TState):
         log_if_enabled(
@@ -125,22 +141,14 @@ class ExecutableStateMachine(Generic[TState]):
             f"Invalid transition attempt: {self.current_state} -> {attempted_state}"
         )
 
-    # ------------------ Execution Loop ------------------
     def start_execution(self, delay: float = 0.1):
-        """Start execution loop that calls 'execute' for current state"""
         self._stop_requested = False
         while not self._stop_requested:
             state_obj = self.state_registry.get(self.current_state)
             if state_obj:
-                try:
-                    state_obj.execute(self.context)
-                except Exception as e:
-                    log_if_enabled(
-                        ENABLE_STATE_MACHINE_LOGGING,
-                        state_machine_logger,
-                        LoggingLevel.ERROR,
-                        f"Error executing state {self.current_state}: {e}"
-                    )
+                next_state = state_obj.execute(self.context)  # <-- get next state from handler
+                if next_state:
+                    self.transition(next_state)  # <-- automatic transition
             time.sleep(delay)
 
     def stop_execution(self):
@@ -151,17 +159,16 @@ class ExecutableStateMachine(Generic[TState]):
 from typing import Optional, Dict, Set
 
 # ------------------ State Machine Builder ------------------
+# ------------------ Executable State Machine Builder ------------------
 class ExecutableStateMachineBuilder(Generic[TState]):
-    """
-    Builder for ExecutableStateMachine using StateRegistry.
-    """
-
     def __init__(self):
+        self._state_topic = None
         self._initial_state: Optional[TState] = None
         self._transition_rules: Dict[TState, Set[TState]] = {}
         self._registry: Optional[StateRegistry] = None
         self._broker: Optional[MessageBroker] = None
         self._context: Optional[Context] = None
+        self._on_transition_success: Optional[Callable[[TState], None]] = None  # NEW
 
     def with_initial_state(self, initial_state: TState):
         self._initial_state = initial_state
@@ -183,18 +190,34 @@ class ExecutableStateMachineBuilder(Generic[TState]):
         self._context = context
         return self
 
+    def with_on_transition_success(self, callback: Callable[[TState], None]):
+        """Allow external on_transition_success hook"""
+        self._on_transition_success = callback
+        return self
+
+    def with_state_topic(self, topic: str):
+        """Set custom state topic for the state machine"""
+        self._state_topic = topic
+        return self
+
     def build(self) -> ExecutableStateMachine[TState]:
         if not self._initial_state:
             raise ValueError("Initial state must be set")
         if not self._registry:
             raise ValueError("StateRegistry must be set")
-        return ExecutableStateMachine(
+        machine = ExecutableStateMachine(
             initial_state=self._initial_state,
             transition_rules=self._transition_rules,
             state_registry=self._registry,
             broker=self._broker,
-            context=self._context
+            context=self._context,
+            state_topic=self._state_topic
         )
+        if self._on_transition_success:
+            machine.on_transition_success = self._on_transition_success
+
+        return machine
+
 
 # ------------------ Example Usage ------------------
 if __name__ == "__main__":

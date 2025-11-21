@@ -1,6 +1,7 @@
 """
 Glue Process States
 
+import threading
 This module defines the states specific to the glue dispensing application.
 These states extend the base ProcessStateType with glue-specific operations
 and workflow steps.
@@ -142,6 +143,7 @@ class GlueProcessTransitionRules:
             },
 
             GlueProcessState.PAUSED: {
+                GlueProcessState.PAUSED,  # Allow to stay in pause
                 GlueProcessState.STARTING,  # Resume execution
                 GlueProcessState.STOPPED,  # Stop from pause
                 GlueProcessState.COMPLETED,  # Complete from pause
@@ -161,6 +163,7 @@ class GlueProcessTransitionRules:
             },
 
             GlueProcessState.ERROR: {
+                GlueProcessState.ERROR, # Allow to stay in error
                 GlueProcessState.IDLE,  # Recovery
                 GlueProcessState.INITIALIZING,  # Full reset
             },

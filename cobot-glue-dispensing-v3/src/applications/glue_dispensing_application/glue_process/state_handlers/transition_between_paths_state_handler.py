@@ -34,7 +34,7 @@ def handle_transition_between_paths(context):
         if context.motor_started and context.spray_on:
             try:
                 log_debug_message(glue_dispensing_logger_context, message="Turning off motor between paths...")
-                context.motor_controller.pump_off(context.service,context.robot_service,context.glue_type,context.current_settings)
+                context.pump_controller.pump_off(context.service,context.robot_service,context.glue_type,context.current_settings)
                 context.motor_started = False
                 log_debug_message(glue_dispensing_logger_context, message="Motor stopped successfully.")
             except Exception as e:

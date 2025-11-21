@@ -68,20 +68,33 @@ class SettingsController(BaseController):
         # ------------------------------
         # APPLICATION-SPECIFIC SETTINGS (dynamic)
         # ------------------------------
+        def make_application_handler(ep):
+            def handler(data=None):
+                return self._handle_application_settings(ep, data)
+
+            return handler
+
         for endpoint in self.settings_registry.get_all_endpoints():
-            # Late-binding safe: create closure for each endpoint
-            self.register_handler(
-                endpoint,
-                (lambda ep: (lambda data=None: self._handle_application_settings(ep, data)))(endpoint)
-            )
+            self.register_handler(endpoint, make_application_handler(endpoint))
+
+        # for endpoint in self.settings_registry.get_all_endpoints():
+        #     # Late-binding safe: create closure for each endpoint
+        #     self.register_handler(
+        #         endpoint,
+        #         (lambda ep: (lambda data=None: self._handle_application_settings(ep, data)))(endpoint)
+        #     )
 
     # Called at request time for dynamic endpoints
     def _resolve_dynamic_handler(self, request):
         endpoint_mapping = self.settings_registry.get_all_endpoints()
         if request not in endpoint_mapping:
             return None
-        ep = request
-        return lambda data=None: self._handle_application_settings(ep, data)
+
+        def handler(data):
+            return self._handle_application_settings(request, data)
+
+        return handler
+
     # =========================
     # INTERNAL HELPERS
     # =========================
@@ -89,26 +102,21 @@ class SettingsController(BaseController):
     def _handle_application_settings(self, request, data=None):
         """
         Handle application-specific settings requests using the registry.
-        
-        Args:
-            request: The request endpoint
-            data: Optional data for SET requests
-            
-        Returns:
-            dict: Response dictionary
         """
+        print(f"[_handle_application_settings] HANDLING request: {request} with data: {data}")
+
         try:
-            # Get mapping of endpoints to settings types
+            # Re-add this line — you must fetch the mapping from the registry
             endpoint_mapping = self.settings_registry.get_all_endpoints()
-            
+
             if request not in endpoint_mapping:
                 return Response(
                     Constants.RESPONSE_STATUS_ERROR,
                     message=f"Unknown settings endpoint: {request}"
                 ).to_dict()
-            
+
             settings_type = endpoint_mapping[request]
-            
+
             try:
                 handler = self.settings_registry.get_handler(settings_type)
             except KeyError:
@@ -116,36 +124,26 @@ class SettingsController(BaseController):
                     Constants.RESPONSE_STATUS_ERROR,
                     message=f"Settings handler not found for type: {settings_type}"
                 ).to_dict()
-            
-            # Determine if this is a GET or SET operation based on data presence
-            if data is None:
-                # GET operation
+
+            # Decide GET/SET by endpoint suffix
+            if request.endswith("/get"):
                 result_data = handler.handle_get_settings()
-                return Response(
-                    Constants.RESPONSE_STATUS_SUCCESS,
-                    message="Success",
-                    data=result_data
-                ).to_dict()
-            else:
-                # SET operation
+                return Response(Constants.RESPONSE_STATUS_SUCCESS, message="Success", data=result_data).to_dict()
+            elif request.endswith("/set"):
+                if data is None:
+                    return Response(Constants.RESPONSE_STATUS_ERROR, message="No data provided for setting").to_dict()
                 success, message = handler.handle_set_settings(data)
                 if success:
-                    return Response(
-                        Constants.RESPONSE_STATUS_SUCCESS,
-                        message=message
-                    ).to_dict()
+                    return Response(Constants.RESPONSE_STATUS_SUCCESS, message=message).to_dict()
                 else:
-                    return Response(
-                        Constants.RESPONSE_STATUS_ERROR,
-                        message=message
-                    ).to_dict()
-                    
+                    return Response(Constants.RESPONSE_STATUS_ERROR, message=message).to_dict()
+            else:
+                return Response(Constants.RESPONSE_STATUS_ERROR, message="Unknown operation type").to_dict()
+
         except Exception as e:
             traceback.print_exc()
-            return Response(
-                Constants.RESPONSE_STATUS_ERROR,
-                message=f"Error handling application settings: {e}"
-            ).to_dict()
+            return Response(Constants.RESPONSE_STATUS_ERROR,
+                            message=f"Error handling application settings: {e}").to_dict()
 
     def _handleGet(self, resource):
         """
