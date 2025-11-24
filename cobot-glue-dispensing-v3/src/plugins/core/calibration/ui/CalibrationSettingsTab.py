@@ -95,6 +95,10 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         self.image_scale_factor = 1.0
         self.image_to_label_scale = 1.0  # Scale factor from image coords to label coords
 
+        # Initialize robot calibration settings early
+        self.robot_settings_fields = {}  # Store references to input fields
+        self.load_robot_calibration_settings_from_service()
+
         # Create main content with new layout
         self.create_main_content()
 
@@ -118,10 +122,6 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
 
         # Load saved work area points for both pickup and spray areas
         self.load_all_saved_work_areas()
-
-        # Initialize robot calibration settings
-        self.robot_settings_fields = {}  # Store references to input fields
-        self.load_robot_calibration_settings_from_service()
 
         self.log_que = []  # Message queue for logs
         self.log_timer = QTimer(self)
