@@ -20,7 +20,7 @@ def handle_contour_matching_mode(application,nesting,debug)->OperationResult:
     result,matches = application.workpiece_matcher.perform_matching(workpieces,new_contours,debug)
     print(f"perform_matching result: {result} matches: {matches}")
     if not result:
-        from modules.shared.localization.enums.Message import Message
+        from modules.shared.localization.enums import Message
         return OperationResult(success=False, message=Message.NO_WORKPIECE_DETECTED)
 
     return application.start_spraying(matches,debug)

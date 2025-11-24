@@ -1,4 +1,4 @@
-from modules.SystemStatePublisherThread import SystemStatePublisherThread
+from modules import SystemStatePublisherThread
 from core.services.robot_service.enums.RobotState import RobotState
 from core.system_state_management import ServiceStateMessage, ServiceState
 

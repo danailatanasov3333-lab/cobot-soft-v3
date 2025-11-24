@@ -2,7 +2,7 @@ import sys
 
 from PyQt6.QtWidgets import QApplication
 
-from modules.shared.localization.enums.Message import Message
+from modules.shared.localization.enums import Message
 from frontend.core.utils.localization.container import get_app_translator
 from frontend.feedback.FeedbackWindow import FeedbackWindow, INFO_MESSAGE
 

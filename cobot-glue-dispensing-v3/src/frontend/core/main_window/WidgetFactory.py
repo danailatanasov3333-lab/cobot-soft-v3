@@ -2,12 +2,11 @@ from enum import Enum
 
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 from plugins.core.calibration.ui.CalibrationAppWidget import CalibrationAppWidget
-from plugins.core.contour_editor.ui.ContourEditorAppWidget import ContourEditorAppWidget
+from plugins.core.contour_editor.ui import ContourEditorAppWidget
 from frontend.legacy_ui.app_widgets.CreateWorkpieceOptionsAppWidget import CreateWorkpieceOptionsAppWidget
 from plugins.core.dashboard.ui.DashboardAppWidget import DashboardAppWidget
-from plugins.core.wight_cells_settings_plugin.ui.GlueWeightCellSettingsAppWidget import GlueWeightCellSettingsAppWidget
 from plugins.core.gallery.ui.GalleryAppWidget import GalleryAppWidget
-from plugins.core.user_management.ui.UserManagementAppWidget import UserManagementAppWidget
+from plugins.core.wight_cells_settings_plugin.ui.GlueWeightCellSettingsAppWidget import GlueWeightCellSettingsAppWidget
 
 
 class WidgetType(Enum):
@@ -66,7 +65,6 @@ class WidgetFactory:
     def __create_user_management_widget(self, *args, **kwargs):
         print("Creating User Management Widget")
 
-        return UserManagementAppWidget(*args, **kwargs)
 
     def __create_settings_widget(self, *args, **kwargs):
         print("Creating Settings Widget")

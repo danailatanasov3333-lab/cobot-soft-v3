@@ -2,7 +2,6 @@ from PyQt6.QtCore import pyqtSignal, Qt, QTimer, QPointF
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QFrame
 
-from modules.shared.core.contour_editor.BezierSegmentManager import BezierSegmentManager
 
 from frontend.contour_editor import constants
 from frontend.contour_editor.controllers.SegmentActionController import SegmentActionController
@@ -18,6 +17,7 @@ from frontend.contour_editor.managers.layer_manager import LayerManager
 from frontend.contour_editor.managers.workpiece_manager import WorkpieceManager
 from frontend.contour_editor.rendering.editor_renderer import EditorRenderer
 from core.model.workpiece.Workpiece import BaseWorkpiece
+from modules.shared.core.contour_editor.BezierSegmentManager import BezierSegmentManager
 
 
 class ContourEditor(QFrame):

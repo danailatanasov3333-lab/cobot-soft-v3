@@ -1,5 +1,7 @@
-from modules.shared.core.user.User import Role, User
 from enum import Enum
+
+from modules.shared.core.user.User import Role, User
+
 
 class Permission(Enum):
     VIEW_WORK_FOLDER = "view_work_folder"

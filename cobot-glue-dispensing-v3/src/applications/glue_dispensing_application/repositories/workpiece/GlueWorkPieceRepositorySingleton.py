@@ -53,7 +53,7 @@ class GlueWorkPieceRepositorySingleton:
             
             # If no application context is set, fall back to system storage
             if storage_dir is None:
-                from modules.utils.PathResolver import PathResolver, PathType
+                from modules import PathResolver, PathType
                 storage_dir = PathResolver.get_path(PathType.WORKPIECE_STORAGE)
                 print("Warning: No application context set, using system-wide workpiece storage")
             

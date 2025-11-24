@@ -12,7 +12,7 @@ from communication_layer.api.v1.endpoints import workpiece_endpoints, operations
 from frontend.contour_editor.utils.utils import create_light_gray_pixmap, qpixmap_to_cv
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 from frontend.core.utils.localization import TranslationKeys, TranslatableWidget
-from modules.shared.core.user.Session import SessionManager
+
 
 from frontend.widgets.Header import Header
 from frontend.legacy_ui.windows.folders_page.FoldersPage import FoldersPage, FolderConfig
@@ -26,9 +26,12 @@ from frontend.core.utils.IconLoader import (DASHBOARD_ICON, CREATE_WORKPIECE_ICO
                                                  GLUE_WEIGHT_CELL_ICON)
 from frontend.core.services.authorizationService import AuthorizationService , Permission
 from frontend.core.utils.FilePaths import DXF_DIRECTORY
+
+from core.application.ApplicationContext import get_application_required_plugins
+from modules.shared.MessageBroker import MessageBroker
 from modules.shared.core.dxf.DxfParser import DXFPathExtractor
 from modules.shared.core.dxf.utils import scale_contours
-from core.application.ApplicationContext import get_application_required_plugins
+from modules.shared.core.user.Session import SessionManager
 
 
 class MainWindow(TranslatableWidget):
@@ -481,7 +484,7 @@ class MainWindow(TranslatableWidget):
                 self.folders_page.disable_folder_by_id(folder_id)
 
         print(f"User '{user.firstName}' with role '{user.role}' logged in.")
-        from modules.shared.MessageBroker import MessageBroker
+
         broker=MessageBroker()
         broker.publish("vison-auto-brightness","start")
         print("Log event triggered in ApplicationDemo")

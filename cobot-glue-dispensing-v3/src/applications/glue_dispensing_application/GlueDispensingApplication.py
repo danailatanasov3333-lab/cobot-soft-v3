@@ -39,7 +39,6 @@ from applications.glue_dispensing_application.settings.GlueSettingsHandler impor
 from core.system_state_management import ServiceRegistry
 from modules.shared.tools.GlueCell import GlueCellsManagerSingleton, GlueDataFetcher
 
-
 Z_OFFSET_FOR_CALIBRATION_PATTERN = -4 # MM
 
 class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):

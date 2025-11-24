@@ -5,7 +5,7 @@ from applications.glue_dispensing_application.services.glueSprayService.generato
 from applications.glue_dispensing_application.services.glueSprayService.motorControl.MotorControl import MotorControl
 import time
 
-from modules.utils.custom_logging import setup_logger,log_if_enabled, LoggingLevel
+from modules.utils.custom_logging import LoggingLevel, log_if_enabled, setup_logger
 
 ENABLE_LOGGING = True
 glue_spray_service_logger = setup_logger("GlueSprayService")

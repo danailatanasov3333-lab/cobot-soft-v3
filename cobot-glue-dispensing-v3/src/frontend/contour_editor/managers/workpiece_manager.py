@@ -42,7 +42,7 @@ class WorkpieceManager:
                 }
             }
         """
-        from modules.shared.core.contour_editor.BezierSegmentManager import Layer
+        from modules import Layer
         
         if contours_by_layer is None:
             return
@@ -180,7 +180,7 @@ class WorkpieceManager:
         Returns:
             ContourEditorData instance
         """
-        from modules.shared.core.contour_editor.BezierSegmentManager import Layer
+        from modules import Layer
 
         editor_data = ContourEditorData()
 

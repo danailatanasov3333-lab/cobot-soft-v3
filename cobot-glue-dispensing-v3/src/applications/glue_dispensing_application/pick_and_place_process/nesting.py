@@ -6,19 +6,24 @@ from datetime import datetime
 
 from communication_layer.api.v1.topics import VisionTopics
 from modules.VisionSystem.heightMeasuring.LaserTracker import LaserTrackService
+from modules.contour_matching import CompareContours
+from modules.shared.MessageBroker import MessageBroker
+from modules.shared.core.ContourStandartized import Contour
+from modules.shared.tools.enums.Gripper import Gripper
+from modules.utils.contours import is_contour_inside_polygon
+
 from modules.utils.custom_logging import LoggingLevel, log_if_enabled, \
     setup_logger
-from modules.utils.contours import is_contour_inside_polygon
+
 import time
-from modules.shared.tools.enums.Gripper import Gripper
+
 # import logging
 import cv2
 import numpy as np
-from modules.shared.core.ContourStandartized import Contour
-from modules.contour_matching import CompareContours
+
 from applications.glue_dispensing_application.pick_and_place_process.Plane import Plane
-from modules.utils import utils
-from modules.shared.MessageBroker import MessageBroker
+from modules import utils
+
 
 # Import matplotlib for debug plotting
 try:
@@ -404,7 +409,7 @@ def start_nesting(application,visionService, robotService,preselected_workpiece,
             # === LOGGING ===
             log_if_enabled(ENABLE_LOGGING,nesting_logger,LoggingLevel.WARNING, "❌ MATCHING: No matching workpieces found!")
             # === FUNCTIONALITY ===
-            from modules.shared.localization.enums.Message import Message
+            from modules.shared.localization.enums import Message
             laser.turnOff()
             return NestingResult(success=False, message=Message.NO_WORKPIECE_DETECTED.value)
 

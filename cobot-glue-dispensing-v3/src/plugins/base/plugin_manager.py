@@ -267,8 +267,10 @@ class PluginManager:
     
     def get_loaded_plugin_names(self) -> List[str]:
         """Get list of successfully loaded plugin names"""
-        return self.registry.get_loaded_plugins()
-    
+
+        result =  self.registry.get_loaded_plugins()
+        print(f"Loaded plugins: {result}")
+        return result
     def unload_plugin(self, plugin_name: str) -> bool:
         """
         Unload a specific plugin.

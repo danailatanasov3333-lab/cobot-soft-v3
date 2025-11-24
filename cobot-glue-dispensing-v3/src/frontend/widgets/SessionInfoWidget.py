@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QIcon
 
-from modules.shared.core.user.Session import SessionManager
+from modules import SessionManager
 from frontend.core.utils.IconLoader import LOGOUT_BUTTON_ICON_PATH
 
 # Update the import

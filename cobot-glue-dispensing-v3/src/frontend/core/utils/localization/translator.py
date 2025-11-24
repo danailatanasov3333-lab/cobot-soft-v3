@@ -2,13 +2,14 @@
 Centralized translation service for the application.
 Provides a clean interface between UI components and the localization system.
 """
+from __future__ import annotations
 from typing import Union, Any
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from communication_layer.api.v1.topics import UITopics
 from modules.shared.MessageBroker import MessageBroker
-from  modules.shared.localization.LanguageResourceLoader import LanguageResourceLoader
-from  modules.shared.localization.enums.Language import Language
+from modules.shared.localization.LanguageResourceLoader import LanguageResourceLoader
+from modules.shared.localization.enums.Language import Language
 from modules.shared.localization.enums.Message import Message
 
 

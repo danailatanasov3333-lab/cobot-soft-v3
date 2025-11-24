@@ -1,7 +1,7 @@
 import numpy as np
 
 from applications.glue_dispensing_application.settings.enums import GlueSettingKey
-from modules.utils import utils
+from modules import utils
 
 
 def execute_from_gallery(application,workpiece,z_offset_for_calibration_pattern):

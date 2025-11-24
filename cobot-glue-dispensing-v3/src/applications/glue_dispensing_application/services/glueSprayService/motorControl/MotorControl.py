@@ -3,10 +3,12 @@ from typing import List, Dict, Tuple
 from dataclasses import dataclass
 
 from applications.glue_dispensing_application.services.glueSprayService.motorControl.utils import split_into_16bit
-from modules.modbusCommunication.ModbusController import ModbusController
+
 from applications.glue_dispensing_application.services.glueSprayService.motorControl.errorCodes import MotorErrorCode
 
-from modules.utils.custom_logging import setup_logger,log_if_enabled, LoggingLevel
+
+from modules.modbusCommunication import ModbusController
+from modules.utils.custom_logging import LoggingLevel, log_if_enabled, setup_logger
 
 ENABLE_LOGGING = True
 motor_control_logger = setup_logger("MotorControl")

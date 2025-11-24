@@ -15,10 +15,12 @@ import threading
 import time
 
 from communication_layer.api.v1.topics import RobotTopics
+from modules.robot_calibration.newRobotCalibUsingExecutableStateMachine import RefactoredRobotCalibrationPipeline
+
+from modules.shared.MessageBroker import MessageBroker
 from modules.robot_calibration.config_helpers import AdaptiveMovementConfig, RobotCalibrationEventsConfig, \
     RobotCalibrationConfig
-from modules.robot_calibration.newRobotCalibUsingExecutableStateMachine import RefactoredRobotCalibrationPipeline
-from modules.shared.MessageBroker import MessageBroker
+
 
 def calibrate_robot(application):
 

@@ -11,8 +11,9 @@ from typing import Dict, Any, Optional
 import numpy as np
 
 from frontend.contour_editor.EditorDataModel import ContourEditorData
-from modules.shared.core.contour_editor.BezierSegmentManager import Layer, Segment
 from PyQt6.QtCore import QPointF
+
+from modules.shared.core.contour_editor.BezierSegmentManager import Layer, Segment
 
 
 class CaptureDataHandler:

@@ -45,8 +45,8 @@ from .widgets import (
 from .keys import TranslationKeys
 
 # Convenience imports for backwards compatibility
-from modules.shared.localization.enums.Language import Language
-from modules.shared.localization.enums.Message import Message
+from modules.shared.localization.enums import Language
+from modules.shared.localization.enums import Message
 
 __all__ = [
     # Core services

@@ -1,18 +1,20 @@
 import queue
-import cv2
 import numpy as np
-# from system.robot.RobotCalibrationService import CAMERA_TO_ROBOT_MATRIX_PATH
-from modules.utils import utils
+from modules import utils
 from communication_layer.api.v1.topics import VisionTopics
 from modules.VisionSystem.VisionSystem import VisionSystem
 import os
 import json
+import cv2
+import threading
 from pathlib import Path
 from modules.shared.MessageBroker import MessageBroker
 from core.application.ApplicationContext import get_core_settings_path
-import threading
-# PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = '/home/ilv/Cobot-Glue-Nozzle/VisionSystem/calibration/cameraCalibration/storage/calibration_result/pickupCamToRobotMatrix.npy'
-PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__),'..','..', '..', 'VisionSystem', 'calibration', 'cameraCalibration', 'storage', 'calibration_result', 'pickupCamToRobotMatrix.npy')
+
+PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'VisionSystem',
+                                                       'calibration', 'cameraCalibration', 'storage',
+                                                       'calibration_result', 'pickupCamToRobotMatrix.npy')
+
 
 class _VisionService(VisionSystem):
     """
@@ -31,6 +33,7 @@ class _VisionService(VisionSystem):
         pickupCamToRobotMatrix (numpy.ndarray): Matrix to transform camera points to robot coordinates.
 
     """
+
     def __init__(self):
         """
             Initializes the VisionService with camera settings and prepares the frame queue and other attributes.
@@ -45,9 +48,10 @@ class _VisionService(VisionSystem):
         config_file_path = get_core_settings_path("camera_settings.json", create_if_missing=True)
         if config_file_path is None:
             # Fallback to hardcoded path for backward compatibility
-            config_file_path = os.path.join(os.path.dirname(__file__), '..','..','..','backend', 'system','storage', 'settings', 'camera_settings.json')
+            config_file_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend', 'system', 'storage',
+                                            'settings', 'camera_settings.json')
             print("VisionService: Warning - No application context set, using fallback camera settings path")
-        
+
         # Check if the settings file exists, create with defaults if missing
         if not os.path.exists(config_file_path):
             print(f"VisionService: Camera settings file not found at {config_file_path}")
@@ -68,7 +72,7 @@ class _VisionService(VisionSystem):
         self.filteredContours = None
         self.pickupCamToRobotMatrix = self._loadPickupCamToRobotMatrix()
         broker = MessageBroker()
-        broker.subscribe(VisionTopics.TRANSFORM_TO_CAMERA_POINT,self.transformRobotPointToCamera)
+        broker.subscribe(VisionTopics.TRANSFORM_TO_CAMERA_POINT, self.transformRobotPointToCamera)
 
     @staticmethod
     def _get_default_camera_settings():
@@ -201,8 +205,6 @@ class _VisionService(VisionSystem):
             with self.frame_lock:
                 self.latest_frame = frame
 
-
-
     def getLatestFrame(self):
         """
             Retrieves the latest frame from the queue.
@@ -274,7 +276,7 @@ class _VisionService(VisionSystem):
                Returns:
                    bool: Calibration result indicating success or failure.
                """
-        result =  super().calibrateCamera()
+        result = super().calibrateCamera()
         print("Calibration result: ", result)
         return result
 
@@ -295,7 +297,7 @@ class _VisionService(VisionSystem):
         print("Setting raw mode to: ", rawMode)
         self.rawMode = rawMode
 
-    def detectArucoMarkers(self,flip=False,image= None):
+    def detectArucoMarkers(self, flip=False, image=None):
         """
               Detects ArUco markers in the provided image.
 
@@ -306,7 +308,7 @@ class _VisionService(VisionSystem):
               Returns:
                   tuple: The detected ArUco marker corners, ids, and the processed image.
               """
-        return super().detectArucoMarkers(flip,image)
+        return super().detectArucoMarkers(flip, image)
 
     def captureImage(self):
         """
@@ -318,8 +320,6 @@ class _VisionService(VisionSystem):
         image = super().captureImage()
         return image
 
-
-
     def detectQrCode(self):
         return super().detectQrCode()
 
@@ -328,7 +328,6 @@ class _VisionService(VisionSystem):
 
     def startContourDetection(self):
         self.contourDetection = True
-
 
     def captureFrameThreadSafe(self):
         """
@@ -342,12 +341,13 @@ class _VisionService(VisionSystem):
             print(f"Calling superRun() in thread {threading.current_thread().name}")
             return self.superRun()
 
-    def transformRobotPointToCamera(self,message):
+    def transformRobotPointToCamera(self, message):
         # message format {"x": x, "y": y}
         x = message.get("x")
         y = message.get("y")
         point = (x, y)
         return utils.transformSinglePointToCamera(point, self.cameraToRobotMatrix)
+
 
 class VisionServiceSingleton:
     """
@@ -363,7 +363,7 @@ class VisionServiceSingleton:
     _visionServiceInstance = None  # Static variable to hold the instance
 
     @staticmethod
-    def get_instance()-> _VisionService:
+    def get_instance() -> _VisionService:
         """
                Returns the singleton instance of the VisionService.
 
@@ -376,9 +376,11 @@ class VisionServiceSingleton:
             VisionServiceSingleton._visionServiceInstance = _VisionService()
         return VisionServiceSingleton._visionServiceInstance
 
+
 if __name__ == "__main__":
     # Example usage
     import cv2
+
     vision_service = VisionServiceSingleton.get_instance()
     print("After instantiation, vision_service is: ", vision_service)
 
@@ -395,4 +397,3 @@ if __name__ == "__main__":
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     # For example, to get the latest frame:
-

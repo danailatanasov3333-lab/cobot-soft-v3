@@ -67,9 +67,9 @@ class AuthDispatch(IDispatcher):
         
         try:
             # Import authentication dependencies
-            from modules.shared.core.user.User import User, Role, UserField
-            from modules.shared.core.user.CSVUsersRepository import CSVUsersRepository
-            from modules.shared.core.user.UserService import UserService
+            from modules import User, Role, UserField
+            from modules import CSVUsersRepository
+            from modules import UserService
             
             # Set up user repository
             csv_file_path = os.path.join(os.path.dirname(__file__), "../../shared/shared/user/users.csv")
@@ -89,7 +89,7 @@ class AuthDispatch(IDispatcher):
                     print(f"AuthHandler: Login successful! Welcome, {user.firstName} ({user.role.value})")
                     
                     # Start user session
-                    from modules.shared.core.user.Session import SessionManager
+                    from modules import SessionManager
                     SessionManager.login(user)
                     
                     response = Response(Constants.RESPONSE_STATUS_SUCCESS, "1")
@@ -148,7 +148,7 @@ class AuthDispatch(IDispatcher):
         print("AuthHandler: Handling logout")
         
         try:
-            from modules.shared.core.user.Session import SessionManager
+            from modules import SessionManager
             SessionManager.logout()
             
             response = Response(Constants.RESPONSE_STATUS_SUCCESS,

@@ -2,11 +2,14 @@ import numpy as np
 
 from applications.glue_dispensing_application.model.workpiece.GlueWorkpieceField import GlueWorkpieceField
 from core.model.workpiece.Workpiece import BaseWorkpiece
+
+
 from modules.shared.core.interfaces.JsonSerializable import JsonSerializable
 from modules.shared.tools.GlueCell import GlueType
-from modules.shared.tools.enums.Gripper import Gripper
-from modules.shared.tools.enums.Program import Program
 from modules.shared.tools.enums.ToolID import ToolID
+from modules.shared.tools.enums.Program import Program
+from modules.shared.tools.enums.Gripper import Gripper
+
 
 
 class GlueWorkpiece(BaseWorkpiece, JsonSerializable):

@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import QComboBox
 from PyQt6.QtCore import pyqtSignal
 
-from frontend.core.utils.localization import get_app_translator, Language
+from frontend.core.utils.localization import get_app_translator
+from modules.shared.localization.enums.Language import Language
 
 
 class LanguageSelectorWidget(QComboBox):

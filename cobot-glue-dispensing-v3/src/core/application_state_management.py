@@ -1,10 +1,9 @@
 from enum import Enum
-from modules.SystemStatePublisherThread import SystemStatePublisherThread
 from core.application.interfaces.ISubscriptionModule import ISubscriptionModule
 from core.operation_state_management import OperationState
 from core.system_state_management import SystemState
 from communication_layer.api.v1.topics import VisionTopics, RobotTopics, SystemTopics
-
+from modules.SystemStatePublisherThread import SystemStatePublisherThread
 
 
 class SubscriptionManger:

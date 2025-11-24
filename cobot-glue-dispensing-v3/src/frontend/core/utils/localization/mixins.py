@@ -1,7 +1,7 @@
 """
 Mixin classes and base widgets that provide automatic translation capabilities.
 """
-from typing import Union, Optional, Any
+from typing import Union, Optional
 from PyQt6.QtWidgets import QWidget, QDialog, QFrame
 from modules.shared.localization.enums.Message import Message
 from .container import get_app_translator

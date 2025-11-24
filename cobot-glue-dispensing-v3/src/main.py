@@ -61,8 +61,8 @@ if __name__ == "__main__":
     # - PAINT_APPLICATION uses ZeroError robot  
     # - TEST_APPLICATION uses test robot
     
-    # SELECTED_APP_TYPE = ApplicationType.GLUE_DISPENSING  # Uses Fairino robot
-    SELECTED_APP_TYPE = ApplicationType.PAINT_APPLICATION  # Uses ZeroError robot
+    SELECTED_APP_TYPE = ApplicationType.GLUE_DISPENSING  # Uses Fairino robot
+    # SELECTED_APP_TYPE = ApplicationType.PAINT_APPLICATION  # Uses ZeroError robot
     # SELECTED_APP_TYPE = ApplicationType.TEST_APPLICATION  # Uses test robot
     
     # Set application context using the enum directly

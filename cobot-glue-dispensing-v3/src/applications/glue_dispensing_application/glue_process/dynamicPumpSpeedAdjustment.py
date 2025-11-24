@@ -3,9 +3,8 @@ import time
 
 from applications.glue_dispensing_application.settings import GlueSettingKey
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
+from modules.utils import files, robot_utils
 from modules.utils.custom_logging import log_debug_message
-from modules.utils import robot_utils, files
-
 
 # State Management Functions
 def is_point_reached(currentPos, targetPoint, threshold):

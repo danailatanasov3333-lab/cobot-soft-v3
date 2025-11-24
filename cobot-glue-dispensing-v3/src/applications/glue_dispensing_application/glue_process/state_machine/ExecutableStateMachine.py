@@ -6,7 +6,7 @@ from applications.glue_dispensing_application.glue_process.ExecutionContext impo
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import \
     GlueProcessTransitionRules, GlueProcessState
 from modules.shared.MessageBroker import MessageBroker
-from modules.utils.custom_logging import log_if_enabled, LoggingLevel, setup_logger
+from modules.utils.custom_logging import LoggingLevel, log_if_enabled, setup_logger
 
 TState = TypeVar("TState")  # Generic state type
 

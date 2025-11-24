@@ -15,20 +15,22 @@ from typing import Dict, Any, List, Union, Optional
 from communication_layer.api.v1.topics import SystemTopics
 from core.operation_state_management import BaseOperation, OperationResult
 from core.services.robot_service.impl.base_robot_service import  RobotService
+from core.services.vision.VisionService import _VisionService
 
 from modules.shared.MessageBroker import MessageBroker
-from core.services.vision.VisionService import _VisionService
+
 from core.services.settings.SettingsService import SettingsService
 from core.operations_handlers.robot_calibration_handler import calibrate_robot
 from core.operations_handlers.camera_calibration_handler import calibrate_camera
 from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 from core.application_state_management import ApplicationState, ApplicationStateManager, ApplicationMessagePublisher, \
     SubscriptionManger
+
+from core.model.robot.robot_types import RobotType
 from modules.shared.tools.Laser import Laser
 from modules.shared.tools.ToolChanger import ToolChanger
 from modules.shared.tools.ToolManager import ToolManager
 from modules.shared.tools.VacuumPump import VacuumPump
-from core.model.robot.robot_types import RobotType
 
 
 class ApplicationType(Enum):

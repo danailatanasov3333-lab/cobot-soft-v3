@@ -1,11 +1,11 @@
 from typing import Dict, Callable
 
-from modules.utils.custom_logging import log_if_enabled, LoggingLevel, \
+from modules import log_if_enabled, LoggingLevel, \
     log_calls_with_timestamp_decorator, setup_logger
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import \
     GlueProcessTransitionRules, GlueProcessState
 from communication_layer.api.v1.topics import GlueTopics
-from modules.shared.MessageBroker import MessageBroker
+from modules import MessageBroker
 
 ENABLE_ROBOT_SERVICE_STATE_MACHINE_LOGGING = True
 if ENABLE_ROBOT_SERVICE_STATE_MACHINE_LOGGING:

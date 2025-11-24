@@ -2,8 +2,7 @@ import threading
 import time
 from typing import Optional
 
-from modules.utils.custom_logging import log_info_message, log_debug_message, setup_logger, LoggerContext
-from modules.utils import robot_utils
+
 from communication_layer.api.v1.topics import RobotTopics, VisionTopics
 from core.application.interfaces.ISubscriptionModule import ISubscriptionModule
 from core.application_state_management import SubscriptionManger
@@ -15,6 +14,8 @@ from frontend.core.services.domain.RobotService import RobotAxis
 
 from core.model.robot.enums.axis import Direction
 from modules.shared.MessageBroker import MessageBroker
+from modules.utils import robot_utils
+from modules.utils.custom_logging import LoggerContext, setup_logger, log_info_message, log_debug_message
 
 ENABLE_ROBOT_SERVICE_LOGGING = True
 

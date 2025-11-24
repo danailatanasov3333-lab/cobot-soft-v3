@@ -5,7 +5,7 @@ This file demonstrates various usage patterns and migration strategies.
 
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel
 
-from modules.shared.localization.LanguageResourceLoader import LanguageResourceLoader
+from modules import LanguageResourceLoader
 from frontend.core.utils.localization import (
     setup_localization,
     TranslatableWidget,
@@ -81,8 +81,8 @@ class OldStyleWidget(QWidget):
         super().__init__(parent)
         
         # OLD: Manual imports and setup
-        from modules.shared.localization.LanguageResourceLoader import LanguageResourceLoader
-        from modules.shared.MessageBroker import MessageBroker
+        from modules import LanguageResourceLoader
+        from modules import MessageBroker
         
         self.lang_loader = LanguageResourceLoader()  # Creates instance
         
@@ -96,13 +96,13 @@ class OldStyleWidget(QWidget):
         layout = QVBoxLayout(self)
         
         # OLD: Set text immediately with manual calls
-        from modules.shared.localization.enums.Message import Message
+        from modules.shared.localization.enums import Message
         self.label = QLabel(self.lang_loader.get_message(Message.LOGIN))
         layout.addWidget(self.label)
     
     def update_translations(self, _):
         """OLD: Manual translation updates."""
-        from modules.shared.localization.enums.Message import Message
+        from modules.shared.localization.enums import Message
         self.lang_loader = LanguageResourceLoader()  # Recreate instance!
         self.label.setText(self.lang_loader.get_message(Message.LOGIN))
 

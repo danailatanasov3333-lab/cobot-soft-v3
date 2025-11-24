@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 
 
-from modules.contour_matching import align_single_contour
-from modules.contour_matching.matching_config import REFINEMENT_THRESHOLD
+from modules import align_single_contour
+from modules import REFINEMENT_THRESHOLD
 from compare_contours.testShapeGenerator import create_rectangle_contour
-from modules.shared.core.ContourStandartized import Contour
+from modules import Contour
 
 
 # --- Fixtures for basic contours ---

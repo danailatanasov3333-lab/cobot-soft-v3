@@ -14,10 +14,11 @@ from frontend.feedback.FeedbackProvider import FeedbackProvider
 
 
 
-from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
-from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
+from plugins.core.settings.ui import CameraSettingsTabLayout
 
 import logging
+
+from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
 
 
 class UIController:

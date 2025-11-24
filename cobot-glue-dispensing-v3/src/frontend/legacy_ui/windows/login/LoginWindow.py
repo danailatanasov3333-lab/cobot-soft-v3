@@ -19,7 +19,7 @@ from frontend.legacy_ui.windows.login.LoginTab import LoginTab
 from frontend.legacy_ui.windows.login.QRLoginTab import QRLoginTab
 from frontend.legacy_ui.windows.login.SetupStepsWidget import SetupStepsWidget
 from frontend.core.utils.IconLoader import LOGIN_BUTTON, LOGIN_QR_BUTTON, LOGO
-from modules.shared.utils.jsonUtils import load_json_file
+from modules.shared.MessageBroker import MessageBroker
 
 # Suppress specific DeprecationWarning
 warnings.filterwarnings("ignore", category=DeprecationWarning, message="sipPyTypeDict() is deprecated")
@@ -49,7 +49,6 @@ class LoginWindow(TranslatableDialog):
         
         # Initialize translations after UI is created
         self.init_translations()
-        from modules.shared.MessageBroker import MessageBroker
         broker = MessageBroker()
         broker.publish("vison-auto-brightness","stop")
 

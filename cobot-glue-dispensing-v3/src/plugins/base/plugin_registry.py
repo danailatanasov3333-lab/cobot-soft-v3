@@ -46,6 +46,7 @@ class PluginRegistry:
         """
         try:
             metadata = plugin.metadata
+            print(f"Registerig plugin: {metadata.name} v{metadata.version}")
             plugin_name = metadata.name
             
             # Check for conflicts
@@ -67,6 +68,8 @@ class PluginRegistry:
             return True
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             self.logger.error(f"Failed to register plugin: {e}", exc_info=True)
             return False
     
@@ -147,8 +150,10 @@ class PluginRegistry:
     
     def get_loaded_plugins(self) -> List[str]:
         """Get list of successfully loaded plugin names"""
-        return list(self._loaded_plugins)
-    
+        result = list(self._loaded_plugins)
+        print(f"[PluginRegistry] get_loaded_plugins: {result}")
+        return result
+
     def get_failed_plugins(self) -> List[str]:
         """Get list of plugins that failed to load"""
         return list(self._failed_plugins)

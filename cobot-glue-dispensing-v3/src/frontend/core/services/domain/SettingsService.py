@@ -14,12 +14,10 @@ from frontend.core.services.types.ServiceResult import ServiceResult
 # Import settings classes for type hints and validation
 
 # Import UI component classes for validation
-from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
-
+from plugins.core.settings.ui import CameraSettingsTabLayout
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
 
-if TYPE_CHECKING:
-    from frontend.core.ui_controller.Controller import Controller
+
 
 
 class SettingComponentType(Enum):

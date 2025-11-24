@@ -1,6 +1,8 @@
-from modules.modbusCommunication.ModbusController import ModbusController
+
 from typing import List, Optional
 from dataclasses import dataclass
+
+from modules.modbusCommunication import ModbusController
 
 
 @dataclass

@@ -5,9 +5,10 @@ This module provides monitoring capabilities for Zero Error robots,
 following the same interface as the Fairino robot monitor.
 """
 
-from modules.utils import robot_utils
+
 from core.model.robot.ZeroErrRobot import ZeroErrRobot
 from core.services.robot_service.impl.robot_monitor.base_robot_monitor import BaseRobotMonitor
+from modules.utils import robot_utils
 
 
 class ZeroErrorRobotMonitor(BaseRobotMonitor):

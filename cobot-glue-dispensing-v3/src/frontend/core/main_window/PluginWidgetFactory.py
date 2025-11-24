@@ -10,12 +10,14 @@ import logging
 from typing import Optional, Dict, Any
 from PyQt6.QtWidgets import QWidget
 
+from frontend.legacy_ui.app_widgets.CreateWorkpieceOptionsAppWidget import CreateWorkpieceOptionsAppWidget
 from plugins.core.gallery.ui.GalleryAppWidget import GalleryAppWidget
+from core.application.ApplicationContext import get_application_required_plugins
 
 # Add plugin path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..'))
 
-from plugins.base.plugin_manager import PluginManager
+from plugins.base import PluginManager
 from frontend.core.services.ControllerService import ControllerService
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 from frontend.core.main_window.WidgetFactory import WidgetType
@@ -50,18 +52,20 @@ class PluginWidgetFactory:
         self._widget_cache: Dict[str, QWidget] = {}
         
         # Initialize plugin system
-        self._setup_plugin_system()
-    
+        try:
+            self._setup_plugin_system()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
     def _setup_plugin_system(self):
         """Setup and initialize the plugin system"""
         try:
             # Get application-specific required plugins
-            from core.application.ApplicationContext import get_application_required_plugins
             required_plugins = get_application_required_plugins()
             self.logger.info(f"Application requires plugins: {required_plugins}")
 
             # Configure plugin directories
-            base_dir = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'plugins')
+            base_dir = os.path.join(os.path.dirname(__file__),'..','..','..', 'plugins')
             self.logger.info(f"Plugin base directory: {base_dir}")
             
             self.plugin_manager.add_plugin_directory(os.path.join(base_dir, 'core'))
@@ -221,7 +225,6 @@ class PluginWidgetFactory:
 
     def _create_legacy_create_workpiece(self, *args, **kwargs):
         """Create legacy create workpiece widget"""
-        from frontend.legacy_ui.app_widgets.CreateWorkpieceOptionsAppWidget import CreateWorkpieceOptionsAppWidget
         return CreateWorkpieceOptionsAppWidget(controller=self.controller)
 
     

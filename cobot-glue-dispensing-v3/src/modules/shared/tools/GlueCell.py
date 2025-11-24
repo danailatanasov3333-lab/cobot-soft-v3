@@ -1,6 +1,5 @@
 # from system.tools.enums.GlueType import GlueType
 from enum import Enum
-import time
 import requests
 import json
 import threading
