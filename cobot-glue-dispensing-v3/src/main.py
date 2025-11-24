@@ -12,7 +12,7 @@ from core.application.ApplicationContext import set_current_application, get_cor
 from core.controllers.vision.camera_system_controller import CameraSystemController
 from core.services.robot_service.impl.RobotStateManager import RobotStateManager
 from core.services.robot_service.impl.base_robot_service import RobotService
-
+from core.services.robot_service.impl.robot_monitor.fairino_monitor import FairinoRobotMonitor
 from frontend.core.utils.localization import setup_localization
 
 # Import SystemStateManager and related components
@@ -55,11 +55,6 @@ else:
 
 if __name__ == "__main__":
 
-    # Initialize ROS2 before creating any ROS2 nodes
-    import rclpy
-    import threading
-
-    rclpy.init()
     # Choose which application to run - CHANGE THIS LINE TO SWITCH APPS
     # ApplicationFactory will automatically create the correct robot based on metadata:
     # - GLUE_DISPENSING uses Fairino robot
@@ -114,23 +109,11 @@ if __name__ == "__main__":
     else:
         robot_type = RobotType.FAIRINO  # Default fallback
 
-    # Create robot using factory
+    # Create robot using factory (handles ROS2 initialization automatically)
     default_robot = RobotFactory.create_robot(robot_type, robot_config.robot_ip)
 
     # Create robot monitor using factory
     robot_monitor = RobotMonitorFactory.create_monitor(robot_type, robot_config.robot_ip, cycle_time=0.03)
-
-    # Start ROS2 spinning in a separate thread if robot is a ROS2 node
-    if hasattr(default_robot, 'subscriptions') and not testRobot:
-        def spin_ros2():
-            try:
-                rclpy.spin(default_robot)
-            except Exception as e:
-                print(f"ROS2 spin error: {e}")
-
-        ros2_thread = threading.Thread(target=spin_ros2, daemon=True)
-        ros2_thread.start()
-        print("ROS2 node spinning in background thread")
     robot_state_manager = RobotStateManager(robot_monitor=robot_monitor)
     robotService = RobotService(default_robot, settings_service, robot_state_manager)
 
@@ -197,10 +180,6 @@ if __name__ == "__main__":
     try:
         gui.start()
     finally:
-        # Clean up ROS2 when GUI exits
-        if not testRobot:
-            print("Shutting down ROS2...")
-            if hasattr(default_robot, 'destroy_node'):
-                default_robot.destroy_node()
-            rclpy.shutdown()
-            print("ROS2 shutdown complete")
+        # Clean up ROS2 when GUI exits (handled by RobotFactory)
+        from core.model.robot.robot_factory import RobotFactory
+        RobotFactory.shutdown_ros2()
