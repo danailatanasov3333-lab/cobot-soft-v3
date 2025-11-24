@@ -2,8 +2,8 @@ import threading
 import time
 from typing import Optional
 
-from backend.system.utils.custom_logging import log_info_message, log_debug_message, setup_logger, LoggerContext
-from backend.system.utils import robot_utils
+from modules.utils.custom_logging import log_info_message, log_debug_message, setup_logger, LoggerContext
+from modules.utils import robot_utils
 from communication_layer.api.v1.topics import RobotTopics, VisionTopics
 from core.application.interfaces.ISubscriptionModule import ISubscriptionModule
 from core.application_state_management import SubscriptionManger
@@ -82,7 +82,7 @@ class RobotService(IRobotService):
         self.robot = robot
         self.service_id = "robot_service"
         self.settings_service = settings_service
-        self.robot_config = self.settings_service.robot_config
+        self.robot_config = self.settings_service.get_robot_config()
         self._operation_lock = threading.Lock()
         self.enable_logging = ENABLE_ROBOT_SERVICE_LOGGING
         self.robot_state_manager = robot_state_manager

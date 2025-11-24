@@ -1,7 +1,9 @@
 from typing import Dict, Any, List
-from backend.system.settings.BaseSettings import Settings
-from core.application.interfaces.application_settings_interface import ApplicationSettingsInterface
+
+
 from applications.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
+from core.application.interfaces.application_settings_interface import ApplicationSettingsInterface
+from core.model.settings.BaseSettings import Settings
 
 from modules.shared.tools.GlueCell import GlueType
 from communication_layer.api.v1.endpoints import glue_endpoints

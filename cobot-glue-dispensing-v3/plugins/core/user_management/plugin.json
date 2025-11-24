@@ -9,5 +9,7 @@
     "permissions": ["file.system"],
     "dependencies": [],
     "min_app_version": "1.0.0",
-    "icon": "icons/user_management.png"
+    "icon": "icons/user_management.png",
+    "folder_id": 3,
+    "icon_name": "USER_MANAGEMENT_ICON"
 }

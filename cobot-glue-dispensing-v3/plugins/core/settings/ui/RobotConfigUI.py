@@ -5,10 +5,10 @@ from PyQt6.QtWidgets import (
     QSizePolicy, QSpacerItem, QSlider, QComboBox, QDialog, QDialogButtonBox
 )
 
-from backend.system.settings.robotConfig.GlobalMotionSettings import GlobalMotionSettings
-from backend.system.settings.robotConfig.MovementGroup import MovementGroup
-from backend.system.settings.robotConfig.SafetyLimits import SafetyLimits
-from backend.system.settings.robotConfig.robotConfigModel import get_default_config, RobotConfig
+from core.model.settings.robotConfig.GlobalMotionSettings import GlobalMotionSettings
+from core.model.settings.robotConfig.MovementGroup import MovementGroup
+from core.model.settings.robotConfig.SafetyLimits import SafetyLimits
+from core.model.settings.robotConfig.robotConfigModel import get_default_config, RobotConfig
 from communication_layer.api.v1 import Constants
 from communication_layer.api.v1.Response import Response
 from communication_layer.api.v1.endpoints import robot_endpoints
@@ -20,7 +20,7 @@ import os
 import copy
 
 
-from backend.system.utils import PathResolver
+from modules.utils import PathResolver
 from core.application.ApplicationContext import get_core_settings_path
 
 from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout

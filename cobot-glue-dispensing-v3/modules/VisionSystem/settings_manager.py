@@ -1,8 +1,8 @@
 import json
 import os
 
-from backend.system.settings.enums.CameraSettingKey import CameraSettingKey
-from backend.system.utils.custom_logging import log_if_enabled, LoggingLevel
+from core.model.settings.enums.CameraSettingKey import CameraSettingKey
+from modules.utils.custom_logging import log_if_enabled, LoggingLevel
 from libs.plvision.PLVision.Camera import Camera
 
 CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), 'config.json') # this is just a default path if not path provided

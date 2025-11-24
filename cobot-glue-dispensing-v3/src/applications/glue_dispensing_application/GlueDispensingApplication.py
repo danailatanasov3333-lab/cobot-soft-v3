@@ -4,21 +4,21 @@ from typing_extensions import override
 
 from applications.glue_dispensing_application.services.glueSprayService.GlueSprayService import GlueSprayService
 from applications.glue_dispensing_application.services.workpiece.glue_workpiece_service import GlueWorkpieceService
-from communication_layer.api.v1.topics import GlueTopics, SystemTopics
+from communication_layer.api.v1.topics import SystemTopics
 from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 from core.application.interfaces.robot_application_interface import RobotApplicationInterface
 
 import logging
 
-from backend.system.settings.SettingsService import SettingsService
-from core.application_state_management import SubscriptionManger, OperationState
+from core.services.settings.SettingsService import SettingsService
+from core.application_state_management import OperationState
 from core.operation_state_management import OperationStatePublisher
 from core.operation_state_management import OperationResult
 
 from core.services.robot_service.impl.base_robot_service import RobotService
 from core.services.vision.VisionService import _VisionService
 
-from core.base_robot_application import BaseRobotApplication, ApplicationState, ApplicationMetadata
+from core.base_robot_application import BaseRobotApplication, ApplicationState, ApplicationMetadata, PluginType
 
 from applications.glue_dispensing_application.glue_process.glue_dispensing_operation import \
     GlueDispensingOperation
@@ -38,15 +38,6 @@ from applications.glue_dispensing_application.settings.GlueSettingsHandler impor
 from core.system_state_management import ServiceRegistry
 from modules.shared.tools.GlueCell import GlueCellsManagerSingleton, GlueDataFetcher
 
-"""
-ENDPOINTS
-- start
-- measureHeight
-- calibrateRobot
-- calibrateCamera
-- createWorkpiece
-
-"""
 
 Z_OFFSET_FOR_CALIBRATION_PATTERN = -4 # MM
 
@@ -73,10 +64,10 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
 
         self.vision_service = vision_service
         self.settings_manager = settings_manager
-        self.workpiece_service=workpiece_service
         self.robot_service = robot_service
         self.settings_registry = settings_registry
         self.service_registry = service_registry
+        self.workpiece_service=workpiece_service
         # Initialize the base class
         super().__init__(self.vision_service, self.settings_manager, self.robot_service,self.settings_registry)
 
@@ -102,8 +93,6 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         self.CONTOUR_MATCHING = True
         self.current_operation = self.glue_dispensing_operation
 
-
-
     @property
     def operation(self):
         return self.current_operation
@@ -125,6 +114,16 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
                           "SettingsService",
                           "GlueRobotService",
                           "ApplicationSettingsRegistry"],
+            plugin_dependencies=[
+                PluginType.DASHBOARD,
+                PluginType.SETTINGS, 
+                PluginType.GALLERY,
+                PluginType.CONTOUR_EDITOR,
+                PluginType.CALIBRATION,
+                PluginType.GLUE_WEIGHT_CELL_SETTINGS,
+                PluginType.USER_MANAGEMENT
+            ],
+            settings_tabs=["camera", "robot", "glue"]
         )
 
 

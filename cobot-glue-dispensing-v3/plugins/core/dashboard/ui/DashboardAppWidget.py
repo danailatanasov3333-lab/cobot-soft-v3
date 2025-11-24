@@ -14,8 +14,6 @@ class DashboardAppWidget(AppWidget):
     stop_requested = pyqtSignal()
     clean_requested = pyqtSignal()
     reset_errors_requested = pyqtSignal()
-    start_demo_requested = pyqtSignal()
-    stop_demo_requested = pyqtSignal()
     mode_toggle_requested = pyqtSignal(str)
 
     def __init__(self, parent=None,controller=None):
@@ -38,8 +36,6 @@ class DashboardAppWidget(AppWidget):
             self.content_widget.clean_requested.connect(self.on_clean)
             self.content_widget.reset_errors_requested.connect(self.reset_errors_requested.emit)
             self.content_widget.glue_type_changed_signal.connect(self.on_glue_type_changed)
-            self.content_widget.start_demo_requested.connect(self.start_demo_requested.emit)
-            self.content_widget.stop_demo_requested.connect(self.stop_demo_requested.emit)
 
             # Replace the last widget in the layout (the placeholder) with the real widget
             layout = self.layout()

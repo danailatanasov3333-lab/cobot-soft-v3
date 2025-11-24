@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
 )
 
 from frontend.core.utils.localization import TranslatableWidget, TranslationKeys
+from frontend.widgets.MaterialButton import MaterialButton
 from plugins.core.dashboard.ui.widgets.ControlButtonsWidget import ControlButtonsWidget
 from plugins.core.dashboard.ui.widgets.RobotTrajectoryWidget import RobotTrajectoryWidget
 from plugins.core.dashboard.ui.config.dashboard_styles import DashboardConfig
@@ -51,8 +52,6 @@ class DashboardWidget(TranslatableWidget):
     clean_requested= pyqtSignal()
     reset_errors_requested = pyqtSignal()
     glue_type_changed_signal = pyqtSignal(int, str)
-    start_demo_requested = pyqtSignal()
-    stop_demo_requested = pyqtSignal()
 
 
     def __init__(self, updateCameraFeedCallback, config=None, parent=None):
@@ -68,11 +67,11 @@ class DashboardWidget(TranslatableWidget):
 
         # Shared components
         self.shared_card_container = CardContainer(columns=1, rows=3)
-        self.run_demo = False
         # Initialize UI
         self.init_ui()
         self.init_translations()
 
+    """GLUE DISPENSING APPLICATION SPECIFIC"""
     def on_mode_toggle(self):
         current_text = self.mode_toggle_button.text()
         if current_text == "Pick And Spray":
@@ -86,23 +85,12 @@ class DashboardWidget(TranslatableWidget):
 
         # self.message_manager.publish_mode_change(new_mode)
 
-    def on_run_demo(self):
-        if self.run_demo == False:
-            self.run_demo = True
-            self.run_demo_button.setText("Stop Demo")
-            print("Run Demo started")
-            self.start_demo_requested.emit()
-        else:
-            self.run_demo = False
-            self.run_demo_button.setText("Run Demo")
-            print("Run Demo stopped")
-            self.stop_demo_requested.emit()
-
     def init_ui(self):
         # Create layout manager
         self.layout_manager = DashboardLayoutManager(self, self.config)
 
         # Create trajectory widget
+        """GLUE DISPENSING APPLICATION SPECIFIC"""
         self.trajectory_widget = RobotTrajectoryWidget(
             image_width=self.config.trajectory_width,
             image_height=self.config.trajectory_height
@@ -117,19 +105,18 @@ class DashboardWidget(TranslatableWidget):
         self.control_buttons.stop_clicked.connect(self.stop_requested.emit)
         self.control_buttons.pause_clicked.connect(self.pause_requested.emit)
 
-        from frontend.widgets.MaterialButton import MaterialButton
+        """GLUE DISPENSING APPLICATION SPECIFIC"""
         self.clean_button = MaterialButton("Clean", font_size=20)
         self.clean_button.clicked.connect(self.clean_requested.emit)
 
         self.reset_errors_button = MaterialButton("Reset Errors", font_size=20)
         self.reset_errors_button.clicked.connect(self.reset_errors_requested.emit)
 
-        self.run_demo_button = MaterialButton("Run Demo", font_size=20)
-        self.run_demo_button.clicked.connect(self.on_run_demo)
-
+        """GLUE DISPENSING APPLICATION SPECIFIC"""
         self.mode_toggle_button = MaterialButton("Pick And Spray", font_size=20)
         self.mode_toggle_button.clicked.connect(self.on_mode_toggle)
 
+        """GLUE DISPENSING APPLICATION SPECIFIC"""
         # Create glue cards
         glue_cards = []
         self.glue_cards_dict = {}  # Store cards for easy access by index
@@ -148,7 +135,6 @@ class DashboardWidget(TranslatableWidget):
             self.control_buttons,
             self.clean_button,
             self.reset_errors_button,
-            self.run_demo_button,
             self.mode_toggle_button
         )
 
@@ -159,6 +145,7 @@ class DashboardWidget(TranslatableWidget):
             # update the title of each glue card: "Glue {id}"
             card.title_label.setText(f"{self.tr(TranslationKeys.Dashboard.GLUE)} {card.card_index}")
 
+    """GLUE DISPENSING APPLICATION SPECIFIC"""
     def create_glue_card(self, index: int, label_text: str) -> DashboardCard:
         """Create glue card using factory"""
         card = self.card_factory.create_glue_card(index, label_text, self.shared_card_container)
@@ -170,6 +157,7 @@ class DashboardWidget(TranslatableWidget):
 
         return card
 
+    """GLUE DISPENSING APPLICATION SPECIFIC"""
     def on_glue_card_long_press(self, card_index: int):
         """Handle long press on glue card - show glue change wizard"""
         from new_development.setupWizard import SetupWizard
@@ -185,6 +173,7 @@ class DashboardWidget(TranslatableWidget):
 
         wizard.exec()
 
+    """GLUE DISPENSING APPLICATION SPECIFIC"""
     def on_wizard_finished(self, result, wizard):
         """Handle wizard completion"""
         print(f"Wizard finished with result: {result}")

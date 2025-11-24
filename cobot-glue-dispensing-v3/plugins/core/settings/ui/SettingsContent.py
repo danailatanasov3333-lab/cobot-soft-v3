@@ -66,58 +66,113 @@ class SettingsContent(BackgroundWidget):
         """)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        self.cameraSettingsTab = BackgroundTabPage()
-        self.robotSettingsTab = BackgroundTabPage()
-        # self.contourSettingsTab = BackgroundTabPage()
-        self.glueSettingsTab = BackgroundTabPage()
+        # Initialize tab containers
+        self.cameraSettingsTab = None
+        self.robotSettingsTab = None
+        self.glueSettingsTab = None
+        
+        # Initialize layout containers
+        self.cameraSettingsTabLayout = None
+        self.robotSettingsTabLayout = None
+        self.glueSettingsTabLayout = None
 
-        self.addTab(self.cameraSettingsTab, "")
-        self.addTab(self.robotSettingsTab, "")
-        # self.addTab(self.contourSettingsTab, "")
-        self.addTab(self.glueSettingsTab, "")
+        # Get needed tabs from application context
+        needed_tabs = self._get_needed_settings_tabs()
+        print(f"SettingsContent: Creating tabs for application: {needed_tabs}")
+        
+        # Create tabs dynamically based on application needs
+        self._create_dynamic_tabs(needed_tabs)
+        
+        print(f"SettingsContent: Tabs created successfully. Glue tab exists: {self.glueSettingsTab is not None}")
 
         # Set icons for tabs (Initial)
         self.update_tab_icons()
 
-        # Tab content layouts - CREATE THEM FIRST
+        # Connect unified signals to settings callback
+        self._connect_settings_signals()
+        # self.hide()  # Hide settings content initially
+
+    def _get_needed_settings_tabs(self):
+        """Get the settings tabs needed by the current application."""
+        try:
+            from core.application.ApplicationContext import get_application_settings_tabs
+            return get_application_settings_tabs()
+        except Exception as e:
+            print(f"Error getting needed settings tabs: {e}")
+            return ["camera", "robot"]  # Fallback to default tabs
+
+    def _create_dynamic_tabs(self, needed_tabs):
+        """Create tabs dynamically based on application needs."""
+        try:
+            # Create camera tab if needed
+            if "camera" in needed_tabs:
+                self._create_camera_tab()
+            
+            # Create robot tab if needed  
+            if "robot" in needed_tabs:
+                self._create_robot_tab()
+                
+            # Create glue tab if needed
+            if "glue" in needed_tabs:
+                self._create_glue_tab()
+                
+        except Exception as e:
+            print(f"Error creating dynamic tabs: {e}")
+            # Fallback to creating default tabs
+            self._create_camera_tab()
+            self._create_robot_tab()
+
+    def _create_camera_tab(self):
+        """Create camera settings tab."""
+        self.cameraSettingsTab = BackgroundTabPage()
+        self.addTab(self.cameraSettingsTab, "")
+        
+        # Create camera settings layout
         self.cameraSettingsTabLayout = CameraSettingsTabLayout(self.cameraSettingsTab)
         self.connectCameraSettingSignals()
         self.cameraSettingsTabLayout.update_camera_feed_signal.connect(lambda: self.update_camera_feed_requested.emit())
+        
+        # Set the layout to the tab
+        self.cameraSettingsTab.setLayout(self.cameraSettingsTabLayout)
 
-
+    def _create_robot_tab(self):
+        """Create robot settings tab."""
+        self.robotSettingsTab = BackgroundTabPage()
+        self.addTab(self.robotSettingsTab, "")
+        
         # Create robot settings (still needs controller for now due to RobotConfigUI design)
         robotConfigController = RobotConfigController(self.controller.requestSender)
         self.robotSettingsTabLayout = RobotConfigUI(self, robotConfigController)
-        
-        # Create glue settings with initial data fetched from server
-        initial_glue_settings = self._load_initial_glue_settings()
-        self.glueSettingsTabLayout = GlueSettingsTabLayout(self.glueSettingsTab, initial_glue_settings)
-
-        # *** ADD THIS: Set the layouts to the tab pages ***
-        self.cameraSettingsTab.setLayout(self.cameraSettingsTabLayout)
         
         # For RobotConfigUI widget, we need to add it as a widget, not set it as layout
         robot_tab_layout = QVBoxLayout()
         robot_tab_layout.addWidget(self.robotSettingsTabLayout)
         self.robotSettingsTab.setLayout(robot_tab_layout)
-        
-        # self.contourSettingsTab.setLayout(self.contourSettingsTabLayout)
-        self.glueSettingsTab.setLayout(self.glueSettingsTabLayout)
 
-        # Connect unified signals to settings callback
-        self._connect_settings_signals()
-        # self.hide()  # Hide settings content initially
+    def _create_glue_tab(self):
+        """Create glue settings tab."""
+        self.glueSettingsTab = BackgroundTabPage()
+        self.addTab(self.glueSettingsTab, "")
+        
+        # Create glue settings with initial data fetched from server
+        initial_glue_settings = self._load_initial_glue_settings()
+        self.glueSettingsTabLayout = GlueSettingsTabLayout(self.glueSettingsTab, initial_glue_settings)
+        
+        # Set the layout to the tab
+        self.glueSettingsTab.setLayout(self.glueSettingsTabLayout)
 
     def _connect_settings_signals(self):
         """
         Connect all settings tab signals to emit the unified setting_changed signal.
         This replaces the old callback pattern with clean signal emission.
         """
-        # Connect glue settings value changes
-        self.glueSettingsTabLayout.value_changed_signal.connect(self._emit_setting_change)
+        # Connect glue settings value changes if glue tab exists
+        if self.glueSettingsTabLayout is not None:
+            self.glueSettingsTabLayout.value_changed_signal.connect(self._emit_setting_change)
         
-        # Connect camera settings value changes
-        self.cameraSettingsTabLayout.value_changed_signal.connect(self._emit_setting_change)
+        # Connect camera settings value changes if camera tab exists
+        if self.cameraSettingsTabLayout is not None:
+            self.cameraSettingsTabLayout.value_changed_signal.connect(self._emit_setting_change)
         
         # Note: RobotConfigUI uses a different pattern - would need separate handling if required
 
@@ -154,13 +209,18 @@ class SettingsContent(BackgroundWidget):
     
     def clean_up(self):
         """Clean up resources when closing the settings content"""
-        self.cameraSettingsTabLayout.clean_up()
-        # self.robotSettingsTabLayout.clean_up()
-        # self.glueSettingsTabLayout.clean_up()
+        if self.cameraSettingsTabLayout is not None:
+            self.cameraSettingsTabLayout.clean_up()
+        # TODO: Add cleanup for other tabs if needed
+        # if self.robotSettingsTabLayout is not None:
+        #     self.robotSettingsTabLayout.clean_up()
+        # if self.glueSettingsTabLayout is not None:
+        #     self.glueSettingsTabLayout.clean_up()
 
     def updateCameraFeed(self, frame):
         """Update the camera feed in the camera settings tab."""
-        self.cameraSettingsTabLayout.update_camera_feed(frame)
+        if self.cameraSettingsTabLayout is not None:
+            self.cameraSettingsTabLayout.update_camera_feed(frame)
 
     def connectCameraSettingSignals(self):
         print("Connecting camera settings signals")
@@ -176,12 +236,23 @@ class SettingsContent(BackgroundWidget):
         self.raw_mode_requested.emit(state)
 
     def update_tab_icons(self):
-        """Dynamically update tab icons based on window width"""
+        """Dynamically update tab icons based on window width and created tabs"""
         tab_icon_size = int(self.width() * 0.05)  # 5% of new window width for tabs
-        self.setTabIcon(0, QIcon(CAMERA_SETTINGS_ICON_PATH))
-        self.setTabIcon(1, QIcon(ROBOT_SETTINGS_ICON_PATH))
-        self.setTabIcon(2, QIcon(GLUE_SETTINGS_ICON_PATH))
-        # self.setTabIcon(3, QIcon(CONTOUR_SETTINGS_ICON_PATH))
+        
+        # Set icons based on which tabs were actually created
+        tab_index = 0
+        if self.cameraSettingsTab is not None:
+            self.setTabIcon(tab_index, QIcon(CAMERA_SETTINGS_ICON_PATH))
+            tab_index += 1
+        
+        if self.robotSettingsTab is not None:
+            self.setTabIcon(tab_index, QIcon(ROBOT_SETTINGS_ICON_PATH))
+            tab_index += 1
+            
+        if self.glueSettingsTab is not None:
+            self.setTabIcon(tab_index, QIcon(GLUE_SETTINGS_ICON_PATH))
+            tab_index += 1
+        
         self.tabBar().setIconSize(QSize(tab_icon_size, tab_icon_size))
 
     def resizeEvent(self, event):
@@ -196,18 +267,24 @@ class SettingsContent(BackgroundWidget):
 
     def updateCameraSettings(self, cameraSettings):
         print("Updating camera settings in SettingsContent: ", cameraSettings)
-        self.cameraSettingsTabLayout.updateValues(cameraSettings)
+        if self.cameraSettingsTabLayout is not None:
+            self.cameraSettingsTabLayout.updateValues(cameraSettings)
 
     def updateRobotSettings(self, robotSettings):
-        # self.robotSettingsTabLayout.updateValues(robotSettings)
+        # TODO: Implement robot settings update if needed
+        # if self.robotSettingsTabLayout is not None:
+        #     self.robotSettingsTabLayout.updateValues(robotSettings)
         pass
 
     def updateContourSettings(self, contourSettings):
+        # TODO: Implement contour settings update if needed
+        # if self.contourSettingsTabLayout is not None:
+        #     self.contourSettingsTabLayout.updateValues(contourSettings)
         return
-        # self.contourSettingsTabLayout.updateValues(contourSettings)
 
     def updateGlueSettings(self, glueSettings):
-        self.glueSettingsTabLayout.updateValues(glueSettings)
+        if self.glueSettingsTabLayout is not None:
+            self.glueSettingsTabLayout.updateValues(glueSettings)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,10 @@
 from collections import namedtuple
 
 
-from applications.glue_dispensing_application.glue_process.glue_dispensing_operation import \
-    glue_dispensing_logger_context
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
-from backend.system.settings.RobotConfigKey import RobotSettingKey
-from backend.system.utils.custom_logging import log_debug_message, log_error_message
+from core.model.settings.RobotConfigKey import RobotSettingKey
+
+from modules.utils.custom_logging import log_debug_message, log_error_message
 from core.services.robot_service.impl.base_robot_service import CancellationToken
 
 HandlerResult = namedtuple(
@@ -21,7 +20,7 @@ HandlerResult = namedtuple(
     ]
 )
 
-def handle_send_path_to_robot(context):
+def handle_send_path_to_robot(context,logger_context):
     """
     Sends path points to robot with immediate pause support using cancellation tokens.
     Returns a HandlerResult describing success/failure and next FSM state.
@@ -32,7 +31,7 @@ def handle_send_path_to_robot(context):
     path_index = context.current_path_index
 
     log_debug_message(
-        glue_dispensing_logger_context,
+        logger_context,
         message=f"Sending {len(path)} points to robot with pause support (path index {path_index})"
     )
 
@@ -43,13 +42,13 @@ def handle_send_path_to_robot(context):
         # Check for pause/stop before each movement
         if context.state_machine.state == GlueProcessState.PAUSED:
             context.save_progress(path_index, i)
-            log_debug_message(glue_dispensing_logger_context, message=f"Paused before point {i}")
+            log_debug_message(logger_context, message=f"Paused before point {i}")
             result = HandlerResult(True, True, GlueProcessState.PAUSED, path_index, i, path, settings)
             update_context_from_handler_result(context, result)
             return result.next_state
 
         if context.state_machine.state == GlueProcessState.STOPPED:
-            log_debug_message(glue_dispensing_logger_context, message=f"Stopped before point {i}")
+            log_debug_message(logger_context, message=f"Stopped before point {i}")
             result = HandlerResult(True, False, GlueProcessState.STOPPED, path_index, i, path, settings)
             update_context_from_handler_result(context, result)
             return result.next_state
@@ -65,20 +64,20 @@ def handle_send_path_to_robot(context):
             )
 
             if ret != 0:
-                log_error_message(glue_dispensing_logger_context, message=f"MoveL failed with code {ret} at point {i}")
+                log_error_message(logger_context, message=f"MoveL failed with code {ret} at point {i}")
                 result = HandlerResult(False, False, GlueProcessState.ERROR, path_index, i, path, settings)
                 update_context_from_handler_result(context, result)
                 return result.next_state
         except Exception as e:
             import traceback
             traceback.print_exc()
-            log_error_message(glue_dispensing_logger_context, message=f"Exception at point {i}: {e}")
+            log_error_message(logger_context, message=f"Exception at point {i}: {e}")
             result = HandlerResult(False, False, GlueProcessState.ERROR, path_index, i, path, settings)
             update_context_from_handler_result(context, result)
             return result.next_state
 
     # All points completed successfully
-    log_debug_message(glue_dispensing_logger_context, message="All points sent and reached. Path completed.")
+    log_debug_message(logger_context, message="All points sent and reached. Path completed.")
     result = HandlerResult(True, False, GlueProcessState.WAIT_FOR_PATH_COMPLETION, path_index, 0, path, settings)
     update_context_from_handler_result(context, result)
     return result.next_state

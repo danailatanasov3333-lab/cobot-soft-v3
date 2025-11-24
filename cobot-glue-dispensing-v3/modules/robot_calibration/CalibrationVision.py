@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
-from backend.system.utils.custom_logging import log_info_message, log_debug_message
+from modules.utils.custom_logging import log_info_message, log_debug_message
 
 @dataclass
 class ChessboardDetectionResult:

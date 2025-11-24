@@ -6,10 +6,9 @@ base class, providing consistent behavior and eliminating the parameter
 passing bugs we encountered earlier.
 """
 
-import logging
 from typing import Dict, Any, Tuple
 
-from backend.system.settings.BaseApplicationSettingsHandler import BaseApplicationSettingsHandler
+from core.BaseApplicationSettingsHandler import BaseApplicationSettingsHandler
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from applications.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
 

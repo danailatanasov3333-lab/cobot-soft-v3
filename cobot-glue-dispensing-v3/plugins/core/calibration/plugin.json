@@ -9,5 +9,7 @@
     "permissions": ["file.system","camera.access"],
     "dependencies": [],
     "min_app_version": "1.0.0",
-    "icon": "icons/calibration.png"
+    "icon": "icons/calibration.png",
+    "folder_id": 2,
+    "icon_name": "CALIBRATION_ICON"
 }

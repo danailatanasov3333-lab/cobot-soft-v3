@@ -1,8 +1,7 @@
 import time
 
-from applications.glue_dispensing_application.glue_process.glue_dispensing_operation import glue_dispensing_logger_context
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
-from backend.system.utils.custom_logging import log_debug_message
+from modules.utils.custom_logging import log_debug_message
 from collections import namedtuple
 
 MoveResult = namedtuple("MoveResult", ["success", "next_state", "generator_should_start"])
@@ -24,7 +23,7 @@ HandlerResult = namedtuple(
 )
 
 
-def move_to_first_point(context,path):
+def move_to_first_point(context,path,logger_context):
     """
     Try to move the robot to the first point of the current path.
     Does not mutate context; instead, returns a MoveResult describing outcome.
@@ -44,7 +43,7 @@ def move_to_first_point(context,path):
             )
 
             log_debug_message(
-                glue_dispensing_logger_context,
+                logger_context,
                 message=f"move_to_first_point: robot.moveCart returned {ret} for attempt {attempt+1}"
             )
 
@@ -76,7 +75,7 @@ def move_to_first_point(context,path):
     # If we somehow exit the loop without success
     return MoveResult(False, GlueProcessState.ERROR, False)
 
-def _handle_resume_case(context):
+def _handle_resume_case(context,logger_context):
     """
     Handle a resume case without mutating the context.
     Returns a ResumeResult describing the next intended state.
@@ -101,7 +100,7 @@ def _handle_resume_case(context):
     # 2️⃣ Handle by paused_from_state
     if context.paused_from_state == GlueProcessState.TRANSITION_BETWEEN_PATHS:
         print("RESUME: Paused between paths → move to next path's first point.")
-        move_result = move_to_first_point(context, path)
+        move_result = move_to_first_point(context, path,logger_context)
 
         return ResumeResult(
             handled=move_result.success,
@@ -189,7 +188,7 @@ def _handle_resume_case(context):
 
     elif context.paused_from_state == GlueProcessState.MOVING_TO_FIRST_POINT:
         print("RESUME: Re-attempting move to first point.")
-        move_result = move_to_first_point(context, path)
+        move_result = move_to_first_point(context, path,logger_context)
 
         return ResumeResult(
             handled=move_result.success,
@@ -214,7 +213,7 @@ def _handle_resume_case(context):
     )
 
 
-def handle_starting_state(context):
+def handle_starting_state(context,logger_context):
     """
     Handle STARTING state without mutating the context.
     Returns a HandlerResult with all next state information.
@@ -226,7 +225,7 @@ def handle_starting_state(context):
 
     # --- Resume flow ---
     if context.is_resuming and context.has_valid_context():
-        resume_result = _handle_resume_case(context)
+        resume_result = _handle_resume_case(context,logger_context)
         if resume_result.handled:
             # Simply forward the resume result into our unified handler result
             handler_result = HandlerResult(
@@ -238,17 +237,9 @@ def handle_starting_state(context):
                 next_path=resume_result.next_path,
                 next_settings=context.current_settings,  # unchanged
             )
-            update_context_after_start_handling(context, handler_result)
+            update_context_after_start_handling(context, handler_result,logger_context)
             return handler_result.next_state
-            # return HandlerResult(
-            #     handled=True,
-            #     resume=resume_result.resume_flag,
-            #     next_path_index=resume_result.next_path_index,
-            #     next_point_index=resume_result.next_point_index,
-            #     next_state=resume_result.next_state,
-            #     next_path=resume_result.next_path,
-            #     next_settings=context.current_settings,  # unchanged
-            # )
+
         else:
             resume = False  # fallback to normal start
 
@@ -264,17 +255,8 @@ def handle_starting_state(context):
             next_path=None,
             next_settings=context.current_settings,
         )
-        update_context_after_start_handling(context, handler_result)
+        update_context_after_start_handling(context, handler_result,logger_context)
         return handler_result.next_state
-        # return HandlerResult(
-        #     handled=True,
-        #     resume=False,
-        #     next_path_index=context.current_path_index,
-        #     next_point_index=context.current_point_index,
-        #     next_state=GlueProcessState.COMPLETED,
-        #     next_path=None,
-        #     next_settings=context.current_settings,
-        # )
 
     # Fetch current path & settings
     path, settings = context.paths[context.current_path_index]
@@ -283,7 +265,7 @@ def handle_starting_state(context):
     if resume and 0 < context.current_point_index < len(path):
         current_path = path[context.current_point_index:]
         log_debug_message(
-            glue_dispensing_logger_context,
+            logger_context,
             message=f"RESUME: Continuing path {context.current_path_index} from point {context.current_point_index}/{len(path)} - skipping move_to_first_point",
         )
         
@@ -298,28 +280,20 @@ def handle_starting_state(context):
             next_path=current_path,
             next_settings=settings,
         )
-        update_context_after_start_handling(context, handler_result)
+        update_context_after_start_handling(context, handler_result,logger_context)
         return handler_result.next_state
-        # return HandlerResult(
-        #     handled=True,
-        #     resume=True,
-        #     next_path_index=context.current_path_index,
-        #     next_point_index=context.current_point_index,
-        #     next_state=GlueProcessState.EXECUTING_PATH,
-        #     next_path=current_path,
-        #     next_settings=settings,
-        # )
+
     else:
         current_path = path
         log_debug_message(
-            glue_dispensing_logger_context,
+            logger_context,
             message=f"NEW START: Starting path {context.current_path_index} with {len(path)} points",
         )
 
     # If path empty → skip to next
     if not current_path:
         log_debug_message(
-            glue_dispensing_logger_context,
+            logger_context,
             message=f"Empty path at index {context.current_path_index}, skipping.",
         )
         handler_result = HandlerResult(
@@ -331,20 +305,12 @@ def handle_starting_state(context):
             next_path=None,
             next_settings=None,
         )
-        update_context_after_start_handling(context, handler_result)
+        update_context_after_start_handling(context, handler_result,logger_context)
         return handler_result.next_state
-        # return HandlerResult(
-        #     handled=True,
-        #     resume=False,
-        #     next_path_index=context.current_path_index + 1,
-        #     next_point_index=0,
-        #     next_state=GlueProcessState.STARTING,  # still starting next path
-        #     next_path=None,
-        #     next_settings=None,
-        # )
+
 
     # Only attempt to move to first point for new starts (not resumes)
-    move_result = move_to_first_point(context,current_path)
+    move_result = move_to_first_point(context,current_path,logger_context)
     next_state = move_result.next_state if move_result.success else GlueProcessState.ERROR
 
     handler_result =  HandlerResult(
@@ -356,19 +322,10 @@ def handle_starting_state(context):
         next_path=current_path,
         next_settings=settings,
     )
-    update_context_after_start_handling(context, handler_result)
+    update_context_after_start_handling(context, handler_result,logger_context)
     return handler_result.next_state
-    # return HandlerResult(
-    #     handled=move_result.success,
-    #     resume=resume,
-    #     next_path_index=context.current_path_index,
-    #     next_point_index=context.current_point_index,
-    #     next_state=next_state,
-    #     next_path=current_path,
-    #     next_settings=settings,
-    # )
 
-def update_context_after_start_handling(context, handler_result):
+def update_context_after_start_handling(context, handler_result,logger_context):
     """
     Update the execution context based on the outcome of handle_starting_state.
     """
@@ -378,7 +335,7 @@ def update_context_after_start_handling(context, handler_result):
     context.current_settings = handler_result.next_settings
     # Log cleanly
     log_debug_message(
-        glue_dispensing_logger_context,
+        logger_context,
         message=(
             f"STARTING handler → handled={handler_result.handled}, resume={handler_result.resume}, "
             f"path_index={context.current_path_index}, point_index={context.current_point_index}, "

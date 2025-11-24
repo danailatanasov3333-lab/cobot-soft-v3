@@ -1,5 +1,5 @@
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
-from backend.system.utils.custom_logging import log_debug_message
+from modules.utils.custom_logging import log_debug_message
 
 
 def pause_operation(glue_dispensing_operation, context,logger_context):

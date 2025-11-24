@@ -11,19 +11,22 @@ from plugins.core.user_management.ui.UserManagementAppWidget import UserManageme
 
 
 class WidgetType(Enum):
-    USER_MANAGEMENT = "User Management"
-    SETTINGS = "settings"
-    CREATE_WORKPIECE_OPTIONS =  "create_workpiece_options"
-    CONTOUR_EDITOR = "contour_editor"
-    DASHBOARD = "dashboard"
-    GALLERY = "gallery"
-    CALIBRATION = "calibration"
-    GLUE_WEIGHT_CELL = "glue_weight_cell"  # Placeholder for future glue weight cell widget
+    # Core plugins - MUST match the "name" field in plugin.json files (same as PluginType)
+    USER_MANAGEMENT = "User Management"  # Matches plugin.json
+    SETTINGS = "Settings"  # Matches plugin.json
+    DASHBOARD = "Dashboard"  # Matches plugin.json
+    GALLERY = "Gallery"  # Matches plugin.json
+    CALIBRATION = "Calibration"  # Matches plugin.json
+    CONTOUR_EDITOR = "ContourEditor"  # Matches plugin.json - FIXED!
+    GLUE_WEIGHT_CELL = "Glue Weight Cell Settings"  # Matches plugin.json - FIXED!
+
+    # Legacy/non-plugin widgets
+    CREATE_WORKPIECE_OPTIONS = "create_workpiece_options"
     DXF_BROWSER = "dxf_browser"
-    SERVICE = "service" # Placeholder for future service widget
-    ANALYTICS = "analytics"  # Placeholder for future analytics widget
-    REPORTS = "reports"  # Placeholder for future reports widget
-    METRICS = "metrics"  # Placeholder for future metrics widget
+    SERVICE = "service"
+    ANALYTICS = "analytics"
+    REPORTS = "reports"
+    METRICS = "metrics"
 
     @classmethod
     def get_from_value(cls, value):
@@ -116,5 +119,3 @@ class WidgetFactory:
         print("Creating DXF Browser Widget")
         # from pl_ui.ui.windows.mainWindow.appWidgets.DXFBrowserAppWidget import DXFBrowserAppWidget
         # return DXFBrowserAppWidget(*args, **kwargs)
-
-

@@ -9,9 +9,8 @@ Updated to use the new standardized base class for consistency and reliability.
 """
 
 import os
-import logging
 from typing import Dict, Any, Tuple
-from backend.system.settings.BaseApplicationSettingsHandler import BaseApplicationSettingsHandler
+from core.BaseApplicationSettingsHandler import BaseApplicationSettingsHandler
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from applications.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
 

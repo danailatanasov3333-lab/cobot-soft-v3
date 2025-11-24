@@ -95,7 +95,9 @@ class ContourEditorAppWidget(AppWidget):
         print(f"CREATE_WORKPIECE_STEP_2 result: {result}, message: {message}")
 
         # Handle image update
-        image = data.image
+        print(f"Contour Editor received image data: {data}")
+        # Fix: data is a dict, not an object - use dict access instead of attribute access
+        image = data.get('image') if isinstance(data, dict) else None
         if image is not None:
             print("Updating Contour Editor with new image")
             # pause the camera feed update timer

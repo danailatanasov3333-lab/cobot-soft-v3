@@ -3,9 +3,7 @@ from applications.glue_dispensing_application.repositories.workpiece.glue_workpi
 from applications.glue_dispensing_application.model.workpiece.GlueWorkpiece import GlueWorkpiece
 from applications.glue_dispensing_application.model.workpiece.GlueWorkpieceField import GlueWorkpieceField
 
-from backend.system.utils.PathResolver import PathType
-
-from backend.system.utils import PathResolver
+from core.application.ApplicationContext import get_workpiece_storage_path
 class GlueWorkPieceRepositorySingleton:
     """
        Singleton class responsible for managing a single instance of the Workpiece repository.
@@ -50,8 +48,15 @@ class GlueWorkPieceRepositorySingleton:
                     workpiece_data = repo.get_workpieces()  # Example of interacting with the repository
                 """
         if cls._instance is None:
-            # Compute an absolute path to the storage directory relative to this file
-            storage_dir = PathResolver.get_path(PathType.WORKPIECE_STORAGE)
+            # Get application-specific workpiece storage path
+            storage_dir = get_workpiece_storage_path(create_if_missing=True)
+            
+            # If no application context is set, fall back to system storage
+            if storage_dir is None:
+                from modules.utils.PathResolver import PathResolver, PathType
+                storage_dir = PathResolver.get_path(PathType.WORKPIECE_STORAGE)
+                print("Warning: No application context set, using system-wide workpiece storage")
+            
             fields = [GlueWorkpieceField.WORKPIECE_ID, GlueWorkpieceField.NAME, GlueWorkpieceField.DESCRIPTION,
                       GlueWorkpieceField.TOOL_ID, GlueWorkpieceField.GRIPPER_ID,
                       GlueWorkpieceField.GLUE_TYPE, GlueWorkpieceField.PROGRAM, GlueWorkpieceField.MATERIAL, GlueWorkpieceField.CONTOUR,
@@ -59,4 +64,6 @@ class GlueWorkPieceRepositorySingleton:
                       GlueWorkpieceField.CONTOUR_AREA,
                       GlueWorkpieceField.NOZZLES]
             cls._instance = GlueWorkpieceJsonRepository(storage_dir, fields, GlueWorkpiece)
+            
+            print(f"GlueWorkPieceRepository initialized with storage: {storage_dir}")
         return cls._instance

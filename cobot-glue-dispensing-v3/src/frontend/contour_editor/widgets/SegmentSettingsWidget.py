@@ -7,7 +7,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal
 
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettingKey
-from backend.system.settings.RobotConfigKey import RobotSettingKey
+from core.model.settings.RobotConfigKey import RobotSettingKey
+
 from frontend.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox
 from frontend.virtualKeyboard.VirtualKeyboard import VirtualKeyboardSingleton
 
@@ -355,7 +356,7 @@ initialize_default_settings()
 
 if __name__ == "__main__":
     from applications.glue_dispensing_application.settings.GlueSettings import GlueSettingKey
-    from backend.system.settings.enums import RobotSettingKey
+    from core.model.settings.enums import RobotSettingKey
 
 
     from PyQt6.QtWidgets import QApplication

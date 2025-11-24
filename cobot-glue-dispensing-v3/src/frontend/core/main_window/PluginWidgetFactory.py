@@ -55,6 +55,11 @@ class PluginWidgetFactory:
     def _setup_plugin_system(self):
         """Setup and initialize the plugin system"""
         try:
+            # Get application-specific required plugins
+            from core.application.ApplicationContext import get_application_required_plugins
+            required_plugins = get_application_required_plugins()
+            self.logger.info(f"Application requires plugins: {required_plugins}")
+
             # Configure plugin directories
             base_dir = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'plugins')
             self.logger.info(f"Plugin base directory: {base_dir}")
@@ -69,9 +74,9 @@ class PluginWidgetFactory:
                 on_failed=self._on_plugin_failed
             )
             
-            # Load all plugins
-            results = self.plugin_manager.discover_and_load_all()
-            
+            # Load only the plugins required by the current application
+            results = self.plugin_manager.discover_and_load_selective(required_plugins)
+
             self.logger.info(f"Plugin system initialized. Loaded: {len([r for r in results.values() if r])} plugins")
             
         except Exception as e:
@@ -140,19 +145,21 @@ class PluginWidgetFactory:
         """
         try:
             # Map WidgetType enum values to plugin names
+            # Note: Keys must match WidgetType.value exactly (case-sensitive)
             plugin_name_map = {
-                WidgetType.SETTINGS.value: 'Settings',
-                WidgetType.DASHBOARD.value: 'Dashboard',
-                WidgetType.GALLERY.value: 'Gallery',
-                WidgetType.CALIBRATION.value: 'Calibration',
-                WidgetType.USER_MANAGEMENT.value: 'User Management',
-                WidgetType.CONTOUR_EDITOR.value: 'ContourEditor',
-                WidgetType.CREATE_WORKPIECE_OPTIONS.value: 'CreateWorkpiece',
-                WidgetType.GLUE_WEIGHT_CELL.value: 'Glue Weight Cell Settings',
-                WidgetType.DXF_BROWSER.value: 'DxfBrowser'
+                'Settings': 'Settings',
+                'Dashboard': 'Dashboard',
+                'Gallery': 'Gallery',
+                'Calibration': 'Calibration',
+                'User Management': 'User Management',
+                'ContourEditor': 'ContourEditor',
+                'create_workpiece_options': 'CreateWorkpiece',
+                'Glue Weight Cell Settings': 'Glue Weight Cell Settings',
+                'dxf_browser': 'DxfBrowser'
             }
             
-            plugin_name = plugin_name_map.get(app_name.lower(), app_name)
+            # Look up plugin name - use app_name directly (no lowercase conversion!)
+            plugin_name = plugin_name_map.get(app_name, app_name)
 
             # Debug logging
             self.logger.info(f"Looking for plugin: {plugin_name} (from app_name: {app_name})")

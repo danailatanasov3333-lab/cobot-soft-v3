@@ -1,10 +1,7 @@
 import platform
 import logging
-import time
-import threading
 
-from backend.system.utils.custom_logging import LoggingLevel, log_if_enabled, \
-    setup_logger, LoggerContext, log_info_message, log_error_message, log_debug_message
+from modules.utils.custom_logging import setup_logger, LoggerContext, log_info_message, log_error_message, log_debug_message
 from core.model.robot.IRobot import IRobot
 from core.model.robot.enums.axis import Direction
 from frontend.core.services.domain.RobotService import RobotAxis
@@ -17,7 +14,6 @@ elif platform.system() == "Linux":
 else:
     raise Exception("Unsupported OS")
 
-from enum import Enum
 ENABLE_LOGGING = True  # Enable or disable logging
 # Initialize logger if enabled
 if ENABLE_LOGGING:

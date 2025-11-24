@@ -17,12 +17,11 @@ class DashboardLayoutManager:
     def setup_complete_layout(self, trajectory_widget, glue_cards: List[QWidget],
                               control_buttons: QWidget,clean_button:MaterialButton,
                               reset_errors_button:MaterialButton,
-                              run_demo_button:MaterialButton,
                               mode_toggle_button:MaterialButton) -> None:
         """Setup the complete dashboard layout"""
         # Create main sections
         top_section = self._create_top_section(trajectory_widget, glue_cards)
-        bottom_section = self._create_bottom_section(control_buttons,clean_button,reset_errors_button,run_demo_button,mode_toggle_button)
+        bottom_section = self._create_bottom_section(control_buttons,clean_button,reset_errors_button,mode_toggle_button)
 
 
         # Add to main layout
@@ -79,7 +78,6 @@ class DashboardLayoutManager:
     def _create_bottom_section(self, control_buttons: QWidget,
                                clean_btn:MaterialButton,
                                reset_errors_button:MaterialButton,
-                               run_demo_button:MaterialButton,
                                mode_toggle_button:MaterialButton) -> QVBoxLayout:
         """Create bottom section with placeholders and control buttons"""
         bottom_section = QVBoxLayout()
@@ -110,7 +108,6 @@ class DashboardLayoutManager:
                     # placeholder = self._create_placeholder(row * 3 + col + 1)
                     # placeholders_layout.addWidget(placeholder, row, col)
                     # # placeholders_layout.addWidget(reset_errors_button, row, col)
-                    # placeholders_layout.addWidget(run_demo_button, row, col)
                     placeholder = self._create_placeholder(row * 3 + col + 1)
                     placeholders_layout.addWidget(placeholder, row, col)
                     # placeholders_layout.addWidget(mode_toggle_button, row, col)

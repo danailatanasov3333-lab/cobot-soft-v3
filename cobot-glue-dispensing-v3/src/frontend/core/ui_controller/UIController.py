@@ -2,7 +2,7 @@ from PyQt6.QtCore import QThread
 
 from applications.glue_dispensing_application.model.workpiece import GlueWorkpiece
 
-from backend.system.settings.CameraSettings import CameraSettings
+from core.model.settings.CameraSettings import CameraSettings
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from communication_layer.api.v1 import Constants
 from communication_layer.api.v1.Response import Response
@@ -191,7 +191,6 @@ class UIController:
     def handleGetSettings(self):
         robotSettingsRequest = settings_endpoints.SETTINGS_ROBOT_GET
         cameraSettingsRequest = settings_endpoints.SETTINGS_CAMERA_GET
-        glueSettingsRequest = glue_endpoints.SETTINGS_GLUE_GET
 
         robotSettingsResponseDict = self.requestSender.send_request(robotSettingsRequest)
         robotSettingsResponse = Response.from_dict(robotSettingsResponseDict)
@@ -199,15 +198,24 @@ class UIController:
         cameraSettingsResponseDict = self.requestSender.send_request(cameraSettingsRequest)
         cameraSettingsResponse = Response.from_dict(cameraSettingsResponseDict)
         print(" get Camera settings response:", cameraSettingsResponse)
-        glueSettingsResponseDict = self.requestSender.send_request(glueSettingsRequest)
-        glueSettingsResponse = Response.from_dict(glueSettingsResponseDict)
 
         robotSettingsDict = robotSettingsResponse.data if robotSettingsResponse.status == Constants.RESPONSE_STATUS_SUCCESS else {}
         cameraSettingsDict = cameraSettingsResponse.data if cameraSettingsResponse.status == Constants.RESPONSE_STATUS_SUCCESS else {}
-        glueSettingsDict = glueSettingsResponse.data if glueSettingsResponse.status == Constants.RESPONSE_STATUS_SUCCESS else {}
 
         cameraSettings = CameraSettings(data=cameraSettingsDict)
-        glueSettings = GlueSettings(data=glueSettingsDict)
+        
+        # Only load glue settings if the current application supports them
+        from core.application.ApplicationContext import get_application_settings_tabs
+        needed_tabs = get_application_settings_tabs()
+        
+        if "glue" in needed_tabs:
+            glueSettingsRequest = glue_endpoints.SETTINGS_GLUE_GET
+            glueSettingsResponseDict = self.requestSender.send_request(glueSettingsRequest)
+            glueSettingsResponse = Response.from_dict(glueSettingsResponseDict)
+            glueSettingsDict = glueSettingsResponse.data if glueSettingsResponse.status == Constants.RESPONSE_STATUS_SUCCESS else {}
+            glueSettings = GlueSettings(data=glueSettingsDict)
+        else:
+            glueSettings = GlueSettings()  # Default settings for non-glue applications
 
         return cameraSettings, glueSettings
 

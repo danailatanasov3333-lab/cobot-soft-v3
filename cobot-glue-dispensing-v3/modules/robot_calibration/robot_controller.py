@@ -1,6 +1,6 @@
 import numpy as np
 
-from backend.system.utils.custom_logging import log_debug_message
+from modules.utils.custom_logging import log_debug_message
 
 
 class CalibrationRobotController:

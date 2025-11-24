@@ -51,6 +51,9 @@ class CaptureDataHandler:
         Returns:
             ContourEditorData instance that was loaded, or None on failure
         """
+
+        print(f"CaptureDataHandler: Handling capture data {capture_data}")
+
         # Extract contours from capture data
         contours = capture_data.workpiece_contour
         if contours is None or (isinstance(contours, (list, np.ndarray)) and len(contours) == 0):

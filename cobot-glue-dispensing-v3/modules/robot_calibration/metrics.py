@@ -3,7 +3,7 @@ from itertools import combinations
 import numpy as np
 import cv2
 
-from backend.system.utils.custom_logging import log_debug_message
+from modules.utils.custom_logging import log_debug_message
 
 
 def compute_avg_ppm(camera_points, robot_points):

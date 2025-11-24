@@ -3,8 +3,8 @@ import numpy as np
 from applications.glue_dispensing_application.settings.enums import GlueSettingKey
 
 
-from backend.system.utils import utils
-from backend.system.utils.contours import flatten_and_convert_to_list
+from modules.utils import utils
+from modules.utils.contours import flatten_and_convert_to_list
 from modules.shared.core.ContourStandartized import Contour
 
 
@@ -118,7 +118,7 @@ class WorkpieceToSprayPathsGenerator:
 
         if COMPUTE_ANGLE_BASED_ON_WIDTH:
             spray_width = float(settings.get(GlueSettingKey.SPRAY_WIDTH.value))
-            from backend.system.utils.calculateAngleBasedOnWidth import get_angle_from_width, SPRAY_ALONG_X
+            from modules.utils.calculateAngleBasedOnWidth import get_angle_from_width, SPRAY_ALONG_X
             rz_angle = get_angle_from_width(desired_width=spray_width, transducer_magnitude=25,
                                             spray_along_axis=SPRAY_ALONG_X)
 

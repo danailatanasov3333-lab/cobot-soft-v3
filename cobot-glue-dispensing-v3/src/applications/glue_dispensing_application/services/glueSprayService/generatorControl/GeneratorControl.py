@@ -2,9 +2,9 @@ from applications.glue_dispensing_application.services.glueSprayService.generato
 from typing import List, Optional
 from dataclasses import dataclass
 
-from src.backend.system.Statistics import Statistics
+from modules.Statistics import Statistics
 from modules.modbusCommunication.ModbusController import ModbusController
-from src.backend.system.utils.custom_logging import setup_logger,log_if_enabled, LoggingLevel
+from modules.utils.custom_logging import setup_logger,log_if_enabled, LoggingLevel
 
 ENABLE_LOGGING = True
 generator_control_logger = setup_logger("generator_control_logger")

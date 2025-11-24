@@ -1,5 +1,5 @@
-from backend.system.SystemStatePublisherThread import SystemStatePublisherThread
-from backend.system.utils.custom_logging import log_if_enabled, LoggingLevel
+from modules.SystemStatePublisherThread import SystemStatePublisherThread
+from modules.utils.custom_logging import log_if_enabled, LoggingLevel
 from core.system_state_management import ServiceStateMessage
 
 class StateManager:

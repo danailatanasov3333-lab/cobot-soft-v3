@@ -1,5 +1,5 @@
-from enum import auto, Enum
-from backend.system.SystemStatePublisherThread import SystemStatePublisherThread
+from enum import Enum
+from modules.SystemStatePublisherThread import SystemStatePublisherThread
 from core.application.interfaces.ISubscriptionModule import ISubscriptionModule
 from core.operation_state_management import OperationState
 from core.system_state_management import SystemState

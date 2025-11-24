@@ -9,5 +9,7 @@
     "permissions": ["file.system"],
     "dependencies": [],
     "min_app_version": "1.0.0",
-    "icon": "icons/gallery.png"
+    "icon": "icons/gallery.png",
+    "folder_id": 1,
+    "icon_name": "GALLERY_ICON"
 }

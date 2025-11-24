@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
-from backend.system.SystemStatePublisherThread import SystemStatePublisherThread
-from backend.system.utils import PathResolver
+from modules.SystemStatePublisherThread import SystemStatePublisherThread
 
 
 # -----------------------------

@@ -5,20 +5,19 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from communication_layer.api.v1.topics import VisionTopics
-from modules.shared.tools.Laser import Laser
 from modules.VisionSystem.heightMeasuring.LaserTracker import LaserTrackService
-from backend.system.utils.custom_logging import LoggingLevel, log_if_enabled, \
+from modules.utils.custom_logging import LoggingLevel, log_if_enabled, \
     setup_logger
-from backend.system.utils.contours import is_contour_inside_polygon
+from modules.utils.contours import is_contour_inside_polygon
 import time
 from modules.shared.tools.enums.Gripper import Gripper
 # import logging
 import cv2
 import numpy as np
 from modules.shared.core.ContourStandartized import Contour
-from backend.system.contour_matching import CompareContours
+from modules.contour_matching import CompareContours
 from applications.glue_dispensing_application.pick_and_place_process.Plane import Plane
-from backend.system.utils import utils
+from modules.utils import utils
 from modules.shared.MessageBroker import MessageBroker
 
 # Import matplotlib for debug plotting
@@ -445,7 +444,7 @@ def start_nesting(application,visionService, robotService,preselected_workpiece,
 
             # Apply homography transformation
             transformed_centroid = utils.applyTransformation(visionService.cameraToRobotMatrix, [centroid])
-            centroid_for_height_measure = utils.applyTransformation(visionService.cameraToRobotMatrix, [centroid],apply_transducer_offset=False)
+            centroid_for_height_measure = utils.applyTransformation(visionService.cameraToRobotMatrix, [centroid], apply_transducer_offset=False)
             flat_centroid = transformed_centroid
             while isinstance(flat_centroid, (list, tuple)) and len(flat_centroid) == 1:
                 flat_centroid = flat_centroid[0]

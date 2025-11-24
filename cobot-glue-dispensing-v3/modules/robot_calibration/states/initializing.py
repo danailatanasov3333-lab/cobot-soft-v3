@@ -1,4 +1,4 @@
-from backend.system.utils.custom_logging import log_info_message
+from modules.utils.custom_logging import log_info_message
 from modules.robot_calibration.states.robot_calibration_states import RobotCalibrationStates
 
 from modules.robot_calibration.states.state_result import StateResult

@@ -1,9 +1,6 @@
-from applications.glue_dispensing_application.glue_process.glue_dispensing_operation import (
-    glue_dispensing_logger_context,
-    TURN_OFF_PUMP_BETWEEN_PATHS,
-)
+
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
-from backend.system.utils.custom_logging import log_debug_message, log_error_message
+from modules.utils.custom_logging import log_debug_message, log_error_message
 from collections import namedtuple
 
 TransitionResult = namedtuple(
@@ -17,7 +14,7 @@ TransitionResult = namedtuple(
 )
 
 
-def handle_transition_between_paths(context):
+def handle_transition_between_paths(context,logger_context,turn_off_pump_between_paths: bool) -> GlueProcessState:
     """
     Handle TRANSITION_BETWEEN_PATHS state without mutating the context.
     Optionally turns off the pump and prepares for the next path.
@@ -30,23 +27,23 @@ def handle_transition_between_paths(context):
     next_point_index = 0
 
     # ✅ Optional: Turn off motor between paths
-    if TURN_OFF_PUMP_BETWEEN_PATHS:
+    if turn_off_pump_between_paths:
         if context.motor_started and context.spray_on:
             try:
-                log_debug_message(glue_dispensing_logger_context, message="Turning off motor between paths...")
+                log_debug_message(logger_context, message="Turning off motor between paths...")
                 context.pump_controller.pump_off(context.service,context.robot_service,context.glue_type,context.current_settings)
                 context.motor_started = False
-                log_debug_message(glue_dispensing_logger_context, message="Motor stopped successfully.")
+                log_debug_message(logger_context, message="Motor stopped successfully.")
             except Exception as e:
-                log_error_message(glue_dispensing_logger_context, message=f"Error stopping motor: {e}")
+                log_error_message(logger_context, message=f"Error stopping motor: {e}")
 
     # ✅ Decide next state
     if next_path_index >= len(context.paths):
-        log_debug_message(glue_dispensing_logger_context, message="All paths completed.")
+        log_debug_message(logger_context, message="All paths completed.")
         next_state = GlueProcessState.COMPLETED
     else:
         log_debug_message(
-            glue_dispensing_logger_context,
+            logger_context,
             message=f"Preparing to move to next path: {next_path_index}"
         )
         next_state = GlueProcessState.STARTING

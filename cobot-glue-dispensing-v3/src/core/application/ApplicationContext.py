@@ -7,7 +7,7 @@ allowing base services to access application-specific core settings.
 
 import threading
 from typing import Optional
-from backend.system.utils.ApplicationStorageResolver import get_application_storage_resolver
+from core.application.ApplicationStorageResolver import get_application_storage_resolver
 
 
 class ApplicationContext:
@@ -28,13 +28,21 @@ class ApplicationContext:
         self._app_lock = threading.Lock()
         self._storage_resolver = get_application_storage_resolver()
     
-    def set_current_application(self, app_name: str) -> None:
+    def set_current_application(self, app_type) -> None:
         """
         Set the current running application.
         
         Args:
-            app_name: Name of the current application (e.g., 'glue_dispensing_application')
+            app_type: ApplicationType enum or string name of the current application
         """
+        from core.base_robot_application import ApplicationType
+        
+        # Handle both enum and string inputs for backward compatibility
+        if isinstance(app_type, ApplicationType):
+            app_name = app_type.value
+        else:
+            app_name = app_type  # Assume it's already a string
+            
         with self._app_lock:
             self._current_app_name = app_name
             print(f"ApplicationContext: Current application set to '{app_name}'")
@@ -76,6 +84,27 @@ class ApplicationContext:
         
         return settings_path
     
+    def get_workpiece_storage_path(self, create_if_missing: bool = False) -> Optional[str]:
+        """
+        Get the path to the workpiece storage directory for the current application.
+        
+        Args:
+            create_if_missing: Whether to create directories if they don't exist
+            
+        Returns:
+            str or None: Full path to the workpiece storage directory, or None if no application is set
+        """
+        current_app = self.get_current_application()
+        if current_app is None:
+            print(f"ApplicationContext: No current application set, cannot get workpiece storage path")
+            return None
+        
+        workpiece_path = self._storage_resolver.get_workpiece_storage_path(
+            current_app, create_if_missing
+        )
+        
+        return workpiece_path
+    
     def is_application_set(self) -> bool:
         """
         Check if a current application has been set.
@@ -108,15 +137,15 @@ class ApplicationContextSingleton:
 
 
 # Convenience functions
-def set_current_application(app_name: str) -> None:
+def set_current_application(app_type) -> None:
     """
     Set the current running application.
     
     Args:
-        app_name: Name of the current application
+        app_type: ApplicationType enum or string name of the current application
     """
     context = ApplicationContextSingleton.get_instance()
-    context.set_current_application(app_name)
+    context.set_current_application(app_type)
 
 
 def get_current_application() -> Optional[str]:
@@ -145,6 +174,20 @@ def get_core_settings_path(settings_filename: str, create_if_missing: bool = Fal
     return context.get_core_settings_path(settings_filename, create_if_missing)
 
 
+def get_workpiece_storage_path(create_if_missing: bool = False) -> Optional[str]:
+    """
+    Get the path to the workpiece storage directory for the current application.
+    
+    Args:
+        create_if_missing: Whether to create directories if they don't exist
+        
+    Returns:
+        str or None: Full path to the workpiece storage directory
+    """
+    context = ApplicationContextSingleton.get_instance()
+    return context.get_workpiece_storage_path(create_if_missing)
+
+
 def is_application_context_set() -> bool:
     """
     Check if a current application has been set.
@@ -154,6 +197,82 @@ def is_application_context_set() -> bool:
     """
     context = ApplicationContextSingleton.get_instance()
     return context.is_application_set()
+
+
+def get_application_settings_tabs() -> list:
+    """
+    Get the settings tabs needed by the current application.
+    
+    Returns:
+        list: List of settings tab names needed by current application, 
+              or default ["camera", "robot"] if no application is set
+    """
+    from core.base_robot_application import ApplicationType
+    
+    try:
+        current_app_name = get_current_application()
+        if current_app_name is None:
+            return ["camera", "robot"]  # Default tabs
+        
+        # Create ApplicationType enum directly from the current app name
+        app_type = ApplicationType(current_app_name)
+        
+        # Get the registered application class and its metadata
+        if app_type == ApplicationType.GLUE_DISPENSING:
+            from applications.glue_dispensing_application.GlueDispensingApplication import GlueSprayingApplication
+            metadata = GlueSprayingApplication.get_metadata()
+            return metadata.settings_tabs
+        elif app_type == ApplicationType.TEST_APPLICATION:
+            from applications.test_application.test_application import TestApplication
+            metadata = TestApplication.get_metadata()
+            return metadata.settings_tabs
+        else:
+            return ["camera", "robot"]  # Default tabs
+            
+    except Exception as e:
+        print(f"Error getting application settings tabs: {e}")
+        return ["camera", "robot"]  # Fallback to default tabs
+
+
+def get_application_required_plugins() -> list:
+    """
+    Get the plugin dependencies needed by the current application.
+    
+    Returns:
+        list: List of plugin identifiers needed by current application,
+              or default plugins if no application is set
+    """
+    from core.base_robot_application import ApplicationType
+    
+    try:
+        current_app_name = get_current_application()
+        if current_app_name is None:
+            # Default plugins for all applications
+            return ["dashboard", "settings", "gallery"]
+        
+        # Create ApplicationType enum directly from the current app name
+        app_type = ApplicationType(current_app_name)
+        
+        # Get the registered application class and its metadata
+        if app_type == ApplicationType.GLUE_DISPENSING:
+            from applications.glue_dispensing_application.GlueDispensingApplication import GlueSprayingApplication
+            metadata = GlueSprayingApplication.get_metadata()
+            return metadata.get_required_plugins()
+        elif app_type == ApplicationType.TEST_APPLICATION:
+            from applications.test_application.test_application import TestApplication
+            metadata = TestApplication.get_metadata()
+            return metadata.get_required_plugins()
+        elif app_type == ApplicationType.PAINT_APPLICATION:
+            from applications.edge_painting_application.application import EdgePaintingApplication
+            metadata = EdgePaintingApplication.get_metadata()
+            return metadata.get_required_plugins()
+        else:
+            # Default plugins for unknown applications
+            return ["dashboard", "settings", "gallery"]
+            
+    except Exception as e:
+        print(f"Error getting application required plugins: {e}")
+        return ["dashboard", "settings", "gallery"]  # Fallback to default plugins
 
 
 if __name__ == "__main__":

@@ -6,8 +6,6 @@ from applications.glue_dispensing_application.controllers.glue_workpiece_control
 from applications.glue_dispensing_application.repositories.workpiece.GlueWorkPieceRepositorySingleton import \
     GlueWorkPieceRepositorySingleton
 from applications.glue_dispensing_application.services.workpiece.glue_workpiece_service import GlueWorkpieceService
-from applications.glue_dispensing_application.settings.GlueSettings import GlueSettings
-from applications.glue_dispensing_application.settings.GlueSettingsHandler import GlueSettingsHandler
 from communication_layer.api_gateway.dispatch.main_router import RequestHandler
 from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 from core.application.ApplicationContext import set_current_application, get_core_settings_path
@@ -29,12 +27,12 @@ from core.application_factory import create_application_factory
 from core.base_robot_application import ApplicationType
 
 # IMPORT CONTROLLERS
-from backend.system.settings.SettingsController import SettingsController
+from core.controllers.settings.SettingsController import SettingsController
 
 # IMPORT SERVICES
-from backend.system.settings.SettingsService import SettingsService
+from core.services.settings.SettingsService import SettingsService
 from core.services.vision.VisionService import VisionServiceSingleton
-from backend.system.utils import PathResolver
+from modules.utils import PathResolver
 
 setup_localization()
 
@@ -57,16 +55,21 @@ else:
     pass
 
 if __name__ == "__main__":
-    # Set the current application context (this determines which app's storage to use for core settings)
-    set_current_application("glue_dispensing_application")
-
+    # Choose which application to run - CHANGE THIS LINE TO SWITCH APPS
+    SELECTED_APP_TYPE = ApplicationType.GLUE_DISPENSING
+    # SELECTED_APP_TYPE = ApplicationType.PAINT_APPLICATION
+    # SELECTED_APP_TYPE = ApplicationType.TEST_APPLICATION
+    
+    # Set application context using the enum directly
+    set_current_application(SELECTED_APP_TYPE)
+    
     # Global registry instance
     settings_registry = ApplicationSettingsRegistry()
 
-    # Use application-specific core settings paths
+    # Use application-specific core settings paths (now that context is set)
     settings_file_paths = {
-        "camera": get_core_settings_path("camera_settings.json") or PathResolver.get_settings_file_path("camera_settings.json"),
-        "robot_config": get_core_settings_path("robot_config.json") or PathResolver.get_settings_file_path("robot_config.json"),
+        "camera": get_core_settings_path("camera_settings.json", create_if_missing=True) or PathResolver.get_settings_file_path("camera_settings.json"),
+        "robot_config": get_core_settings_path("robot_config.json", create_if_missing=True) or PathResolver.get_settings_file_path("robot_config.json"),
     }
 
     settings_service = SettingsService(settings_file_paths=settings_file_paths,settings_registry=settings_registry)
@@ -124,9 +127,8 @@ if __name__ == "__main__":
         auto_register=True
     )
 
-    # GET CURRENT APPLICATION (defaulting to glue dispensing)
-    # current_application = application_factory.switch_application(ApplicationType.TEST_APPLICATION)
-    current_application = application_factory.switch_application(ApplicationType.GLUE_DISPENSING)
+    # GET CURRENT APPLICATION (uses the same app type selected above)
+    current_application = application_factory.switch_application(SELECTED_APP_TYPE)
 
     # INIT REQUEST HANDLER
     if API_VERSION == 1:
@@ -134,7 +136,7 @@ if __name__ == "__main__":
                                         workpieceController, robotController, application_factory)
 
     else:
-        raise ValueError("Unsupported API_VERSION. Please set to 1 or 2.")
+        raise ValueError("Unsupported API_VERSION. Please set to 1")
 
     logging.info("Request Handler initialized")
     """GUI RELATED INITIALIZATIONS"""

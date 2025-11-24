@@ -1,4 +1,4 @@
-from backend.system.utils import robot_utils
+from modules.utils import robot_utils
 from core.model.robot import fairino_robot
 from core.services.robot_service.impl.robot_monitor.base_robot_monitor import BaseRobotMonitor
 

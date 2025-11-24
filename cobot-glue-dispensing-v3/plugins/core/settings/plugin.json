@@ -9,5 +9,7 @@
     "permissions": ["settings.read", "settings.write"],
     "dependencies": [],
     "min_app_version": "1.0.0",
-    "icon": "icons/settings.png"
+    "icon": "icons/settings.png",
+    "folder_id": 2,
+    "icon_name": "SETTINGS_ICON"
 }

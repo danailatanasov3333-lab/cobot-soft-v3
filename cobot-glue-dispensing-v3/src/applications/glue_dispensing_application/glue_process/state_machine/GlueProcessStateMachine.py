@@ -1,6 +1,6 @@
 from typing import Dict, Callable
 
-from backend.system.utils.custom_logging import log_if_enabled, LoggingLevel, \
+from modules.utils.custom_logging import log_if_enabled, LoggingLevel, \
     log_calls_with_timestamp_decorator, setup_logger
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import \
     GlueProcessTransitionRules, GlueProcessState

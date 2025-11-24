@@ -12,5 +12,7 @@
     "dependencies": [],
     "auto_load": true,
     "min_app_version": "1.0.0",
-    "icon": "contour_editor.png"
+    "icon": "contour_editor.png",
+    "folder_id": 1,
+    "icon_name": "CREATE_WORKPIECE_ICON"
 }

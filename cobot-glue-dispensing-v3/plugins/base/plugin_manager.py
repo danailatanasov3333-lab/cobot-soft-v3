@@ -103,6 +103,61 @@ class PluginManager:
             self.logger.error(f"Failed to discover and load plugins: {e}", exc_info=True)
             raise PluginManagerError(f"Plugin loading failed: {e}")
     
+    def discover_and_load_selective(self, required_plugin_names: List[str]) -> Dict[str, bool]:
+        """
+        Discover and load only specific plugins required by the application.
+
+        Args:
+            required_plugin_names: List of plugin names to load (e.g., ["dashboard", "settings", "gallery"])
+
+        Returns:
+            Dictionary mapping plugin names to loading success status
+        """
+        try:
+            if not self.controller_service:
+                raise PluginManagerError("Controller service not configured")
+
+            self.logger.info(f"Starting selective plugin discovery for: {required_plugin_names}")
+
+            # Discover all plugins
+            discovered_plugins = self.loader.discover_plugins(self.plugin_dirs)
+            self.logger.info(f"Discovered {len(discovered_plugins)} total plugins")
+
+            # Filter to only required plugins (case-insensitive matching)
+            required_lower = [name.lower() for name in required_plugin_names]
+            filtered_plugins = [
+                (path, metadata) for path, metadata in discovered_plugins
+                if metadata.get('name', '').lower() in required_lower
+            ]
+
+            self.logger.info(f"Filtered to {len(filtered_plugins)} required plugins: {[m.get('name') for p, m in filtered_plugins]}")
+
+            # Load plugins by category in order
+            load_order = [PluginCategory.CORE, PluginCategory.FEATURE, PluginCategory.TOOL, PluginCategory.EXTENSION]
+            results = {}
+
+            for category in load_order:
+                category_results = self._load_plugins_by_category(filtered_plugins, category)
+                results.update(category_results)
+                if category not in self._loaded_categories:
+                    self._loaded_categories.append(category)
+
+            self._is_initialized = True
+            loaded_count = len([r for r in results.values() if r])
+            self.logger.info(f"Selective plugin loading complete. Loaded: {loaded_count}/{len(required_plugin_names)} plugins")
+
+            # Log any missing required plugins
+            loaded_names = [name.lower() for name, success in results.items() if success]
+            missing = [name for name in required_plugin_names if name.lower() not in loaded_names]
+            if missing:
+                self.logger.warning(f"Required plugins not found or failed to load: {missing}")
+
+            return results
+
+        except Exception as e:
+            self.logger.error(f"Failed to discover and load selective plugins: {e}", exc_info=True)
+            raise PluginManagerError(f"Selective plugin loading failed: {e}")
+
     def _load_plugins_by_category(self, discovered_plugins: List[tuple], category: PluginCategory) -> Dict[str, bool]:
         """
         Load plugins of a specific category.
@@ -159,6 +214,10 @@ class PluginManager:
             # Load plugin instance
             plugin = self.loader.load_plugin(plugin_path, metadata)
             
+            # Store the raw JSON metadata on the plugin instance for UI purposes
+            # This includes folder_id, icon_name, etc. from plugin.json
+            plugin._json_metadata = metadata
+
             # Check if plugin can be loaded
             if not plugin.can_load():
                 self.logger.warning(f"Plugin '{plugin_name}' cannot be loaded (conditions not met)")

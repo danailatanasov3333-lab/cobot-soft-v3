@@ -10,15 +10,15 @@ import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 
-from communication_layer.api.v1.topics import SystemTopics, RobotTopics
+from communication_layer.api.v1.topics import SystemTopics
 from core.operation_state_management import BaseOperation, OperationResult
 from core.services.robot_service.impl.base_robot_service import  RobotService
 
 from modules.shared.MessageBroker import MessageBroker
 from core.services.vision.VisionService import _VisionService
-from backend.system.settings.SettingsService import SettingsService
+from core.services.settings.SettingsService import SettingsService
 from core.operations_handlers.robot_calibration_handler import calibrate_robot
 from core.operations_handlers.camera_calibration_handler import calibrate_camera
 from core.application.interfaces.application_settings_interface import ApplicationSettingsRegistry
@@ -32,9 +32,28 @@ from modules.shared.tools.VacuumPump import VacuumPump
 
 class ApplicationType(Enum):
     """Enum defining available robot application types"""
-    GLUE_DISPENSING = "glue_dispensing"
-    PAINT_APPLICATION = "paint_application"
+    # THE ENUM VALUES MUST MATCH THE DIRECTORY NAMES OF THE APPLICATIONS
+    GLUE_DISPENSING = "glue_dispensing_application"
+    PAINT_APPLICATION = "edge_painting_application"  # Fixed to match actual directory name
     TEST_APPLICATION = "test_application"
+
+
+class PluginType(Enum):
+    """Enum defining available plugin types"""
+    # Core plugins - MUST match the "name" field in plugin.json files
+    DASHBOARD = "Dashboard"  # Matches plugin.json name
+    SETTINGS = "Settings"  # Matches plugin.json name
+    CALIBRATION = "Calibration"  # Matches plugin.json name
+    GALLERY = "Gallery"  # Matches plugin.json name
+    CONTOUR_EDITOR = "ContourEditor"  # Matches plugin.json name
+    USER_MANAGEMENT = "User Management"  # Matches plugin.json name
+    DXF_BROWSER = "dxf_browser"
+    
+    # Application-specific plugins
+    GLUE_WEIGHT_CELL_SETTINGS = "Glue Weight Cell Settings"  # Matches plugin.json name
+    PAINT_SETTINGS = "paint_settings"
+    
+    # Add more plugins as needed
 
 @dataclass
 class ApplicationMetadata:
@@ -42,10 +61,28 @@ class ApplicationMetadata:
     name: str
     version: str
     dependencies: List[str] = None
+    plugin_dependencies: List[Union[str, PluginType]] = None
+    settings_tabs: List[str] = None
 
     def __post_init__(self):
         if self.dependencies is None:
             self.dependencies = []
+
+        if self.plugin_dependencies is None:
+            self.plugin_dependencies = []
+        else:
+            # Convert plugin dependencies to strings if they're enums
+            self.plugin_dependencies = [
+                plugin.value if isinstance(plugin, PluginType) else plugin 
+                for plugin in self.plugin_dependencies
+            ]
+
+        if self.settings_tabs is None:
+            self.settings_tabs = ["camera", "robot"]  # Default tabs for all applications
+    
+    def get_required_plugins(self) -> List[str]:
+        """Get list of plugin identifiers required by this application."""
+        return self.plugin_dependencies
 
 
 class BaseRobotApplication(ABC):

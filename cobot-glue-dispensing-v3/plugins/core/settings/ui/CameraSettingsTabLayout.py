@@ -8,8 +8,8 @@ from PyQt6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QSizePolicy, QCom
 from communication_layer.api.v1.topics import VisionTopics
 from frontend.widgets.ClickableLabel import ClickableLabel
 from frontend.widgets.MaterialButton import MaterialButton
-from backend.system.settings.CameraSettings import CameraSettings
-from backend.system.settings.enums.CameraSettingKey import CameraSettingKey
+from core.model.settings.CameraSettings import CameraSettings
+from core.model.settings.enums.CameraSettingKey import CameraSettingKey
 from frontend.widgets.SwitchButton import QToggle
 from frontend.widgets.ToastWidget import ToastWidget
 from modules.shared.MessageBroker import MessageBroker

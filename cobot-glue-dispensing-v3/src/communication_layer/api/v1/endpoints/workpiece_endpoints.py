@@ -18,7 +18,4 @@ WORKPIECE_SAVE_DXF = "/api/v1/workpieces/import/dxf"
 
 # === WORKPIECE CREATION WORKFLOW ===
 
-# Multi-step workpiece creation process
-WORKPIECE_CREATE = "/api/v1/workpieces/create"
-WORKPIECE_CREATE_STEP_1 = "/api/v1/workpieces/create/step-1"
-WORKPIECE_CREATE_STEP_2 = "/api/v1/workpieces/create/step-2"
+

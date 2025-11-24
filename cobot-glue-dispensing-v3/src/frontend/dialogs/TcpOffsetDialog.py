@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from frontend.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox
 import json
 import os
-from backend.system.settings.robotConfig import RobotConfig, get_default_config, OffsetDirectionMap
+from core.model.settings import RobotConfig, get_default_config, OffsetDirectionMap
 from core.application.ApplicationContext import get_core_settings_path
 
 

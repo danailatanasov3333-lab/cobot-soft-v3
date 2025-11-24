@@ -3,15 +3,14 @@ import time
 
 from applications.glue_dispensing_application.settings import GlueSettingKey
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
-from backend.system.utils.custom_logging import log_debug_message
-from backend.system.utils.files import write_to_debug_file
-from backend.system.utils.robot_utils import calculate_distance_between_points
+from modules.utils.custom_logging import log_debug_message
+from modules.utils import robot_utils, files
 
 
 # State Management Functions
 def is_point_reached(currentPos, targetPoint, threshold):
     """Check if robot has reached a specific point within threshold distance"""
-    distance_to_target = calculate_distance_between_points(currentPos, targetPoint)
+    distance_to_target = robot_utils.calculate_distance_between_points(currentPos, targetPoint)
     return distance_to_target < threshold
 
 def check_robot_state(state_machine, robotService, start_point_index, furthest_checkpoint_passed):
@@ -56,7 +55,7 @@ def is_final_point_reached(currentPos, final_point, remaining_path, furthest_che
     Check if robot has reached final point and passed through required checkpoints.
     Returns: True if path is complete
     """
-    distance_to_final = calculate_distance_between_points(currentPos, final_point)
+    distance_to_final = robot_utils.calculate_distance_between_points(currentPos, final_point)
     final_point_threshold = threshold
 
     # Only exit if robot is close to final point AND has passed through second-to-last point
@@ -86,7 +85,7 @@ def update_checkpoint_progress(currentPos, remaining_path, furthest_checkpoint_p
     """
     for i in range(furthest_checkpoint_passed, len(remaining_path)):
         checkpoint = remaining_path[i]
-        distance_to_checkpoint = calculate_distance_between_points(currentPos, checkpoint)
+        distance_to_checkpoint = robot_utils.calculate_distance_between_points(currentPos, checkpoint)
 
         if distance_to_checkpoint < 1:
             log_checkpoint_reached(start_point_index + i, distance_to_checkpoint, start_point_index, i + 1)
@@ -104,9 +103,9 @@ def get_current_target_checkpoint(remaining_path, furthest_checkpoint_passed):
 def log_checkpoint_reached(checkpoint_index, distance, start_point_index, furthest_checkpoint_passed):
     """Log when a checkpoint is reached"""
     message = f"Checkpoint {checkpoint_index} reached (distance: {distance:.3f} mm)\n"
-    write_to_debug_file("robot_pump_values.txt", message)
+    files.write_to_debug_file("robot_pump_values.txt", message)
     message = "\n"
-    write_to_debug_file("robot_pump_values.txt", message)
+    files.write_to_debug_file("robot_pump_values.txt", message)
 
 # Speed Calculation Functions
 def calculate_velocity_compensation(current_velocity, glue_speed_coefficient):
@@ -137,7 +136,7 @@ def log_debug_data(robotService, current_velocity, current_acceleration, velocit
     delta_time = current_time - last_write_time
     
     message = f"dt: {delta_time} Pos {robotService.get_current_position()} Vel: {float(current_velocity):.3f}, Acc: {float(current_acceleration):.3f}, Vel Com: {float(velocity_compensation):.3f}, Acc Comp {accel_compensation:.3f}, Pump speed: {float(adjustedPumpSpeed):.3f}\n"
-    write_to_debug_file("robot_pump_values.txt", message)
+    files.write_to_debug_file("robot_pump_values.txt", message)
     
     return current_time
 

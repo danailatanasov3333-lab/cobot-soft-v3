@@ -4,7 +4,7 @@ import time
 import cv2
 import numpy as np
 
-from backend.system.utils.custom_logging import log_warning_message
+from modules.utils.custom_logging import log_warning_message
 from modules.VisionSystem.data_loading import CAMERA_TO_ROBOT_MATRIX_PATH
 from modules.robot_calibration import metrics, visualizer
 from modules.robot_calibration.CalibrationVision import CalibrationVision
@@ -18,7 +18,7 @@ from modules.robot_calibration.robot_controller import CalibrationRobotControlle
 from modules.robot_calibration.states.axis_mapping import handle_axis_mapping_state
 from modules.robot_calibration.states.initializing import handle_initializing_state
 from modules.robot_calibration.states.robot_calibration_states import RobotCalibrationStates
-from backend.system.utils.custom_logging import setup_logger, log_debug_message, log_info_message, log_error_message, LoggerContext
+from modules.utils.custom_logging import setup_logger, log_debug_message, log_info_message, log_error_message, LoggerContext
 
 ENABLE_LOGGING = True
 

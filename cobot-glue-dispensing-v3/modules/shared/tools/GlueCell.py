@@ -1,17 +1,20 @@
 # from system.tools.enums.GlueType import GlueType
 from enum import Enum
+import time
 import requests
 import json
 import threading
-from backend.system.SensorPublisher import Sensor
+from modules.SensorPublisher import Sensor
 from communication_layer.api.v1.topics import GlueTopics
 from modules.shared.MessageBroker import MessageBroker
-from backend.system.utils.custom_logging import ColoredFormatter, LoggingLevel
+
 from pathlib import Path
-from backend.system.utils import PathResolver
 import logging
 import inspect
-import time
+
+from modules.utils import PathResolver
+from modules.utils.custom_logging import LoggingLevel, ColoredFormatter
+
 """
    Enum representing the types of glue used in the application.
 
@@ -39,7 +42,7 @@ UPDATE_CONFIG_ENDPOINT = "/update-config?loadCellId={current_cell}&offset={offse
 def _get_glue_config_path():
     """Get the path to glue cell config using application-specific storage."""
     try:
-        from backend.system.utils.ApplicationStorageResolver import get_app_settings_path
+        from core.application.ApplicationStorageResolver import get_app_settings_path
         return Path(get_app_settings_path("glue_dispensing_application", "glue_cell_config"))
     except ImportError:
         # Fallback to old path for backward compatibility
@@ -671,7 +674,7 @@ class GlueCellsManagerSingleton:
     def _get_config_path(cls):
         """Get the path to glue cell config using application-specific storage."""
         try:
-            from backend.system.utils.ApplicationStorageResolver import get_app_settings_path
+            from core.application.ApplicationStorageResolver import get_app_settings_path
             return Path(get_app_settings_path("glue_dispensing_application", "glue_cell_config"))
         except ImportError:
             # Fallback to old path for backward compatibility

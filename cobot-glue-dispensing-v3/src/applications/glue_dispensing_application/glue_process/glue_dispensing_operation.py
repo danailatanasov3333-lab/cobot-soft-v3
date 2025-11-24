@@ -1,29 +1,38 @@
-import time
 import json
 import os
 from datetime import datetime
-from typing import Optional
 
+from applications.glue_dispensing_application.glue_process.state_handlers.initial_pump_boost_state_handler import \
+    handle_pump_initial_boost
+from applications.glue_dispensing_application.glue_process.state_handlers.moving_to_first_point_state_handler import \
+    handle_moving_to_first_point_state
 from applications.glue_dispensing_application.glue_process.state_handlers.pause_operation import pause_operation
 from applications.glue_dispensing_application.glue_process.state_handlers.resume_operation import resume_operation
+from applications.glue_dispensing_application.glue_process.state_handlers.sending_path_to_robot_state_handler import \
+    handle_send_path_to_robot
+from applications.glue_dispensing_application.glue_process.state_handlers.start_pump_adjustment_thread_handler import \
+    handle_start_pump_adjustment_thread
+from applications.glue_dispensing_application.glue_process.state_handlers.start_state_handler import \
+    handle_starting_state
 from applications.glue_dispensing_application.glue_process.state_handlers.stop_operation import stop_operation
+from applications.glue_dispensing_application.glue_process.state_handlers.transition_between_paths_state_handler import \
+    handle_transition_between_paths
+from applications.glue_dispensing_application.glue_process.state_handlers.wait_for_path_completion_state_handler import \
+    handle_wait_for_path_completion
+
 from applications.glue_dispensing_application.glue_process.state_machine.ExecutableStateMachine import \
     ExecutableStateMachine, StateRegistry, State, ExecutableStateMachineBuilder
-from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessStateMachine import \
-    GlueProcessStateMachine
-from applications.glue_dispensing_application.settings.enums.GlueSettingKey import GlueSettingKey
 from applications.glue_dispensing_application.glue_process.ExecutionContext import ExecutionContext
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettings
 
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState, \
     GlueProcessTransitionRules
 
-from backend.system.utils.custom_logging import log_debug_message, log_info_message, log_error_message, \
+from modules.utils.custom_logging import log_debug_message, log_error_message, \
     log_calls_with_timestamp_decorator, setup_logger, LoggerContext
 from applications.glue_dispensing_application.glue_process.PumpController import PumpController
 from communication_layer.api.v1.topics import GlueTopics
 from core.operation_state_management import OperationResult, IOperation
-from core.services.robot_service.impl.base_robot_service import RobotService
 from modules.shared.MessageBroker import MessageBroker
 
 # glue dispensing process configuration
@@ -312,40 +321,33 @@ class GlueDispensingOperation(IOperation):
             self.execution_context.state_machine.transition(GlueProcessState.ERROR)
 
     def _handle_starting_state(self, context):
-        from applications.glue_dispensing_application.glue_process.state_handlers.start_state_handler import \
-            handle_starting_state
+
         # Return whatever the handler returns so the caller can update its local execution context variables
-        return handle_starting_state(context)
+        return handle_starting_state(context,glue_dispensing_logger_context)
 
     def _handle_moving_to_first_point_state(self, context, resume):
-        from applications.glue_dispensing_application.glue_process.state_handlers.moving_to_first_point_state_handler import \
-            handle_moving_to_first_point_state
+
         return handle_moving_to_first_point_state(context, resume)
 
     def _handle_transition_between_paths(self, context):
-        from applications.glue_dispensing_application.glue_process.state_handlers.transition_between_paths_state_handler import \
-            handle_transition_between_paths
-        return handle_transition_between_paths(context)
+
+        return handle_transition_between_paths(context,glue_dispensing_logger_context,TURN_OFF_PUMP_BETWEEN_PATHS)
 
     def _handle_pump_initial_boost(self, context):
-        from applications.glue_dispensing_application.glue_process.state_handlers.initial_pump_boost_state_handler import \
-            handle_pump_initial_boost
-        return handle_pump_initial_boost(context)
+
+        return handle_pump_initial_boost(context,glue_dispensing_logger_context)
 
     def _handle_start_pump_adjustment_thread(self, execution_context):
-        from applications.glue_dispensing_application.glue_process.state_handlers.start_pump_adjustment_thread_handler import \
-            handle_start_pump_adjustment_thread
-        return handle_start_pump_adjustment_thread(execution_context)
+
+        return handle_start_pump_adjustment_thread(execution_context,glue_dispensing_logger_context,ADJUST_PUMP_SPEED_WHILE_SPRAY)
 
     def _handle_send_path_to_robot_state(self, execution_context):
-        from applications.glue_dispensing_application.glue_process.state_handlers.sending_path_to_robot_state_handler import \
-            handle_send_path_to_robot
-        return handle_send_path_to_robot(execution_context)
+
+        return handle_send_path_to_robot(execution_context,glue_dispensing_logger_context)
 
     def _handle_wait_for_path_completion(self, execution_context):
-        from applications.glue_dispensing_application.glue_process.state_handlers.wait_for_path_completion_state_handler import \
-            handle_wait_for_path_completion
-        return handle_wait_for_path_completion(execution_context)
+
+        return handle_wait_for_path_completion(execution_context,glue_dispensing_logger_context)
 
     def get_state_machine(self)->ExecutableStateMachine:
         transition_rules = GlueProcessTransitionRules.get_glue_transition_rules()
@@ -383,7 +385,7 @@ class GlueDispensingOperation(IOperation):
         transition_rules = GlueProcessTransitionRules.get_glue_transition_rules()
         state_machine = (
             ExecutableStateMachineBuilder()
-        .with_initial_state(GlueProcessState.INITIALIZING)
+        .with_initial_state(GlueProcessState.IDLE)
         .with_transition_rules(transition_rules)
         .with_state_registry(registry)
         .with_context(self.execution_context)

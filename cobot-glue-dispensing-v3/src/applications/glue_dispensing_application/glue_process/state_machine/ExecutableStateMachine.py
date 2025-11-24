@@ -1,4 +1,3 @@
-from abc import ABC
 from enum import Enum
 from typing import Dict, Callable, TypeVar, Generic, Optional
 import time
@@ -6,9 +5,8 @@ import time
 from applications.glue_dispensing_application.glue_process.ExecutionContext import Context
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import \
     GlueProcessTransitionRules, GlueProcessState
-from communication_layer.api.v1.topics import GlueTopics
 from modules.shared.MessageBroker import MessageBroker
-from backend.system.utils.custom_logging import log_if_enabled, LoggingLevel, setup_logger
+from modules.utils.custom_logging import log_if_enabled, LoggingLevel, setup_logger
 
 TState = TypeVar("TState")  # Generic state type
 
@@ -103,7 +101,7 @@ class ExecutableStateMachine(Generic[TState]):
         if not self.can_transition(to_state):
             self.on_invalid_transition_attempt(to_state)
             return False
-
+        log_if_enabled(ENABLE_STATE_MACHINE_LOGGING,state_machine_logger,LoggingLevel.INFO,f"Transitioning from {self.current_state} to {to_state}")
         old_state = self.current_state
         self._call_handler(old_state, "on_exit")
         self.current_state = to_state

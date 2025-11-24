@@ -11,7 +11,8 @@ from communication_layer.api.v1.topics import GlueTopics
 from modules.shared.MessageBroker import MessageBroker
 from modules.shared.tools.GlueCell import UPDATE_SCALE_ENDPOINT, GET_CONFIG_ENDPOINT, \
     GlueCellsManagerSingleton, GlueDataFetcher, UPDATE_OFFSET_ENDPOINT, TARE_ENDPOINT
-from backend.system.utils import PathResolver
+from modules.utils import PathResolver
+from core.application.ApplicationContext import get_core_settings_path
 from frontend.widgets.MaterialButton import MaterialButton
 from frontend.core.utils.localization import get_app_translator
 from frontend.widgets.SwitchButton import QToggle
@@ -58,8 +59,13 @@ class LoadCellsSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
             self.use_real_data = False
             self.broker = None
         
-        # Load configuration values using PathResolver
-        self.config_path = Path(PathResolver.get_settings_file_path("glue_cell_config.json"))
+        # Load configuration values using application-aware storage
+        app_config_path = get_core_settings_path("glue_cell_config.json", create_if_missing=True)
+        if app_config_path is None:
+            raise ValueError("Could not determine application-specific config path for glue cells.")
+
+        self.config_path = Path(app_config_path)
+        print(f"Using application-specific glue cell config: {self.config_path}")
         self.load_config()
 
         self.create_main_content()

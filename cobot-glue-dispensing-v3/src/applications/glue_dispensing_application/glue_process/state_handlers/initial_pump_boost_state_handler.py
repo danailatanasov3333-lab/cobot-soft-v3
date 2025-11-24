@@ -1,7 +1,6 @@
 from collections import namedtuple
-from applications.glue_dispensing_application.glue_process.glue_dispensing_operation import glue_dispensing_logger_context
 from applications.glue_dispensing_application.glue_process.state_machine.GlueProcessState import GlueProcessState
-from backend.system.utils.custom_logging import log_debug_message, log_error_message
+from modules.utils.custom_logging import log_debug_message, log_error_message
 # Shared result type for all state handlers
 InitialPumpBoostResult = namedtuple(
     "HandlerResult",
@@ -18,7 +17,7 @@ InitialPumpBoostResult = namedtuple(
 )
 
 
-def handle_pump_initial_boost(context):
+def handle_pump_initial_boost(context,logger_context) -> GlueProcessState:
     """
     Handles initial pump boost logic in a pure, return-based way.
     Does not mutate the context directly or trigger transitions.
@@ -35,7 +34,7 @@ def handle_pump_initial_boost(context):
 
         if not result:
             log_error_message(
-                glue_dispensing_logger_context,
+                logger_context,
                 message=f"Motor start failed for path {path_index}, point_offset={point_index}"
             )
 
@@ -53,7 +52,7 @@ def handle_pump_initial_boost(context):
             return  result.next_state
 
         log_debug_message(
-            glue_dispensing_logger_context,
+            logger_context,
             message=f"Motor started successfully for path {path_index}, point_offset={point_index}"
         )
 
@@ -72,7 +71,7 @@ def handle_pump_initial_boost(context):
 
     # --- Case 2: Spray off or already started ---
     log_debug_message(
-        glue_dispensing_logger_context,
+        logger_context,
         message=(
             f"Motor already active or spray off — skipping boost for "
             f"path {path_index}, point_offset={point_index}"

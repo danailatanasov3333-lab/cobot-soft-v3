@@ -2,10 +2,9 @@ import threading
 
 import cv2
 import numpy as np
-from enum import Enum
 
 # Internal shared settings
-from backend.system.settings.CameraSettings import CameraSettings
+from core.model.settings.CameraSettings import CameraSettings
 from core.system_state_management import ServiceState
 # Vision System core modules
 from modules.VisionSystem.brightness_manager import BrightnessManager
@@ -29,7 +28,7 @@ from modules.VisionSystem.handlers.contour_detection_handler import handle_conto
 from libs.plvision.PLVision import ImageProcessing
 
 # Conditional logging import
-from src.backend.system.utils.custom_logging import (
+from modules.utils.custom_logging import (
     setup_logger, LoggerContext, log_debug_message, log_info_message
 )
 
@@ -147,7 +146,7 @@ class VisionSystem:
                     self.isSystemCalibrated = False
             # optional logging
             try:
-                from src.backend.system.utils.custom_logging import log_info_message, LoggerContext, setup_logger
+                from modules.utils.custom_logging import log_info_message, LoggerContext, setup_logger
                 log_info_message(LoggerContext(ENABLE_LOGGING, vision_system_logger), message=f"cameraToRobotMatrix updated via setter")
             except Exception:
                 pass

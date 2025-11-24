@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 
 import cv2
@@ -15,6 +16,17 @@ class CreateWorkpieceData:
     image: object
     message: str
     originalContours: list
+
+    def to_dict(self):
+        return {
+            "estimatedHeight": self.estimatedHeight,
+            "contourArea": self.contourArea,
+            "workpiece_contour": self.workpiece_contour,
+            "scaleFactor": self.scaleFactor,
+            "image": self.image,
+            "message": self.message,
+            "originalContours": self.originalContours
+        }
 
 
 @dataclass
@@ -36,6 +48,7 @@ class CreateWorkpieceHandler:
         self.workpiece_step = 1
 
     def create_workpiece(self) -> CrateWorkpieceResult:
+        return  self.create_workpiece_step_2()
         if self.workpiece_step == 1:
             result = self.create_workpiece_step_1()
             if result.success:
@@ -65,6 +78,14 @@ class CreateWorkpieceHandler:
 
     def create_workpiece_step_2(self) -> CrateWorkpieceResult:
         # if robot service is not in idle state, return error
+
+        result = self.create_workpiece_step_1()
+        if not result.success:
+            return result
+
+        time.sleep(1)  # wait for a second to ensure stability
+
+        print(f'CreateWorkpieceHandler: Starting create_workpiece_step_2')
         if self.application.state_manager.current_state != ApplicationState.IDLE:
             return CrateWorkpieceResult(success=False, message="Application not ready", data=None)
 
@@ -113,6 +134,7 @@ class CreateWorkpieceHandler:
             originalContours=originalContours
         )
 
+        print(f'CreateWorkpieceHandler: {data.to_dict()}')
 
         # Always return True to allow contour editor to open, even if no contours found
         return CrateWorkpieceResult(success=True, message=message, data=data)

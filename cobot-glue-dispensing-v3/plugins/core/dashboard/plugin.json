@@ -12,5 +12,7 @@
     "services": [
         "dashboard_service"
     ],
-    "icon": "icons/dashboard.png"
+    "icon": "icons/dashboard.png",
+    "folder_id": 1,
+    "icon_name": "DASHBOARD_ICON"
 }

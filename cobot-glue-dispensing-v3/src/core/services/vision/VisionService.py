@@ -1,16 +1,16 @@
 import queue
-import time
-import numpy as np
 import cv2
-import threading
+import numpy as np
 # from system.robot.RobotCalibrationService import CAMERA_TO_ROBOT_MATRIX_PATH
-from backend.system.utils import utils
+from modules.utils import utils
 from communication_layer.api.v1.topics import VisionTopics
 from modules.VisionSystem.VisionSystem import VisionSystem
 import os
+import json
+from pathlib import Path
 from modules.shared.MessageBroker import MessageBroker
 from core.application.ApplicationContext import get_core_settings_path
-
+import threading
 # PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = '/home/ilv/Cobot-Glue-Nozzle/VisionSystem/calibration/cameraCalibration/storage/calibration_result/pickupCamToRobotMatrix.npy'
 PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__),'..','..', '..', 'VisionSystem', 'calibration', 'cameraCalibration', 'storage', 'calibration_result', 'pickupCamToRobotMatrix.npy')
 
@@ -42,12 +42,19 @@ class _VisionService(VisionSystem):
                 None
             """
         # Get camera settings path from application context
-        config_file_path = get_core_settings_path("camera_settings.json")
+        config_file_path = get_core_settings_path("camera_settings.json", create_if_missing=True)
         if config_file_path is None:
             # Fallback to hardcoded path for backward compatibility
             config_file_path = os.path.join(os.path.dirname(__file__), '..','..','..','backend', 'system','storage', 'settings', 'camera_settings.json')
             print("VisionService: Warning - No application context set, using fallback camera settings path")
         
+        # Check if the settings file exists, create with defaults if missing
+        if not os.path.exists(config_file_path):
+            print(f"VisionService: Camera settings file not found at {config_file_path}")
+            print("VisionService: Creating default camera settings...")
+            if not self._create_default_camera_settings(config_file_path):
+                raise RuntimeError(f"Failed to create default camera settings at {config_file_path}")
+
         super().__init__(configFilePath=config_file_path)
 
         self.MAX_QUEUE_SIZE = 100  # Maximum number of frames to store in the queue
@@ -62,6 +69,87 @@ class _VisionService(VisionSystem):
         self.pickupCamToRobotMatrix = self._loadPickupCamToRobotMatrix()
         broker = MessageBroker()
         broker.subscribe(VisionTopics.TRANSFORM_TO_CAMERA_POINT,self.transformRobotPointToCamera)
+
+    @staticmethod
+    def _get_default_camera_settings():
+        """
+        Returns the default camera settings configuration.
+
+        Returns:
+            dict: Default camera settings
+        """
+        return {
+            "Index": 0,
+            "Width": 1280,
+            "Height": 720,
+            "Skip frames": 30,
+            "Capture position offset": 0,
+            "Threshold": 100,
+            "Threshold pickup area": 150,
+            "Epsilon": 0.004,
+            "Min contour area": 1000,
+            "Max contour area": 10000000,
+            "Contour detection": True,
+            "Draw contours": False,
+            "Preprocessing": {
+                "Gaussian blur": True,
+                "Blur kernel size": 5,
+                "Threshold type": "binary_inv",
+                "Dilate enabled": True,
+                "Dilate kernel size": 3,
+                "Dilate iterations": 2,
+                "Erode enabled": True,
+                "Erode kernel size": 3,
+                "Erode iterations": 4
+            },
+            "Calibration": {
+                "Chessboard width": 32,
+                "Chessboard height": 20,
+                "Square size (mm)": 25,
+                "Skip frames": 30
+            },
+            "Brightness Control": {
+                "Enable auto adjust": False,
+                "Kp": 0.7,
+                "Ki": 0.2,
+                "Kd": 0.05,
+                "Target brightness": 200
+            },
+            "Aruco": {
+                "Enable detection": True,
+                "Dictionary": "DICT_4X4_1000",
+                "Flip image": False
+            }
+        }
+
+    @staticmethod
+    def _create_default_camera_settings(file_path):
+        """
+        Creates a camera settings file with default values.
+
+        Args:
+            file_path (str): Path where the settings file should be created
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Ensure directory exists
+            Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+
+            # Get default settings
+            default_settings = _VisionService._get_default_camera_settings()
+
+            # Write to file
+            with open(file_path, 'w') as f:
+                json.dump(default_settings, f, indent=2)
+
+            print(f"VisionService: Created default camera settings at {file_path}")
+            return True
+
+        except Exception as e:
+            print(f"VisionService: Error creating default camera settings: {e}")
+            return False
 
     def _loadPickupCamToRobotMatrix(self):
         """
@@ -259,7 +347,7 @@ class _VisionService(VisionSystem):
         x = message.get("x")
         y = message.get("y")
         point = (x, y)
-        return utils.transformSinglePointToCamera(point,self.cameraToRobotMatrix)
+        return utils.transformSinglePointToCamera(point, self.cameraToRobotMatrix)
 
 class VisionServiceSingleton:
     """

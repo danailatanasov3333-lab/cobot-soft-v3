@@ -130,8 +130,6 @@ class MainWindow(TranslatableWidget):
                 app_widget.clean_requested.connect(self.on_clean)
                 app_widget.reset_errors_requested.connect(lambda: self.controller.handle(
                     robot_endpoints.ROBOT_RESET_ERRORS))
-                app_widget.start_demo_requested.connect(lambda: self.controller.handle(operations_endpoints.RUN_DEMO))
-                app_widget.stop_demo_requested.connect(lambda: self.controller.handle(operations_endpoints.STOP_DEMO))
                 app_widget.LOGOUT_REQUEST.connect(self.onLogout)
             
             # Gallery signals
@@ -281,43 +279,99 @@ class MainWindow(TranslatableWidget):
     def create_folders_page(self):
         """Create and configure the folders page"""
 
-
         def translate_fn(translation_key):
             return self.tr(translation_key)
 
-        folder_config_list = [
-            FolderConfig(
+        # Get application-specific required plugins
+        from core.application.ApplicationContext import get_application_required_plugins
+        required_plugins = get_application_required_plugins()
+
+        print(f"[MainWindow] Required plugins: {required_plugins}")
+
+        # Icon name to actual icon mapping
+        icon_map = {
+            'DASHBOARD_ICON': DASHBOARD_ICON,
+            'CREATE_WORKPIECE_ICON': CREATE_WORKPIECE_ICON,
+            'GALLERY_ICON': GALLERY_ICON,
+            'SETTINGS_ICON': SETTINGS_ICON,
+            'CALIBRATION_ICON': CALIBRATION_ICON,
+            'GLUE_WEIGHT_CELL_ICON': GLUE_WEIGHT_CELL_ICON,
+            'USER_MANAGEMENT_ICON': USER_MANAGEMENT_ICON,
+        }
+
+        # Build apps dynamically from loaded plugins
+        filtered_apps = {}
+
+        # Get all loaded plugins from the plugin manager
+        for plugin_name in self.plugin_widget_factory.plugin_manager.get_loaded_plugin_names():
+            plugin = self.plugin_widget_factory.plugin_manager.get_plugin(plugin_name)
+            if plugin:
+                # Get folder_id and icon_name from the raw JSON metadata (from plugin.json)
+                json_metadata = getattr(plugin, '_json_metadata', {})
+                folder_id = json_metadata.get('folder_id', 1)  # Default to folder 1
+                icon_name = json_metadata.get('icon_name', 'CREATE_WORKPIECE_ICON')  # Default icon
+
+                # Get the actual icon from the map
+                icon = icon_map.get(icon_name, CREATE_WORKPIECE_ICON)
+
+                # Get the WidgetType enum value that matches this plugin name
+                widget_type = None
+                for wt in WidgetType:
+                    if wt.value == plugin_name:
+                        widget_type = wt
+                        break
+
+                if widget_type:
+                    if folder_id not in filtered_apps:
+                        filtered_apps[folder_id] = []
+                    filtered_apps[folder_id].append([widget_type, icon])
+                    print(f"[MainWindow] Added {plugin_name} to folder {folder_id} with icon {icon_name}")
+                else:
+                    print(f"[MainWindow] Warning: No WidgetType found for plugin {plugin_name}")
+
+        # Add legacy widgets that aren't plugins yet
+        legacy_widgets = {
+            WidgetType.CREATE_WORKPIECE_OPTIONS: (1, CREATE_WORKPIECE_ICON),
+        }
+
+        # Convert plugin names to lowercase for comparison
+        required_plugins_lower = [p.lower() for p in required_plugins]
+
+        for widget_type, (folder_id, icon) in legacy_widgets.items():
+            # Check if this widget is in the required plugins (case-insensitive)
+            widget_name = widget_type.value.lower()
+            if widget_name in required_plugins_lower:
+                if folder_id not in filtered_apps:
+                    filtered_apps[folder_id] = []
+                filtered_apps[folder_id].append([widget_type, icon])
+                print(f"[MainWindow] Added legacy widget {widget_type.value} to folder {folder_id}")
+
+        # Build folder configuration list only for folders that have apps
+        folder_config_list = []
+
+        if 1 in filtered_apps and filtered_apps[1]:
+            folder_config_list.append(FolderConfig(
                 ID=1,
                 name=self.tr(TranslationKeys.Navigation.WORK),
-                apps=[[WidgetType.DASHBOARD, DASHBOARD_ICON],
-                      [WidgetType.CREATE_WORKPIECE_OPTIONS, CREATE_WORKPIECE_ICON],
-                      [WidgetType.GALLERY, GALLERY_ICON]],
+                apps=filtered_apps[1],
                 translate_fn=lambda _: translate_fn(TranslationKeys.Navigation.WORK)
-            ),
-            FolderConfig(
+            ))
+
+        if 2 in filtered_apps and filtered_apps[2]:
+            folder_config_list.append(FolderConfig(
                 ID=2,
                 name=self.tr(TranslationKeys.Navigation.SERVICE),
-                apps=[[WidgetType.SETTINGS, SETTINGS_ICON],
-                      [WidgetType.CALIBRATION, CALIBRATION_ICON],
-                      [WidgetType.GLUE_WEIGHT_CELL,GLUE_WEIGHT_CELL_ICON]],
-                      # [WidgetType.SERVICE, SETTINGS_ICON]],
+                apps=filtered_apps[2],
                 translate_fn=lambda _: translate_fn(TranslationKeys.Navigation.SERVICE)
-            ),
-            FolderConfig(
+            ))
+
+        if 3 in filtered_apps and filtered_apps[3]:
+            folder_config_list.append(FolderConfig(
                 ID=3,
                 name=self.tr(TranslationKeys.Navigation.ADMINISTRATION),
-                apps=[[WidgetType.USER_MANAGEMENT, USER_MANAGEMENT_ICON]],
+                apps=filtered_apps[3],
                 translate_fn=lambda _: translate_fn(TranslationKeys.Navigation.ADMINISTRATION)
-            ),
-            # FolderConfig(
-            #     ID=4,
-            #     name=self.tr(TranslationKeys.Navigation.STATISTICS),
-            #     apps=[[WidgetType.ANALYTICS, PLACEHOLDER_ICON],
-            #           [WidgetType.REPORTS, PLACEHOLDER_ICON],
-            #           [WidgetType.METRICS, PLACEHOLDER_ICON]],
-            #     translate_fn=lambda _: translate_fn(TranslationKeys.Navigation.STATISTICS)
-            # )
-        ]
+            ))
 
         if self.folders_page:
             self.stacked_widget.removeWidget(self.folders_page)
@@ -622,4 +676,3 @@ class MainWindow(TranslatableWidget):
         """Handle window close event"""
         self.cleanup()
         super().closeEvent(event)
-

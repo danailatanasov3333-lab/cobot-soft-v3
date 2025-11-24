@@ -7,7 +7,7 @@ from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QScroller
 from PyQt6.QtWidgets import (QSizePolicy, QScrollArea, QTextEdit, QProgressBar)
 
-from backend.system.utils import PathResolver
+from modules.utils import PathResolver
 from communication_layer.api.v1.topics import VisionTopics, RobotTopics
 from frontend.widgets.ClickableLabel import ClickableLabel
 from frontend.widgets.MaterialButton import MaterialButton

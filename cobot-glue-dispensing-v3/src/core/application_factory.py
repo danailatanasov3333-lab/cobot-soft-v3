@@ -9,13 +9,15 @@ their lifecycle.
 from typing import Dict, Optional, Type, List
 import logging
 
-from applications.test_application import TestApplication
+from applications.test_application.test_application import TestApplication
+from applications.edge_painting_application.application import EdgePaintingApplication
 from .application.interfaces.application_settings_interface import ApplicationSettingsRegistry
 from .application.interfaces.robot_application_interface import RobotApplicationInterface
 from .base_robot_application import BaseRobotApplication, ApplicationType
+from .application.ApplicationContext import set_current_application
 
 from core.services.vision.VisionService import _VisionService
-from backend.system.settings.SettingsService import SettingsService
+from core.services.settings.SettingsService import SettingsService
 from core.services.workpiece.BaseWorkpieceService import BaseWorkpieceService
 from applications.glue_dispensing_application.GlueDispensingApplication import GlueSprayingApplication
 from core.services.robot_service.interfaces.IRobotService import IRobotService
@@ -167,6 +169,11 @@ class ApplicationFactory:
             app_metadata = app_class.get_metadata()
             dependencies = app_metadata.dependencies
             print(f"Dependencies for {app_type.value}: {dependencies}")
+            
+            # Set the ApplicationContext using the enum directly
+            set_current_application(app_type)
+            logger.info(f"Set ApplicationContext to: {app_type.value}")
+            
             # Create the application instance
             logger.info(f"Creating new instance of {app_type.value}")
             application = app_class(
@@ -327,6 +334,7 @@ class ApplicationFactory:
 
         logger.info("ApplicationFactory shutdown complete")
 
+
     def _shutdown_application(self, application: RobotApplicationInterface) -> None:
         """
         Safely shutdown an application instance.
@@ -364,19 +372,20 @@ def auto_register_applications(factory: ApplicationFactory) -> None:
     # Register Robot Base Application For Testing
     try:
         factory.register_application(ApplicationType.TEST_APPLICATION, TestApplication)
-        logger.info("Registered BaseRobotApplication")
+        logger.info("Registered TestApplication")
     except ImportError as e:
-        logger.warning(f"Could not register BaseRobotApplication: {e}")
+        logger.warning(f"Could not register TestApplication: {e}")
     except Exception as e:
-        logger.warning(f"Error registering BaseRobotApplication: {e}")
-    # try:
-    #     # Register Painting Application
-    #     factory.register_application(ApplicationType.PAINT_APPLICATION, PaintingApplication)
-    #     logger.info("Registered PaintingApplication")
-    # except ImportError as e:
-    #     logger.warning(f"Could not register PaintingApplication: {e}")
-    # except Exception as e:
-    #     logger.warning(f"Error registering PaintingApplication: {e}")
+        logger.warning(f"Error registering TestApplication: {e}")
+
+    try:
+        # Register Edge Painting Application
+        factory.register_application(ApplicationType.PAINT_APPLICATION, EdgePaintingApplication)
+        logger.info("Registered EdgePaintingApplication")
+    except ImportError as e:
+        logger.warning(f"Could not register EdgePaintingApplication: {e}")
+    except Exception as e:
+        logger.warning(f"Error registering EdgePaintingApplication: {e}")
 
     logger.info(f"Auto-registration complete. Registered applications: {factory.get_registered_applications()}")
 
