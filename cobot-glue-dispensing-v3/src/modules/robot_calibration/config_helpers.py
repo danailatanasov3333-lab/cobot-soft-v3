@@ -7,6 +7,16 @@ class AdaptiveMovementConfig:
         self.k = k  # responsiveness (1.0 = smooth, 2.0 = faster reaction)
         self.derivative_scaling = derivative_scaling  # how strongly derivative term reduces step
 
+    def to_dict(self):
+        return {
+            "min_step_mm": self.min_step_mm,
+            "max_step_mm": self.max_step_mm,
+            "target_error_mm": self.target_error_mm,
+            "max_error_ref": self.max_error_ref,
+            "k": self.k,
+            "derivative_scaling": self.derivative_scaling
+        }
+
 
 class RobotCalibrationEventsConfig:
     def __init__(self, broker,
@@ -20,6 +30,14 @@ class RobotCalibrationEventsConfig:
         self.calibration_image_topic = calibration_image_topic
         self.calibration_log_topic = calibration_log_topic
 
+    def to_dict(self):
+        return {
+            "broker": self.broker,
+            "calibration_start_topic": self.calibration_start_topic,
+            "calibration_stop_topic": self.calibration_stop_topic,
+            "calibration_image_topic": self.calibration_image_topic,
+            "calibration_log_topic": self.calibration_log_topic
+        }
 
 class RobotCalibrationConfig:
     def __init__(self, vision_system,
@@ -36,3 +54,14 @@ class RobotCalibrationConfig:
         self.debug = debug
         self.step_by_step = step_by_step
         self.live_visualization = live_visualization
+
+    def to_dict(self):
+        return {
+            "vision_system": self.vision_system,
+            "robot_service": self.robot_service,
+            "required_ids": self.required_ids,
+            "z_target": self.z_target,
+            "debug": self.debug,
+            "step_by_step": self.step_by_step,
+            "live_visualization": self.live_visualization
+        }

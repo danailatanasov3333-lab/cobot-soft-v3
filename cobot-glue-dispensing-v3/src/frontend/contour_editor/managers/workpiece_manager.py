@@ -10,6 +10,7 @@ It supports both:
 from frontend.contour_editor.services.workpiece_loader import load_workpiece
 from frontend.contour_editor.EditorDataModel import ContourEditorData
 from frontend.contour_editor.adapters.WorkpieceAdapter import WorkpieceAdapter
+from modules.shared.core.contour_editor.BezierSegmentManager import Layer
 
 
 class WorkpieceManager:
@@ -42,8 +43,7 @@ class WorkpieceManager:
                 }
             }
         """
-        from modules import Layer
-        
+
         if contours_by_layer is None:
             return
 
@@ -180,7 +180,6 @@ class WorkpieceManager:
         Returns:
             ContourEditorData instance
         """
-        from modules import Layer
 
         editor_data = ContourEditorData()
 
