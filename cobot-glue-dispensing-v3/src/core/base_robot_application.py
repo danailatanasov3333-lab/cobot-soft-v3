@@ -10,7 +10,7 @@ import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List, Union, Optional
 
 from communication_layer.api.v1.topics import SystemTopics
 from core.operation_state_management import BaseOperation, OperationResult
@@ -28,6 +28,7 @@ from modules.shared.tools.Laser import Laser
 from modules.shared.tools.ToolChanger import ToolChanger
 from modules.shared.tools.ToolManager import ToolManager
 from modules.shared.tools.VacuumPump import VacuumPump
+from core.model.robot.robot_types import RobotType
 
 
 class ApplicationType(Enum):
@@ -60,6 +61,7 @@ class ApplicationMetadata:
     """Metadata for robot applications"""
     name: str
     version: str
+    robot_type: Optional[RobotType] = None  # Robot type required by this application
     dependencies: List[str] = None
     plugin_dependencies: List[Union[str, PluginType]] = None
     settings_tabs: List[str] = None
@@ -79,6 +81,10 @@ class ApplicationMetadata:
 
         if self.settings_tabs is None:
             self.settings_tabs = ["camera", "robot"]  # Default tabs for all applications
+        
+        # Set default robot type if not specified
+        if self.robot_type is None:
+            self.robot_type = RobotType.FAIRINO  # Default to Fairino for backward compatibility
     
     def get_required_plugins(self) -> List[str]:
         """Get list of plugin identifiers required by this application."""

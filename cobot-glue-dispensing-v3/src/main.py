@@ -56,9 +56,14 @@ else:
 
 if __name__ == "__main__":
     # Choose which application to run - CHANGE THIS LINE TO SWITCH APPS
-    # SELECTED_APP_TYPE = ApplicationType.GLUE_DISPENSING
-    SELECTED_APP_TYPE = ApplicationType.PAINT_APPLICATION
-    # SELECTED_APP_TYPE = ApplicationType.TEST_APPLICATION
+    # ApplicationFactory will automatically create the correct robot based on metadata:
+    # - GLUE_DISPENSING uses Fairino robot
+    # - PAINT_APPLICATION uses ZeroError robot  
+    # - TEST_APPLICATION uses test robot
+    
+    SELECTED_APP_TYPE = ApplicationType.GLUE_DISPENSING  # Uses Fairino robot
+    # SELECTED_APP_TYPE = ApplicationType.PAINT_APPLICATION  # Uses ZeroError robot
+    # SELECTED_APP_TYPE = ApplicationType.TEST_APPLICATION  # Uses test robot
     
     # Set application context using the enum directly
     set_current_application(SELECTED_APP_TYPE)
@@ -74,14 +79,9 @@ if __name__ == "__main__":
 
     settings_service = SettingsService(settings_file_paths=settings_file_paths,settings_registry=settings_registry)
 
-    # INIT ROBOT
+    # ROBOT INITIALIZATION NOW HANDLED BY APPLICATION FACTORY
+    # Robot and robot service will be created dynamically based on application metadata
     robot_config = settings_service.get_robot_config()
-    if testRobot:
-        from core.model.robot import TestRobotWrapper
-        robot = TestRobotWrapper()
-    else:
-        from core.model.robot import fairino_robot
-        robot = fairino_robot.FairinoRobot(robot_config.robot_ip)
 
     # INIT CAMERA SERVICE
     cameraService = VisionServiceSingleton().get_instance()
@@ -90,11 +90,18 @@ if __name__ == "__main__":
     repository = GlueWorkPieceRepositorySingleton().get_instance()
     workpieceService = GlueWorkpieceService(repository=repository)
 
-    # INIT ROBOT SERVICE
-    robot_state_manager_cycle_time = 0.03  # 30ms cycle time
+    # CREATE A DEFAULT ROBOT SERVICE FOR SYSTEM INITIALIZATION
+    # Note: This will be replaced by application-specific robot services in ApplicationFactory
+    if testRobot:
+        from core.model.robot import TestRobotWrapper
+        default_robot = TestRobotWrapper()
+    else:
+        from core.model.robot import fairino_robot
+        default_robot = fairino_robot.FairinoRobot(robot_config.robot_ip)
+    
     robot_monitor = FairinoRobotMonitor(robot_config.robot_ip, cycle_time=0.03)
     robot_state_manager = RobotStateManager(robot_monitor=robot_monitor)
-    robotService = RobotService(robot, settings_service, robot_state_manager)
+    robotService = RobotService(default_robot, settings_service, robot_state_manager)
 
     # INIT SYSTEM STATE MANAGER
     # Create and configure the system-wide state manager

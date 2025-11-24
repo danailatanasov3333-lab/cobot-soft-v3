@@ -4,13 +4,13 @@ from core.application.interfaces.application_settings_interface import Applicati
 from core.application.interfaces.robot_application_interface import RobotApplicationInterface
 from core.application_state_management import ApplicationState
 from core.base_robot_application import BaseRobotApplication, ApplicationMetadata, PluginType
+from core.model.robot.robot_types import RobotType
 from core.operation_state_management import OperationResult, OperationStatePublisher, OperationState
 from core.services.robot_service.impl.base_robot_service import RobotService
 from core.services.settings.SettingsService import SettingsService
 from core.services.vision.VisionService import _VisionService
 from core.system_state_management import ServiceRegistry
 from modules.shared.MessageBroker import MessageBroker
-
 
 class OperationPublisher:
     pass
@@ -45,6 +45,7 @@ class EdgePaintingApplication(BaseRobotApplication, RobotApplicationInterface):
         return ApplicationMetadata(
             name="Edge Painting Application",
             version="1.0.0",
+            robot_type=RobotType.ZERO_ERROR,  # Paint application uses ZeroError robot
             dependencies=["_VisionService",
                           "SettingsService",
                           "GlueRobotService",

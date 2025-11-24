@@ -23,6 +23,9 @@ from applications.glue_dispensing_application.GlueDispensingApplication import G
 from core.services.robot_service.interfaces.IRobotService import IRobotService
 from .services.robot_service.impl.base_robot_service import RobotService
 from .system_state_management import ServiceRegistry
+from core.model.robot.robot_factory import RobotFactory
+from core.services.robot_service.impl.robot_monitor.robot_monitor_factory import RobotMonitorFactory
+from core.services.robot_service.impl.RobotStateManager import RobotStateManager
 
 logger = logging.getLogger(__name__)
 
@@ -174,12 +177,18 @@ class ApplicationFactory:
             set_current_application(app_type)
             logger.info(f"Set ApplicationContext to: {app_type.value}")
             
+            # Create application-specific robot service if robot_type is specified
+            robot_service = self.robot_service  # Default to injected robot service
+            if hasattr(app_metadata, 'robot_type') and app_metadata.robot_type is not None:
+                logger.info(f"Creating application-specific robot service for {app_metadata.robot_type.value}")
+                robot_service = self._create_robot_service_for_app(app_metadata)
+            
             # Create the application instance
             logger.info(f"Creating new instance of {app_type.value}")
             application = app_class(
                 vision_service=self.vision_service,
                 settings_manager=self.settings_service,
-                robot_service=self.robot_service,
+                robot_service=robot_service,
                 settings_registry=self.settings_registry,
                 workpiece_service=self.workpiece_service,  # optional for apps that use it
                 service_registry=self.service_registry # optional for apps that use it
@@ -334,6 +343,45 @@ class ApplicationFactory:
 
         logger.info("ApplicationFactory shutdown complete")
 
+
+    def _create_robot_service_for_app(self, app_metadata) -> RobotService:
+        """
+        Create a robot service based on application metadata.
+        
+        Args:
+            app_metadata: Application metadata containing robot_type
+            
+        Returns:
+            RobotService instance configured for the application's robot type
+        """
+        try:
+            robot_type = app_metadata.robot_type
+            logger.info(f"Creating robot service for robot type: {robot_type.value}")
+            
+            # Get robot configuration from settings service
+            robot_config = self.settings_service.get_robot_config()
+            robot_ip = robot_config.robot_ip
+            
+            # Create robot instance using factory
+            robot = RobotFactory.create_robot(robot_type, robot_ip)
+            
+            # Create robot monitor using factory
+            robot_monitor = RobotMonitorFactory.create_monitor(robot_type, robot_ip, cycle_time=0.03)
+            
+            # Create robot state manager
+            robot_state_manager = RobotStateManager(robot_monitor=robot_monitor)
+            
+            # Create and return robot service
+            robot_service = RobotService(robot, self.settings_service, robot_state_manager)
+            
+            logger.info(f"Successfully created robot service for {robot_type.value}")
+            return robot_service
+            
+        except Exception as e:
+            logger.error(f"Failed to create robot service for application: {e}")
+            # Fallback to default robot service if creation fails
+            logger.warning("Falling back to default robot service")
+            return self.robot_service
 
     def _shutdown_application(self, application: RobotApplicationInterface) -> None:
         """

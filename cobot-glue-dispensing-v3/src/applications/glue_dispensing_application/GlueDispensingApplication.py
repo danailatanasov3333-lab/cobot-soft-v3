@@ -19,6 +19,7 @@ from core.services.robot_service.impl.base_robot_service import RobotService
 from core.services.vision.VisionService import _VisionService
 
 from core.base_robot_application import BaseRobotApplication, ApplicationState, ApplicationMetadata, PluginType
+from core.model.robot.robot_types import RobotType
 
 from applications.glue_dispensing_application.glue_process.glue_dispensing_operation import \
     GlueDispensingOperation
@@ -110,6 +111,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         return ApplicationMetadata(
             name="Glue Spraying Application",
             version="1.0.0",
+            robot_type=RobotType.FAIRINO,  # Glue application uses Fairino robot
             dependencies=["_VisionService",
                           "SettingsService",
                           "GlueRobotService",

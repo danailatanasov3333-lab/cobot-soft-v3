@@ -47,7 +47,7 @@ from modules.robot_calibration.states.robot_calibration_states import (
     RobotCalibrationStates, 
     RobotCalibrationTransitionRules
 )
-from src.applications.glue_dispensing_application.glue_process.state_machine.ExecutableStateMachine import (
+from applications.glue_dispensing_application.glue_process.state_machine.ExecutableStateMachine import (
     ExecutableStateMachine,
     StateRegistry,
     State,

@@ -34,7 +34,7 @@ class ZeroErrRobot(IRobot):
               """
 
         """ADD IMPLEMENTATION HERE"""
-        pass
+        print(f"ZeroErrRobot.move_cartesian called with position: {position}, tool: {tool}, user: {user}, vel: {vel}, acc: {acc}, blendR: {blendR}")
 
     def move_liner(self,position, tool=0, user=0, vel=30, acc=30, blendR=0):
         """
@@ -53,7 +53,7 @@ class ZeroErrRobot(IRobot):
                   """
 
         """ADD IMPLEMENTATION HERE"""
-        pass
+        print(f"ZeroErrRobot.move_liner called with position: {position}, tool: {tool}, user: {user}, vel: {vel}, acc: {acc}, blendR: {blendR}")
 
     def get_current_position(self):
         """
@@ -63,7 +63,7 @@ class ZeroErrRobot(IRobot):
                   list: Current robot TCP pose.
               """
         """ADD IMPLEMENTATION HERE"""
-        pass
+        print(f"ZeroErrRobot.get_current_position called")
 
     def get_current_velocity(self):
         """
@@ -74,7 +74,7 @@ class ZeroErrRobot(IRobot):
                """
 
         """ADD IMPLEMENTATION HERE"""
-        pass
+        print(f"ZeroErrRobot.get_current_velocity called")
 
     def get_current_acceleration(self):
         """
@@ -85,7 +85,7 @@ class ZeroErrRobot(IRobot):
                """
 
         """ADD IMPLEMENTATION HERE"""
-        pass
+        print(f"ZeroErrRobot.get_current_acceleration called")
 
     def enable(self):
         """
@@ -93,14 +93,14 @@ class ZeroErrRobot(IRobot):
                """
 
         """ADD IMPLEMENTATION HERE"""
-        pass
+        print(f"ZeroErrRobot.enable called")
 
     def disable(self):
         """
              Disables the robot, preventing motion.
              """
         """ADD IMPLEMENTATION HERE"""
-        pass
+        print(f"ZeroErrRobot.disable called")
 
 
 
@@ -120,7 +120,7 @@ class ZeroErrRobot(IRobot):
                   object: Result of the StartJOG command.
               """
         """ADD IMPLEMENTATION HERE"""
-        pass
+        print(f"ZeroErrRobot.start_jog called with axis: {axis}, direction: {direction}, step: {step}, vel: {vel}, acc: {acc}")
 
 
     def stop_motion(self):
@@ -131,4 +131,4 @@ class ZeroErrRobot(IRobot):
                    object: Result of StopMotion command.
                """
         """ADD IMPLEMENTATION HERE"""
-        pass
+        print(f"ZeroErrRobot.stop_motion called")
