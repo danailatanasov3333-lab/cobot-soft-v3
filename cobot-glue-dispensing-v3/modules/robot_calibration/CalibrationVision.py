@@ -5,26 +5,38 @@ import numpy as np
 
 from modules.utils.custom_logging import log_info_message, log_debug_message
 
+
 @dataclass
 class ChessboardDetectionResult:
     found: bool
     ppm: float
     bottom_left_px: tuple
+    message: str
+
+    def to_dict(self):
+        return {
+            "found": self.found,
+            "ppm": self.ppm,
+            "bottom_left_px": (float(self.bottom_left_px[0]), float(self.bottom_left_px[1])) if self.bottom_left_px is not None else None
+        }
+
 
 @dataclass()
 class SpecificMarkerDetectionResult:
-    found:bool
-    aruco_corners:np.ndarray
-    aruco_ids:np.ndarray
-    frame:np.ndarray
+    found: bool
+    aruco_corners: np.ndarray
+    aruco_ids: np.ndarray
+    frame: np.ndarray
+
 
 @dataclass
 class FindRequiredMarkersResult:
-    found:bool
-    frame:np.ndarray
+    found: bool
+    frame: np.ndarray
+
 
 class CalibrationVision:
-    def __init__(self, system, chessboard_size, square_size_mm,required_ids, logger_context,debug_draw,debug):
+    def __init__(self, system, chessboard_size, square_size_mm, required_ids, logger_context, debug_draw, debug):
         self.bottom_left_chessboard_corner_px = None
         self.chessboard_center_px = None
         self.original_chessboard_corners = None
@@ -40,10 +52,15 @@ class CalibrationVision:
         self.marker_top_left_corners_mm = {}
         self.PPM = None
 
-
     def find_chessboard_and_compute_ppm(self, frame) -> ChessboardDetectionResult:
+        if frame is None:
+            log_debug_message(self.logger_context, "No frame provided for chessboard detection")
+            return ChessboardDetectionResult(found=False, ppm=None, bottom_left_px=None,message ="No frame provided")
+
+        print(f"Looking for chessboard of size: {self.chessboard_size}")
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         ret, corners = cv2.findChessboardCorners(gray, self.chessboard_size, None)
+        cv2.imwrite("robot_calibration_chessboard_detection_debug.png", frame)
 
         if ret:
             log_info_message(self.logger_context, message=f"Found chessboard! Detected {len(corners)} corners")
@@ -116,12 +133,12 @@ class CalibrationVision:
             ppm = self.__compute_ppm_from_corners(corners_refined)
 
             cv2.drawChessboardCorners(frame, self.chessboard_size, corners_refined, ret)
-            return ChessboardDetectionResult(found=True, ppm=ppm, bottom_left_px=self.bottom_left_chessboard_corner_px)
+            return ChessboardDetectionResult(found=True, ppm=ppm, bottom_left_px=self.bottom_left_chessboard_corner_px,message ="Chessboard detected successfully")
         else:
             cv2.putText(frame, "No chessboard detected", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
             self.bottom_left_chessboard_corner_px = None
-            return  ChessboardDetectionResult(found=False, ppm=None ,bottom_left_px=None)
+            return ChessboardDetectionResult(found=False, ppm=None, bottom_left_px=None,message ="Chessboard not detected")
 
     def __compute_ppm_from_corners(self, corners_refined):
         """Compute pixels-per-mm from chessboard corners"""
@@ -156,7 +173,7 @@ class CalibrationVision:
 
         return ppm
 
-    def find_required_aruco_markers(self, frame) -> FindRequiredMarkersResult :
+    def find_required_aruco_markers(self, frame) -> FindRequiredMarkersResult:
 
         arucoCorners, arucoIds, image = self.system.detectArucoMarkers(image=frame)
 
@@ -214,7 +231,7 @@ class CalibrationVision:
     #         # update marker top-left corner in mm
     #         self.marker_top_left_corners_mm[marker_id] = (x_mm, y_mm)
 
-    def detect_specific_marker(self, frame, marker_id) -> SpecificMarkerDetectionResult :
+    def detect_specific_marker(self, frame, marker_id) -> SpecificMarkerDetectionResult:
         marker_found = False
         arucoCorners, arucoIds, image = self.system.detectArucoMarkers(image=frame)
         log_debug_message(self.logger_context, f"Detection loop for specific marker {marker_id}")

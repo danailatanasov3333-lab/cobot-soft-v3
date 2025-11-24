@@ -24,11 +24,6 @@ ENABLE_LOGGING = True
 
 robot_calibration_logger = setup_logger("RobotCalibrationService") if ENABLE_LOGGING else None
 
-
-
-
-
-
 class RobotCalibrationContext:
     def __init__(self):
         pass
@@ -280,8 +275,6 @@ class RobotCalibrationPipeline:
                 while chessboard_frame is None:
                     chessboard_frame = self.system.getLatestFrame()
 
-                # found, ppm = self.find_chessboard_and_compute_ppm(chessboard_frame)
-                # found, ppm,self.bottom_left_chessboard_corner_px = self.calibration_vision.find_chessboard_and_compute_ppm(chessboard_frame)
                 result = self.calibration_vision.find_chessboard_and_compute_ppm(chessboard_frame)
                 found = result.found
                 ppm = result.ppm
@@ -290,8 +283,8 @@ class RobotCalibrationPipeline:
                     found=found,
                     ppm=ppm if found else None,
                     bottom_left_corner=self.bottom_left_chessboard_corner_px,
-                    chessboard_center=self.chessboard_center_px,
-                    debug_enabled=self.debug and self.debug_draw is not None
+                    debug_enabled=self.debug and self.debug_draw is not None,
+                    detection_message=result.message
                 )
 
                 log_debug_message(self.logger_context,message)
@@ -372,7 +365,6 @@ class RobotCalibrationPipeline:
 
                 log_debug_message(self.logger_context,message)
 
-
                 self.current_state = RobotCalibrationStates.COMPUTE_OFFSETS
 
             elif self.current_state == RobotCalibrationStates.COMPUTE_OFFSETS:
@@ -434,17 +426,9 @@ class RobotCalibrationPipeline:
                 cx, cy, cz, crx, cry, crz = calib_pose
 
                 calib_to_current = (x - cx, y - cy)
-                print(f"calib_to_current: {calib_to_current}")
                 # Map image offsets to robot space
                 x_offset_before_mapping = calib_to_marker[0] - calib_to_current[0]
                 y_offset_before_mapping = calib_to_marker[1] - calib_to_current[1]
-                print(f"Before mapping: X {x_offset_before_mapping}, Y {y_offset_before_mapping}")
-                # mapped_x_mm, mapped_y_mm = self.image_to_robot_mapping.map(
-                #     x_offset_before_mapping,
-                #     y_offset_before_mapping
-                # )
-                # print("After mapping:", mapped_x_mm, mapped_y_mm)
-                # current_to_marker = (mapped_x_mm, mapped_y_mm)
 
                 current_to_marker = (
                     calib_to_marker[0] - calib_to_current[0],

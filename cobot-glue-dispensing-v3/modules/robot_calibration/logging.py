@@ -57,7 +57,8 @@ def construct_chessboard_state_log_message(
     found: bool,
     ppm: Optional[float] = None,
     bottom_left_corner: Optional[np.ndarray] = None,
-    debug_enabled: bool = False
+    debug_enabled: bool = False,
+    detection_message: Optional[str] = None
 ) -> str:
     """
     Construct a structured log message describing the LOOKING_FOR_CHESSBOARD state results.
@@ -66,19 +67,23 @@ def construct_chessboard_state_log_message(
         found (bool): Whether the chessboard was successfully detected.
         ppm (Optional[float]): Pixels-per-millimeter value computed from the chessboard.
         bottom_left_corner (Optional[np.ndarray]): Pixel coordinates of the bottom-left chessboard corner.
-        chessboard_center (Optional[np.ndarray]): Pixel coordinates of the chessboard center.
         debug_enabled (bool): Whether debug drawing is active.
+        detection_message (Optional[str]): Message from the chessboard detection result.
 
     Returns:
         str: Formatted multi-line message summarizing the chessboard detection step.
     """
     lines = ["🧩 === CHESSBOARD DETECTION SUMMARY ==="]
 
-    if not found:
+    # Include the detection result message if available
+    if detection_message:
+        status_icon = "✅" if found else "❌"
+        lines.append(f"{status_icon} Detection result: {detection_message}")
+    elif not found:
         lines.append("❌ Chessboard not found. Retrying...")
         return "\n".join(lines)
-
-    lines.append(f"✅ Chessboard found successfully.")
+    else:
+        lines.append(f"✅ Chessboard found successfully.")
     if ppm is not None:
         lines.append(f"   • Pixels per millimeter (PPM): {ppm:.3f}")
 

@@ -56,8 +56,8 @@ else:
 
 if __name__ == "__main__":
     # Choose which application to run - CHANGE THIS LINE TO SWITCH APPS
-    SELECTED_APP_TYPE = ApplicationType.GLUE_DISPENSING
-    # SELECTED_APP_TYPE = ApplicationType.PAINT_APPLICATION
+    # SELECTED_APP_TYPE = ApplicationType.GLUE_DISPENSING
+    SELECTED_APP_TYPE = ApplicationType.PAINT_APPLICATION
     # SELECTED_APP_TYPE = ApplicationType.TEST_APPLICATION
     
     # Set application context using the enum directly
