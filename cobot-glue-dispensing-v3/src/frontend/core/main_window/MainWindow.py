@@ -28,6 +28,8 @@ from frontend.core.services.authorizationService import AuthorizationService , P
 from frontend.core.utils.FilePaths import DXF_DIRECTORY
 from modules.shared.core.dxf.DxfParser import DXFPathExtractor
 from modules.shared.core.dxf.utils import scale_contours
+from core.application.ApplicationContext import get_application_required_plugins
+
 
 class MainWindow(TranslatableWidget):
     """Demo application showing the Android folder widget with QStackedWidget for app management"""
@@ -283,7 +285,6 @@ class MainWindow(TranslatableWidget):
             return self.tr(translation_key)
 
         # Get application-specific required plugins
-        from core.application.ApplicationContext import get_application_required_plugins
         required_plugins = get_application_required_plugins()
 
         print(f"[MainWindow] Required plugins: {required_plugins}")
