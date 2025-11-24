@@ -13,7 +13,6 @@ from core.controllers.vision.camera_system_controller import CameraSystemControl
 from core.services.robot_service.impl.RobotStateManager import RobotStateManager
 from core.services.robot_service.impl.base_robot_service import RobotService
 
-from core.services.robot_service.impl.robot_monitor.fairino_monitor import FairinoRobotMonitor
 from frontend.core.utils.localization import setup_localization
 
 # Import SystemStateManager and related components
@@ -55,19 +54,25 @@ else:
     pass
 
 if __name__ == "__main__":
+
+    # Initialize ROS2 before creating any ROS2 nodes
+    import rclpy
+    import threading
+
+    rclpy.init()
     # Choose which application to run - CHANGE THIS LINE TO SWITCH APPS
     # ApplicationFactory will automatically create the correct robot based on metadata:
     # - GLUE_DISPENSING uses Fairino robot
-    # - PAINT_APPLICATION uses ZeroError robot  
+    # - PAINT_APPLICATION uses ZeroError robot
     # - TEST_APPLICATION uses test robot
-    
+
     #SELECTED_APP_TYPE = ApplicationType.GLUE_DISPENSING  # Uses Fairino robot
     SELECTED_APP_TYPE = ApplicationType.PAINT_APPLICATION  # Uses ZeroError robot
     # SELECTED_APP_TYPE = ApplicationType.TEST_APPLICATION  # Uses test robot
-    
+
     # Set application context using the enum directly
     set_current_application(SELECTED_APP_TYPE)
-    
+
     # Global registry instance
     settings_registry = ApplicationSettingsRegistry()
 
@@ -91,15 +96,41 @@ if __name__ == "__main__":
     workpieceService = GlueWorkpieceService(repository=repository)
 
     # CREATE A DEFAULT ROBOT SERVICE FOR SYSTEM INITIALIZATION
-    # Note: This will be replaced by application-specific robot services in ApplicationFactory
+    # Import factories
+    from core.model.robot.robot_factory import RobotFactory
+    from core.services.robot_service.impl.robot_monitor.robot_monitor_factory import RobotMonitorFactory
+    from core.base_robot_application import ApplicationType
+    from core.model.robot.robot_types import RobotType
+
+    # Robot type is determined by the selected application or testRobot flag
     if testRobot:
-        from core.model.robot import TestRobotWrapper
-        default_robot = TestRobotWrapper()
+        robot_type = RobotType.TEST
+    elif SELECTED_APP_TYPE == ApplicationType.GLUE_DISPENSING:
+        robot_type = RobotType.FAIRINO
+    elif SELECTED_APP_TYPE == ApplicationType.PAINT_APPLICATION:
+        robot_type = RobotType.ZERO_ERROR
+    elif SELECTED_APP_TYPE == ApplicationType.TEST_APPLICATION:
+        robot_type = RobotType.TEST
     else:
-        from core.model.robot import fairino_robot
-        default_robot = fairino_robot.FairinoRobot(robot_config.robot_ip)
-    
-    robot_monitor = FairinoRobotMonitor(robot_config.robot_ip, cycle_time=0.03)
+        robot_type = RobotType.FAIRINO  # Default fallback
+
+    # Create robot using factory
+    default_robot = RobotFactory.create_robot(robot_type, robot_config.robot_ip)
+
+    # Create robot monitor using factory
+    robot_monitor = RobotMonitorFactory.create_monitor(robot_type, robot_config.robot_ip, cycle_time=0.03)
+
+    # Start ROS2 spinning in a separate thread if robot is a ROS2 node
+    if hasattr(default_robot, 'subscriptions') and not testRobot:
+        def spin_ros2():
+            try:
+                rclpy.spin(default_robot)
+            except Exception as e:
+                print(f"ROS2 spin error: {e}")
+
+        ros2_thread = threading.Thread(target=spin_ros2, daemon=True)
+        ros2_thread.start()
+        print("ROS2 node spinning in background thread")
     robot_state_manager = RobotStateManager(robot_monitor=robot_monitor)
     robotService = RobotService(default_robot, settings_service, robot_state_manager)
 
@@ -162,4 +193,14 @@ if __name__ == "__main__":
 
     from frontend.core.runPlUi import PlGui
     gui = PlGui(controller=controller)
-    gui.start()
+
+    try:
+        gui.start()
+    finally:
+        # Clean up ROS2 when GUI exits
+        if not testRobot:
+            print("Shutting down ROS2...")
+            if hasattr(default_robot, 'destroy_node'):
+                default_robot.destroy_node()
+            rclpy.shutdown()
+            print("ROS2 shutdown complete")
