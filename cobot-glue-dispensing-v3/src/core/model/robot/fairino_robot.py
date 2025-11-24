@@ -7,7 +7,7 @@ from core.model.robot.enums.axis import Direction
 from frontend.core.services.domain.RobotService import RobotAxis
 
 if platform.system() == "Windows":
-    from libs.fairino.windows import Robot
+    from libs.fairino import Robot
 elif platform.system() == "Linux":
     logging.info("Linux detected")
     from libs.fairino.linux.fairino import Robot

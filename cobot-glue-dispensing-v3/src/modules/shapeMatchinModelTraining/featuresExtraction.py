@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from scipy.spatial.distance import directed_hausdorff
+# from scipy.spatial.distance import directed_hausdorff
 
 # ===== AREA FEATURES =====
 
