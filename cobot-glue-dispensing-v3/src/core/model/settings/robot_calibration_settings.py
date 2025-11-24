@@ -4,11 +4,11 @@ from modules.robot_calibration.config_helpers import AdaptiveMovementConfig
 class RobotCalibrationSettings:
     def __init__(self,):
         """ INITIALIZE WITH DEFAULT SETTINGS """
-        self.min_step_mm = 0.1,  # minimum movement (for very small errors)
-        self.max_step_mm = 25.0,  # maximum movement for very large misalignment's
-        self.target_error_mm = 0.25,  # desired error to reach
-        self.max_error_ref = 100.0,  # error at which we reach max step
-        self.k = 2.0,  # responsiveness (1.0 = smooth, 2.0 = faster reaction)
+        self.min_step_mm = 0.1  # minimum movement (for very small errors)
+        self.max_step_mm = 25.0  # maximum movement for very large misalignment's
+        self.target_error_mm = 0.25  # desired error to reach
+        self.max_error_ref = 100.0  # error at which we reach max step
+        self.k = 2.0  # responsiveness (1.0 = smooth, 2.0 = faster reaction)
         self.derivative_scaling = 0.5  # how strongly derivative term reduces step
         self.z_target: int = 300  # height for refined marker search
         self.required_ids = [0, 1, 2, 3, 4, 5, 6, 8]
