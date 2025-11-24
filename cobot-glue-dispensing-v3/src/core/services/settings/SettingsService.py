@@ -201,6 +201,9 @@ class SettingsService:
     def get_robot_config(self):
         """Get robot configuration object."""
         return self.get_settings("robot_config")
+
+    def get_robot_calibration_settings(self):
+        return self.get_settings("robot_calibration")
     
     def register_settings_type(self, settings_type: str, repository_class) -> None:
         """

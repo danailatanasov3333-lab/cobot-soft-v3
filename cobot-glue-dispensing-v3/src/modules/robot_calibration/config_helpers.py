@@ -54,14 +54,3 @@ class RobotCalibrationConfig:
         self.debug = debug
         self.step_by_step = step_by_step
         self.live_visualization = live_visualization
-
-    def to_dict(self):
-        return {
-            "vision_system": self.vision_system,
-            "robot_service": self.robot_service,
-            "required_ids": self.required_ids,
-            "z_target": self.z_target,
-            "debug": self.debug,
-            "step_by_step": self.step_by_step,
-            "live_visualization": self.live_visualization
-        }

@@ -75,6 +75,7 @@ if __name__ == "__main__":
     settings_file_paths = {
         "camera": get_core_settings_path("camera_settings.json", create_if_missing=True) or PathResolver.get_settings_file_path("camera_settings.json"),
         "robot_config": get_core_settings_path("robot_config.json", create_if_missing=True) or PathResolver.get_settings_file_path("robot_config.json"),
+        "robot_calibration": get_core_settings_path("robot_calibration_settings.json", create_if_missing=True) or PathResolver.get_settings_file_path("robot_calibration_settings.json"),
     }
 
     settings_service = SettingsService(settings_file_paths=settings_file_paths,settings_registry=settings_registry)

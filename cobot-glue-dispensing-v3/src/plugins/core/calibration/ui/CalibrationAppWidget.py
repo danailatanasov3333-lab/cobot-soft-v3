@@ -38,7 +38,7 @@ class CalibrationAppWidget(AppWidget):
                 self.content_layout.update_camera_feed(frame)
 
             self.content_widget = QWidget(self.parent)
-            self.content_layout = CalibrationServiceTabLayout()
+            self.content_layout = CalibrationServiceTabLayout(parent_widget=self.parent, calibration_service=None, controller_service=self.controller_service)
             self.content_layout.update_camera_feed_signal.connect(lambda: updateCameraFeedCallback())
             # Connect controller-related signals only if controller_service present
             if self.controller_service:

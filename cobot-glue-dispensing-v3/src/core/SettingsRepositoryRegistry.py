@@ -9,8 +9,10 @@ of settings types.
 from typing import Dict, Type, Optional
 import logging
 
+from core.database.settings.RobotCalibrationRepository import RobotCalibrationSettingsRepository
 from core.services.settings.interfaces.ISettingsRepository import ISettingsRepository
-
+from core.database.settings.CameraSettingsRepository import CameraSettingsRepository
+from core.database.settings.RobotSettingsRepository import RobotSettingsRepository
 
 class SettingsRepositoryRegistry:
     """
@@ -102,11 +104,10 @@ class SettingsRepositoryRegistry:
     def _register_core_repositories(self) -> None:
         """Register core repository types."""
         try:
-            from core.database.settings.CameraSettingsRepository import CameraSettingsRepository
-            from core.database.settings.RobotSettingsRepository import RobotSettingsRepository
-            
+
             self.register_repository_class("camera", CameraSettingsRepository)
             self.register_repository_class("robot_config", RobotSettingsRepository)
+            self.register_repository_class("robot_calibration_settings", RobotCalibrationSettingsRepository)
             
             self.logger.info("Core repositories registered successfully")
         except ImportError as e:

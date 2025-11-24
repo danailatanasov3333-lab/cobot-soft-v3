@@ -15,6 +15,7 @@ from modules.shared.MessageBroker import MessageBroker
 from frontend.widgets.robotManualControl.RobotJogWidget import RobotJogWidget
 from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout
 from frontend.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox
+from core.model.settings.robot_calibration_settings import RobotCalibrationSettings
 
 
 
@@ -78,13 +79,14 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
     # Debug and testing signals
     show_debug_view_requested = QtCore.pyqtSignal(bool)
 
-    def __init__(self, parent_widget=None, calibration_service=None):
+    def __init__(self, parent_widget=None, calibration_service=None, controller_service=None):
         BaseSettingsTabLayout.__init__(self, parent_widget)
         QVBoxLayout.__init__(self)
         print(f"Initializing {self.__class__.__name__} with parent widget: {parent_widget}")
 
         self.parent_widget = parent_widget
         self.calibration_service = calibration_service
+        self.controller_service = controller_service
         self.debug_mode_active = False
         self.calibration_in_progress = False
 
@@ -117,10 +119,53 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         # Load saved work area points for both pickup and spray areas
         self.load_all_saved_work_areas()
 
+        # Initialize robot calibration settings
+        self.robot_settings_fields = {}  # Store references to input fields
+        self.load_robot_calibration_settings_from_service()
+
         self.log_que = []  # Message queue for logs
         self.log_timer = QTimer(self)
         self.log_timer.timeout.connect(self.flush_log_queue)
         self.log_timer.start(100)  # Flush every 100ms
+
+    def load_robot_calibration_settings_from_service(self):
+        """Load robot calibration settings from the SettingsService"""
+        try:
+            if self.controller_service and hasattr(self.controller_service, 'settings'):
+                # Get settings from the service
+                settings_result = self.controller_service.settings.get_robot_calibration_settings()
+                if settings_result and hasattr(settings_result, 'data') and settings_result.data:
+                    self.robot_calibration_settings = settings_result.data
+                    print("Loaded robot calibration settings from service")
+                else:
+                    # Fallback to default settings
+                    self.robot_calibration_settings = RobotCalibrationSettings()
+                    print("Using default robot calibration settings (no service data)")
+            else:
+                # Fallback to default settings if no service available
+                self.robot_calibration_settings = RobotCalibrationSettings()
+                print("Using default robot calibration settings (no service available)")
+        except Exception as e:
+            print(f"Error loading robot calibration settings from service: {e}")
+            # Fallback to default settings
+            self.robot_calibration_settings = RobotCalibrationSettings()
+            self.addLog(f"Error loading robot calibration settings: {e}")
+
+    def update_robot_settings_fields_from_loaded_settings(self):
+        """Update UI fields with loaded settings values"""
+        if hasattr(self, 'robot_settings_fields') and self.robot_settings_fields:
+            try:
+                self.robot_settings_fields['min_step_mm'].setValue(self.robot_calibration_settings.min_step_mm)
+                self.robot_settings_fields['max_step_mm'].setValue(self.robot_calibration_settings.max_step_mm)
+                self.robot_settings_fields['target_error_mm'].setValue(self.robot_calibration_settings.target_error_mm)
+                self.robot_settings_fields['max_error_ref'].setValue(self.robot_calibration_settings.max_error_ref)
+                self.robot_settings_fields['k'].setValue(self.robot_calibration_settings.k)
+                self.robot_settings_fields['derivative_scaling'].setValue(self.robot_calibration_settings.derivative_scaling)
+                self.robot_settings_fields['z_target'].setValue(self.robot_calibration_settings.z_target)
+                self.robot_settings_fields['required_ids_display'].setText(str(self.robot_calibration_settings.required_ids))
+                print("Updated robot calibration settings UI fields from loaded settings")
+            except Exception as e:
+                print(f"Error updating robot settings fields: {e}")
 
     def onRbotCalibrationImage(self,image):
         self.update_camera_preview_from_cv2(image,True,zoom_factor=5,show_work_area=False)
@@ -627,11 +672,13 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         work_area_group = self.create_work_area_group()
-        parent_layout.addWidget(work_area_group)
+        robot_calibration_group = self.create_robot_calibration_settings_group()
+        
         # First row of settings
         first_row = QHBoxLayout()
         first_row.setSpacing(2)
         first_row.addWidget(work_area_group)
+        first_row.addWidget(robot_calibration_group)
         parent_layout.addLayout(first_row)
 
         # Second row of settings
@@ -962,6 +1009,226 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
 
         # Load current area (pickup by default)
         self.load_saved_work_area_points(self.current_work_area)
+
+    def create_robot_calibration_settings_group(self):
+        """Create the Robot Calibration Settings group widget"""
+        group_box = QGroupBox("Robot Calibration Settings")
+        group_box.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #cccccc;
+                border-radius: 8px;
+                margin: 5px 0px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+            }
+        """)
+
+        # Create main layout for the group
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(10, 15, 10, 10)
+
+        # Create settings form layout
+        form_layout = QGridLayout()
+        form_layout.setSpacing(8)
+        form_layout.setHorizontalSpacing(15)
+        form_layout.setVerticalSpacing(6)
+
+        # Row counter
+        row = 0
+
+        # Adaptive Movement Settings
+        adaptive_label = QLabel("Adaptive Movement:")
+        adaptive_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        form_layout.addWidget(adaptive_label, row, 0, 1, 4)
+        row += 1
+
+        # Min Step (mm)
+        form_layout.addWidget(QLabel("Min Step (mm):"), row, 0)
+        self.robot_settings_fields['min_step_mm'] = FocusDoubleSpinBox()
+        self.robot_settings_fields['min_step_mm'].setRange(0.01, 10.0)
+        self.robot_settings_fields['min_step_mm'].setDecimals(2)
+        self.robot_settings_fields['min_step_mm'].setValue(self.robot_calibration_settings.min_step_mm)
+        self.robot_settings_fields['min_step_mm'].setSuffix(" mm")
+        self.robot_settings_fields['min_step_mm'].setFixedWidth(80)
+        form_layout.addWidget(self.robot_settings_fields['min_step_mm'], row, 1)
+
+        # Max Step (mm)
+        form_layout.addWidget(QLabel("Max Step (mm):"), row, 2)
+        self.robot_settings_fields['max_step_mm'] = FocusDoubleSpinBox()
+        self.robot_settings_fields['max_step_mm'].setRange(1.0, 100.0)
+        self.robot_settings_fields['max_step_mm'].setDecimals(1)
+        self.robot_settings_fields['max_step_mm'].setValue(self.robot_calibration_settings.max_step_mm)
+        self.robot_settings_fields['max_step_mm'].setSuffix(" mm")
+        self.robot_settings_fields['max_step_mm'].setFixedWidth(80)
+        form_layout.addWidget(self.robot_settings_fields['max_step_mm'], row, 3)
+        row += 1
+
+        # Target Error (mm)
+        form_layout.addWidget(QLabel("Target Error (mm):"), row, 0)
+        self.robot_settings_fields['target_error_mm'] = FocusDoubleSpinBox()
+        self.robot_settings_fields['target_error_mm'].setRange(0.1, 5.0)
+        self.robot_settings_fields['target_error_mm'].setDecimals(2)
+        self.robot_settings_fields['target_error_mm'].setValue(self.robot_calibration_settings.target_error_mm)
+        self.robot_settings_fields['target_error_mm'].setSuffix(" mm")
+        self.robot_settings_fields['target_error_mm'].setFixedWidth(80)
+        form_layout.addWidget(self.robot_settings_fields['target_error_mm'], row, 1)
+
+        # Max Error Reference (mm)
+        form_layout.addWidget(QLabel("Max Error Ref (mm):"), row, 2)
+        self.robot_settings_fields['max_error_ref'] = FocusDoubleSpinBox()
+        self.robot_settings_fields['max_error_ref'].setRange(10.0, 500.0)
+        self.robot_settings_fields['max_error_ref'].setDecimals(1)
+        self.robot_settings_fields['max_error_ref'].setValue(self.robot_calibration_settings.max_error_ref)
+        self.robot_settings_fields['max_error_ref'].setSuffix(" mm")
+        self.robot_settings_fields['max_error_ref'].setFixedWidth(80)
+        form_layout.addWidget(self.robot_settings_fields['max_error_ref'], row, 3)
+        row += 1
+
+        # Responsiveness (k)
+        form_layout.addWidget(QLabel("Responsiveness (k):"), row, 0)
+        self.robot_settings_fields['k'] = FocusDoubleSpinBox()
+        self.robot_settings_fields['k'].setRange(0.5, 5.0)
+        self.robot_settings_fields['k'].setDecimals(1)
+        self.robot_settings_fields['k'].setValue(self.robot_calibration_settings.k)
+        self.robot_settings_fields['k'].setFixedWidth(80)
+        form_layout.addWidget(self.robot_settings_fields['k'], row, 1)
+
+        # Derivative Scaling
+        form_layout.addWidget(QLabel("Derivative Scaling:"), row, 2)
+        self.robot_settings_fields['derivative_scaling'] = FocusDoubleSpinBox()
+        self.robot_settings_fields['derivative_scaling'].setRange(0.1, 2.0)
+        self.robot_settings_fields['derivative_scaling'].setDecimals(1)
+        self.robot_settings_fields['derivative_scaling'].setValue(self.robot_calibration_settings.derivative_scaling)
+        self.robot_settings_fields['derivative_scaling'].setFixedWidth(80)
+        form_layout.addWidget(self.robot_settings_fields['derivative_scaling'], row, 3)
+        row += 1
+
+        # Add some vertical spacing
+        spacer = QWidget()
+        spacer.setFixedHeight(8)
+        form_layout.addWidget(spacer, row, 0, 1, 4)
+        row += 1
+
+        # General Settings
+        general_label = QLabel("General Settings:")
+        general_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        form_layout.addWidget(general_label, row, 0, 1, 4)
+        row += 1
+
+        # Z Target Height
+        form_layout.addWidget(QLabel("Z Target (mm):"), row, 0)
+        self.robot_settings_fields['z_target'] = FocusDoubleSpinBox()
+        self.robot_settings_fields['z_target'].setRange(100, 1000)
+        self.robot_settings_fields['z_target'].setDecimals(0)
+        self.robot_settings_fields['z_target'].setValue(self.robot_calibration_settings.z_target)
+        self.robot_settings_fields['z_target'].setSuffix(" mm")
+        self.robot_settings_fields['z_target'].setFixedWidth(80)
+        form_layout.addWidget(self.robot_settings_fields['z_target'], row, 1)
+        row += 1
+
+        # Required IDs (as a text display for now)
+        form_layout.addWidget(QLabel("Required Marker IDs:"), row, 0)
+        required_ids_label = QLabel(str(self.robot_calibration_settings.required_ids))
+        required_ids_label.setStyleSheet("background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 4px; border-radius: 4px;")
+        required_ids_label.setFixedWidth(200)
+        form_layout.addWidget(required_ids_label, row, 1, 1, 3)
+        self.robot_settings_fields['required_ids_display'] = required_ids_label
+        row += 1
+
+        main_layout.addLayout(form_layout)
+
+        # Add control buttons
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(10)
+
+        # Reset to defaults button
+        reset_button = MaterialButton("Reset to Defaults")
+        reset_button.setMaximumWidth(120)
+        reset_button.clicked.connect(self.reset_robot_calibration_settings)
+        button_layout.addWidget(reset_button)
+
+        # Save settings button
+        save_button = MaterialButton("Save Settings")
+        save_button.setMaximumWidth(100)
+        save_button.clicked.connect(self.save_robot_calibration_settings)
+        button_layout.addWidget(save_button)
+
+        button_layout.addStretch()
+        main_layout.addLayout(button_layout)
+
+        group_box.setLayout(main_layout)
+        
+        # Update fields with loaded settings after creating the widgets
+        self.update_robot_settings_fields_from_loaded_settings()
+        
+        return group_box
+
+    def reset_robot_calibration_settings(self):
+        """Reset robot calibration settings to defaults"""
+        try:
+            # Create new default settings
+            default_settings = RobotCalibrationSettings()
+            
+            # Update all fields with default values
+            self.robot_settings_fields['min_step_mm'].setValue(default_settings.min_step_mm)
+            self.robot_settings_fields['max_step_mm'].setValue(default_settings.max_step_mm)
+            self.robot_settings_fields['target_error_mm'].setValue(default_settings.target_error_mm)
+            self.robot_settings_fields['max_error_ref'].setValue(default_settings.max_error_ref)
+            self.robot_settings_fields['k'].setValue(default_settings.k)
+            self.robot_settings_fields['derivative_scaling'].setValue(default_settings.derivative_scaling)
+            self.robot_settings_fields['z_target'].setValue(default_settings.z_target)
+            self.robot_settings_fields['required_ids_display'].setText(str(default_settings.required_ids))
+            
+            # Update the internal settings object
+            self.robot_calibration_settings = default_settings
+            
+            print("Robot calibration settings reset to defaults")
+            self.addLog("Robot calibration settings reset to default values")
+            
+        except Exception as e:
+            print(f"Error resetting robot calibration settings: {e}")
+            self.addLog(f"Error resetting robot calibration settings: {e}")
+
+    def save_robot_calibration_settings(self):
+        """Save current robot calibration settings using SettingsService"""
+        try:
+            # Update settings object from UI fields
+            self.robot_calibration_settings.min_step_mm = self.robot_settings_fields['min_step_mm'].value()
+            self.robot_calibration_settings.max_step_mm = self.robot_settings_fields['max_step_mm'].value()
+            self.robot_calibration_settings.target_error_mm = self.robot_settings_fields['target_error_mm'].value()
+            self.robot_calibration_settings.max_error_ref = self.robot_settings_fields['max_error_ref'].value()
+            self.robot_calibration_settings.k = self.robot_settings_fields['k'].value()
+            self.robot_calibration_settings.derivative_scaling = self.robot_settings_fields['derivative_scaling'].value()
+            self.robot_calibration_settings.z_target = int(self.robot_settings_fields['z_target'].value())
+            
+            # Save using SettingsService if available
+            if self.controller_service and hasattr(self.controller_service, 'settings'):
+                save_result = self.controller_service.settings.save_robot_calibration_settings(self.robot_calibration_settings)
+                if save_result and hasattr(save_result, 'success') and save_result.success:
+                    print("Robot calibration settings saved to service")
+                    self.addLog("Robot calibration settings saved successfully")
+                else:
+                    error_msg = getattr(save_result, 'message', 'Unknown error') if save_result else 'Service unavailable'
+                    print(f"Failed to save robot calibration settings: {error_msg}")
+                    self.addLog(f"Failed to save robot calibration settings: {error_msg}")
+            else:
+                print("Robot calibration settings updated (no service available)")
+                self.addLog("Robot calibration settings updated locally")
+            
+        except Exception as e:
+            print(f"Error saving robot calibration settings: {e}")
+            self.addLog(f"Error saving robot calibration settings: {e}")
+
+    def get_robot_calibration_settings(self):
+        """Get current robot calibration settings"""
+        self.save_robot_calibration_settings()  # Ensure settings are up to date
+        return self.robot_calibration_settings
 
 
 if __name__ == "__main__":

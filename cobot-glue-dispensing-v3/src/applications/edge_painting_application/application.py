@@ -85,3 +85,8 @@ class EdgePaintingApplication(BaseRobotApplication, RobotApplicationInterface):
     def _register_settings(self):
         # Register application-specific settings here
         pass
+
+    def _initialize_application(self):
+        super()._initialize_application()
+        # Additional initialization for Edge Painting Application
+        pass
