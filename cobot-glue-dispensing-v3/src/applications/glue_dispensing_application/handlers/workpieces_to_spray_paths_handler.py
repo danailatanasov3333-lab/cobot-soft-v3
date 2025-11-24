@@ -3,8 +3,9 @@ import numpy as np
 from applications.glue_dispensing_application.settings.enums import GlueSettingKey
 
 
-from modules import utils
+
 from modules.shared.core.ContourStandartized import Contour
+from modules.utils import utils
 from modules.utils.contours import flatten_and_convert_to_list
 
 

@@ -19,8 +19,9 @@ from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 
 from frontend.core.utils.IconLoader import LOGO
+from modules.shared.core.user.User import User, Role
+
 # Import the original User class
-from modules import User, Role
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
