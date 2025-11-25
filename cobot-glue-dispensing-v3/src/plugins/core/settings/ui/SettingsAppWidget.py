@@ -42,9 +42,12 @@ class SettingsAppWidget(AppWidget):
                     self.controller.handle(camera_endpoints.CAMERA_ACTION_RAW_MODE_OFF)
 
             try:
-                # Create SettingsContent without callback - it will emit signals instead
-                self.content_widget = SettingsContent(controller=self.controller)
-                
+                # Create SettingsContent with controller_service - it will emit signals instead
+                self.content_widget = SettingsContent(
+                    controller=self.controller,
+                    controller_service=self.controller_service
+                )
+
                 # Connect to the new unified signal for settings changes
                 self.content_widget.setting_changed.connect(self._handle_setting_change)
                 

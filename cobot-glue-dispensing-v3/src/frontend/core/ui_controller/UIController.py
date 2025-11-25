@@ -395,11 +395,16 @@ class UIController:
             resource = Constants.REQUEST_RESOURCE_CAMERA
             request = settings_endpoints.SETTINGS_CAMERA_SET
 
-
         elif className == GlueSettingsTabLayout.__name__:
             print("Updating Settings Glue", key, value)
             resource = glue_endpoints.REQUEST_RESOURCE_GLUE
             request = glue_endpoints.SETTINGS_GLUE_SET
+
+        elif className == "RobotConfigUI":
+            print("Updating Settings Robot", key, value)
+            resource = Constants.REQUEST_RESOURCE_ROBOT
+            request = settings_endpoints.SETTINGS_ROBOT_SET
+
         else:
             self.logger.error(f"{self.logTag}] Updating Unknown Settings {className} : {key} {value}")
             return

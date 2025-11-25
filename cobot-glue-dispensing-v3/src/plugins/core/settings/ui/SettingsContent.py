@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import QVBoxLayout, QSizePolicy
 
 
 from frontend.widgets.CustomWidgets import CustomTabWidget, BackgroundTabPage
-from plugins.core.settings.controller.robot_config_controller import RobotConfigController
 from plugins.core.settings.ui.robot_settings_tab.RobotConfigUI import RobotConfigUI
 from .CameraSettingsTabLayout import CameraSettingsTabLayout
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
@@ -49,12 +48,13 @@ class SettingsContent(BackgroundWidget):
     # Settings change signal - replaces callback pattern
     setting_changed = QtCore.pyqtSignal(str, object, str)  # key, value, component_type
 
-    def __init__(self, controller=None):
+    def __init__(self, controller=None, controller_service=None):
         super().__init__()
 
-        # Keep minimal controller reference only for RobotConfigController
-        # All other operations should be handled via signals
-        self.controller = controller
+        # Store controller_service for passing to UI components
+        # Prefer controller_service over raw controller
+        self.controller_service = controller_service
+        self.controller = controller  # Legacy fallback
 
         self.setStyleSheet(""" 
             QTabWidget {
@@ -141,11 +141,10 @@ class SettingsContent(BackgroundWidget):
         """Create robot settings tab."""
         self.robotSettingsTab = BackgroundTabPage()
         self.addTab(self.robotSettingsTab, "")
-        
-        # Create robot settings (still needs controller for now due to RobotConfigUI design)
-        robotConfigController = RobotConfigController(self.controller.requestSender)
-        self.robotSettingsTabLayout = RobotConfigUI(self, robotConfigController)
-        
+
+        # Create robot settings using controller_service (signal-based pattern)
+        self.robotSettingsTabLayout = RobotConfigUI(self, self.controller_service)
+
         # For RobotConfigUI widget, we need to add it as a widget, not set it as layout
         robot_tab_layout = QVBoxLayout()
         robot_tab_layout.addWidget(self.robotSettingsTabLayout)
@@ -171,12 +170,14 @@ class SettingsContent(BackgroundWidget):
         # Connect glue settings value changes if glue tab exists
         if self.glueSettingsTabLayout is not None:
             self.glueSettingsTabLayout.value_changed_signal.connect(self._emit_setting_change)
-        
+
         # Connect camera settings value changes if camera tab exists
         if self.cameraSettingsTabLayout is not None:
             self.cameraSettingsTabLayout.value_changed_signal.connect(self._emit_setting_change)
-        
-        # Note: RobotConfigUI uses a different pattern - would need separate handling if required
+
+        # Connect robot settings value changes if robot tab exists
+        if self.robotSettingsTabLayout is not None:
+            self.robotSettingsTabLayout.value_changed_signal.connect(self._emit_setting_change)
 
     def _load_initial_glue_settings(self):
         """Load initial glue settings from the server."""

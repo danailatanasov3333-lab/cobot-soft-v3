@@ -100,28 +100,58 @@ class SettingsService:
     def update_settings(self, settings_type: str, settings_data: Dict[str, Any]) -> None:
         """
         Update settings for a specific type.
-        
+
         Args:
             settings_type: The settings type identifier
-            settings_data: New settings data
+            settings_data: Partial or complete settings data to update
         """
         repository = self.repositories.get(settings_type)
         if repository is None:
             raise ValueError(f"No repository found for settings type: {settings_type}")
-        
+
         try:
-            # Create new settings object from data
-            settings = repository.from_dict(settings_data)
-            
+            # Load current settings
+            current_settings = self.get_settings(settings_type)
+
+            if current_settings is None:
+                # No existing settings, create new from provided data
+                settings = repository.from_dict(settings_data)
+            else:
+                # Convert current settings to dict
+                current_dict = repository.to_dict(current_settings)
+
+                # Update with new data (handles nested keys and case conversion)
+                for key, value in settings_data.items():
+                    # Convert key to uppercase for robot_config (maintains compatibility)
+                    if settings_type == "robot_config":
+                        if '.' in key:
+                            # Handle nested keys (e.g., "robot_info.robot_ip" -> skip nested prefix, use last part)
+                            actual_key = key.split('.')[-1].upper()
+                        else:
+                            actual_key = key.upper()
+                    else:
+                        actual_key = key
+
+                    # Update the dict
+                    current_dict[actual_key] = value
+
+                # Create settings object from updated dict
+                settings = repository.from_dict(current_dict)
+
             # Update cache
             self._settings_cache[settings_type] = settings
-            
+
             # Save immediately
             repository.save(settings)
-            
-            print(f"Updated {settings_type} settings")
+
+            print(f"✅ Updated and saved {settings_type} settings: {list(settings_data.keys())}")
         except SettingsRepositoryError as e:
-            print(f"Failed to update {settings_type} settings: {e}")
+            print(f"❌ Failed to update {settings_type} settings: {e}")
+            raise
+        except Exception as e:
+            print(f"❌ Error updating {settings_type} settings: {e}")
+            import traceback
+            traceback.print_exc()
             raise
     
     def get_settings_by_resource(self, key: str) -> Dict[str, Any]:
@@ -192,7 +222,13 @@ class SettingsService:
             camera_data = {k: v for k, v in settings.items() if k != 'header'}
             self.update_settings("camera", camera_data)
             return
-        
+
+        if header == Constants.REQUEST_RESOURCE_ROBOT:
+            # Remove header and update robot settings
+            robot_data = {k: v for k, v in settings.items() if k != 'header'}
+            self.update_settings("robot_config", robot_data)
+            return
+
         # Handle application-specific settings through registry
         resource_map = {"Glue": "glue"}
         settings_type = resource_map.get(header, header.lower())

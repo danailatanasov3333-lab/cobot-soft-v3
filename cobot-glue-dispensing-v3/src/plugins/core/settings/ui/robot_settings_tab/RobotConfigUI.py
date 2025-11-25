@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QWidget, QLabel,
+    QWidget, QLabel, QMessageBox,
     QVBoxLayout, QHBoxLayout, QScrollArea,
     QListWidget, QComboBox, QDialog, QDialogButtonBox, QTabWidget, QListWidgetItem
 )
@@ -23,9 +23,9 @@ from plugins.core.settings.ui.robot_settings_tab.sub_tabs.safety import SafetySe
 # Main UI Class
 class RobotConfigUI(BaseSettingsTabLayout, QWidget):
     value_changed_signal = pyqtSignal(str, object, str)
-    def __init__(self,parent_widget= None, robotConfigController=None):
+    def __init__(self, parent_widget=None, controller_service=None):
         # super().__init__()
-        BaseSettingsTabLayout.__init__(self,parent_widget)
+        BaseSettingsTabLayout.__init__(self, parent_widget)
         QWidget.__init__(self)
         self.setWindowTitle("Robot Config UI")
         self.resize(1200, 800)
@@ -36,12 +36,14 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
         self._button_translation_map = {}
         self._group_box_translation_map = {}
         self._label_translation_map = {}
+
+        # Store controller_service for robot operations
+        self.controller_service = controller_service
+
         self.init_ui()
         self.connect_ui_signals()
-        self.controller = robotConfigController
+        self.connect_service_handlers()
 
-        # Set UI reference in controller and initialize
-        self.controller.set_ui(self)
         self.translator = get_app_translator()
         self.translator.language_changed.connect(lambda: translate(self))
         translate(self)
@@ -109,36 +111,123 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
 
         self.setLayout(main_layout)
 
-    def on_settings_changed(self,k,v):
-        self.value_changed_signal.emit(k,v,self.className)
+    def on_settings_changed(self, k, v):
+        """Emit value_changed_signal when settings change"""
+        self.value_changed_signal.emit(k, v, self.className)
+
+    def connect_service_handlers(self):
+        """Connect signals to controller_service methods for robot operations"""
+        if not self.controller_service:
+            print("Warning: controller_service not available in RobotConfigUI")
+            return
+
+        # Connect jog operations
+        self.signals.jog_requested.connect(self._handle_jog)
+
+        # Connect movement operations
+        self.signals.move_to_point_requested.connect(self._handle_move_to_point)
+        self.signals.move_to_single_position_requested.connect(self._handle_move_to_position)
+
+        # Connect position operations
+        self.signals.save_current_position_as_point.connect(self._handle_save_current_position)
+
+        # Connect trajectory execution
+        self.signals.execute_trajectory_requested.connect(self._handle_execute_trajectory)
+
+    def _handle_jog(self, command, axis, direction, step):
+        """Handle jog request through controller_service"""
+        if self.controller_service:
+            result = self.controller_service.robot.jog_robot(axis, direction, step)
+            if not result.success:
+                QMessageBox.warning(self, "Jog Error", result.message)
+
+    def _handle_move_to_point(self, group_name):
+        """Handle move to point request"""
+        # This will be implemented based on movement group logic
+        print(f"Move to point in group: {group_name}")
+
+    def _handle_move_to_position(self, group_name):
+        """Handle move to single position request"""
+        # This will be implemented based on position logic
+        print(f"Move to position: {group_name}")
+
+    def _handle_save_current_position(self, group_name):
+        """Handle save current position request"""
+        # This will be implemented based on position save logic
+        print(f"Save current position to: {group_name}")
+
+    def _handle_execute_trajectory(self, group_name):
+        """Handle trajectory execution request"""
+        # This will be implemented based on trajectory logic
+        print(f"Execute trajectory: {group_name}")
 
     def connect_ui_signals(self):
         """Connect UI element signals to custom signals"""
-        # Robot info signals
-        self.general_settings_tab.robot_info_group.ip_edit.textChanged.connect(self.signals.robot_ip_changed.emit)
-        self.general_settings_tab.robot_info_group.tool_edit.valueChanged.connect(self.signals.robot_tool_changed.emit)
-        self.general_settings_tab.robot_info_group.user_edit.valueChanged.connect(self.signals.robot_user_changed.emit)
-        self.general_settings_tab.robot_info_group.tcp_x_offset_edit.valueChanged.connect(self.signals.tcp_x_offset_changed.emit)
-        self.general_settings_tab.robot_info_group.tcp_y_offset_edit.valueChanged.connect(self.signals.tcp_y_offset_changed.emit)
+        # Connect general settings to value_changed_signal
+        # This follows the same pattern as camera and glue settings
+        self.general_settings_tab.general_settings_changed_signal.connect(
+            lambda k, v: self.value_changed_signal.emit(k, v, self.className)
+        )
 
-        # Velocity/acceleration signals
+        # Robot info signals (also emit to value_changed_signal)
+        self.general_settings_tab.robot_info_group.ip_edit.textChanged.connect(
+            lambda value: (self.signals.robot_ip_changed.emit(value),
+                          self.value_changed_signal.emit("robot_ip", value, self.className))
+        )
+        self.general_settings_tab.robot_info_group.tool_edit.valueChanged.connect(
+            lambda value: (self.signals.robot_tool_changed.emit(value),
+                          self.value_changed_signal.emit("robot_tool", value, self.className))
+        )
+        self.general_settings_tab.robot_info_group.user_edit.valueChanged.connect(
+            lambda value: (self.signals.robot_user_changed.emit(value),
+                          self.value_changed_signal.emit("robot_user", value, self.className))
+        )
+        self.general_settings_tab.robot_info_group.tcp_x_offset_edit.valueChanged.connect(
+            lambda value: (self.signals.tcp_x_offset_changed.emit(value),
+                          self.value_changed_signal.emit("tcp_x_offset", value, self.className))
+        )
+        self.general_settings_tab.robot_info_group.tcp_y_offset_edit.valueChanged.connect(
+            lambda value: (self.signals.tcp_y_offset_changed.emit(value),
+                          self.value_changed_signal.emit("tcp_y_offset", value, self.className))
+        )
+
+        # Velocity/acceleration signals (also emit to value_changed_signal)
         for group_name, widgets in self.velocity_acceleration_widgets.items():
             widgets["velocity"].valueChanged.connect(
-                lambda value, gn=group_name: self.signals.velocity_changed.emit(gn, value)
+                lambda value, gn=group_name: (
+                    self.signals.velocity_changed.emit(gn, value),
+                    self.value_changed_signal.emit(f"movement_groups.{gn}.velocity", value, self.className)
+                )
             )
             widgets["acceleration"].valueChanged.connect(
-                lambda value, gn=group_name: self.signals.acceleration_changed.emit(gn, value)
+                lambda value, gn=group_name: (
+                    self.signals.acceleration_changed.emit(gn, value),
+                    self.value_changed_signal.emit(f"movement_groups.{gn}.acceleration", value, self.className)
+                )
             )
 
-        # Safety limit signals
+        # Safety limit signals (also emit to value_changed_signal)
         for limit_name, spinbox in self.safety_settings_tab.safety_group.safety_limits.items():
             spinbox.valueChanged.connect(
-                lambda value, ln=limit_name: self.signals.safety_limit_changed.emit(ln, value)
+                lambda value, ln=limit_name: (
+                    self.signals.safety_limit_changed.emit(ln, value),
+                    self.value_changed_signal.emit(f"safety_limits.{ln.lower()}", value, self.className)
+                )
             )
 
-        # Global motion settings signals
-        self.general_settings_tab.global_group.global_velocity.valueChanged.connect(self.signals.global_velocity_changed.emit)
-        self.general_settings_tab.global_group.global_acceleration.valueChanged.connect(self.signals.global_acceleration_changed.emit)
+        # Global motion settings signals (also emit to value_changed_signal)
+        self.general_settings_tab.global_group.global_velocity.valueChanged.connect(
+            lambda value: (
+                self.signals.global_velocity_changed.emit(value),
+                self.value_changed_signal.emit("global_motion_settings.global_velocity", value, self.className)
+            )
+        )
+        self.general_settings_tab.global_group.global_acceleration.valueChanged.connect(
+            lambda value: (
+                self.signals.global_acceleration_changed.emit(value),
+                self.value_changed_signal.emit("global_motion_settings.global_acceleration", value, self.className)
+            )
+        )
 
         # Connect jog widget signals
         self.jog_widget.jogRequested.connect(self.signals.jog_requested.emit)
