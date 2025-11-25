@@ -1052,6 +1052,11 @@ class RobotConfigController:
         self.ui.tcp_x_offset_edit.setValue(config.tcp_x_offset)
         self.ui.tcp_y_offset_edit.setValue(config.tcp_y_offset)
 
+        # Apply calibration aruco IDs
+        if hasattr(self.ui, 'aruco_ids_edit'):
+            aruco_ids_str = ', '.join(map(str, config.calibration_aruco_ids))
+            self.ui.aruco_ids_edit.setText(aruco_ids_str)
+
         # Apply safety limits
         if hasattr(self.ui, 'safety_limits'):
             self.ui.safety_limits['X_MIN'].setValue(config.safety_limits.x_min)
@@ -1162,12 +1167,23 @@ class RobotConfigController:
         if hasattr(self.ui, 'max_jog_step'):
             global_motion_settings.max_jog_step = self.ui.max_jog_step.value()
 
+        # Parse calibration aruco IDs from UI
+        calibration_aruco_ids = [0, 8, 99, 107]  # default
+        if hasattr(self.ui, 'aruco_ids_edit'):
+            try:
+                aruco_ids_text = self.ui.aruco_ids_edit.text().strip()
+                calibration_aruco_ids = [int(x.strip()) for x in aruco_ids_text.split(',') if x.strip()]
+            except ValueError:
+                print("Warning: Invalid ArUco IDs format, using defaults")
+                calibration_aruco_ids = [0, 8, 99, 107]
+
         return RobotConfig(
             robot_ip=self.ui.ip_edit.text(),
             robot_tool=self.ui.tool_edit.value(),
             robot_user=self.ui.user_edit.value(),
             tcp_x_offset=self.ui.tcp_x_offset_edit.value(),
             tcp_y_offset=self.ui.tcp_y_offset_edit.value(),
+            calibration_aruco_ids=calibration_aruco_ids,
             movement_groups=movement_groups,
             safety_limits=safety_limits,
             global_motion_settings=global_motion_settings
@@ -1281,6 +1297,19 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
         
         # Add Robot Info to scroll content
         scroll_layout.addWidget(self.robot_group)
+
+        # Calibration Settings
+        self.calibration_group = QGroupBox("Calibration Settings")
+        calibration_layout = QGridLayout()
+
+        self.aruco_ids_label = QLabel("ArUco Marker IDs:")
+        calibration_layout.addWidget(self.aruco_ids_label, 0, 0)
+        self.aruco_ids_edit = FocusLineEdit("0, 8, 99, 107")
+        self.aruco_ids_edit.setPlaceholderText("Enter comma-separated IDs (e.g., 0, 8, 99, 107)")
+        calibration_layout.addWidget(self.aruco_ids_edit, 0, 1)
+
+        self.calibration_group.setLayout(calibration_layout)
+        scroll_layout.addWidget(self.calibration_group)
 
         # Safety Settings
         self.safety_group = QGroupBox("Safety Limits")

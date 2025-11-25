@@ -98,6 +98,7 @@ def get_default_config():
         tcp_x_step_offset=0.1,
         tcp_y_step_distance=50.0,
         tcp_y_step_offset=0.1,
+        calibration_aruco_ids=[0, 8, 99, 107],
         movement_groups=movement_groups,
         safety_limits=SafetyLimits(),
         global_motion_settings=GlobalMotionSettings()
@@ -119,6 +120,9 @@ class RobotConfig:
     tcp_y_step_offset: float = 0.1
     offset_direction_map: OffsetDirectionMap = field(default_factory=OffsetDirectionMap)
 
+    # Calibration settings
+    calibration_aruco_ids: List[int] = field(default_factory=lambda: [0, 8, 99, 107])
+
     movement_groups: Dict[str, MovementGroup] = field(default_factory=dict)
     safety_limits: SafetyLimits = field(default_factory=SafetyLimits)
     global_motion_settings: GlobalMotionSettings = field(default_factory=GlobalMotionSettings)
@@ -134,6 +138,10 @@ class RobotConfig:
         global_motion_settings = GlobalMotionSettings.from_dict(data.get("GLOBAL_MOTION_SETTINGS", {}))
         # Create OffsetDirectionMap from the dictionary (with default values if missing)
         offset_direction_map = OffsetDirectionMap.from_dict(data.get("OFFSET_DIRECTION_MAP", {}))
+
+        # Get calibration aruco IDs (with default values if missing)
+        calibration_aruco_ids = data.get("CALIBRATION_ARUCO_IDS", [0, 8, 99, 107])
+
         return cls(
             robot_ip=data.get("ROBOT_IP", "192.168.58.2"),
             robot_tool=data.get("ROBOT_TOOL", 0),
@@ -145,6 +153,7 @@ class RobotConfig:
             tcp_y_step_distance=data.get("TCP_Y_STEP_DISTANCE", 50.0), # this will be removed in future
             tcp_y_step_offset=data.get("TCP_Y_STEP_OFFSET", 0.1), # step/coeff per mm y
             offset_direction_map=offset_direction_map,
+            calibration_aruco_ids=calibration_aruco_ids,
             movement_groups=movement_groups,
             safety_limits=safety_limits,
             global_motion_settings=global_motion_settings
@@ -163,6 +172,7 @@ class RobotConfig:
             "TCP_Y_STEP_DISTANCE": self.tcp_y_step_distance,
             "TCP_Y_STEP_OFFSET": self.tcp_y_step_offset,
             "OFFSET_DIRECTION_MAP": self.offset_direction_map.to_dict(),
+            "CALIBRATION_ARUCO_IDS": self.calibration_aruco_ids,
             "MOVEMENT_GROUPS": {name: group.to_dict() for name, group in self.movement_groups.items()},
             "SAFETY_LIMITS": self.safety_limits.to_dict(),
             "GLOBAL_MOTION_SETTINGS": self.global_motion_settings.to_dict()
