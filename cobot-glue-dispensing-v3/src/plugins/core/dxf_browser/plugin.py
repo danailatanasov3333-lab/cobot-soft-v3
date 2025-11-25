@@ -64,11 +64,16 @@ class DxfBrowserPlugin(IPlugin):
             if self.controller_service:
                 controller = self.controller_service.get_controller()
             
+            # Always create a fresh widget instance
             widget = DxfBrowserAppWidget(
                 parent=parent,
                 controller=controller,
                 controller_service=self.controller_service
             )
+
+            # Store weak reference for cleanup purposes
+            self._widget_instance = widget
+
             return widget
         except Exception as e:
             print(f"Error creating DXF Browser widget: {e}")
@@ -81,18 +86,22 @@ class DxfBrowserPlugin(IPlugin):
 
     def cleanup(self) -> None:
         """Cleanup resources when the plugin is unloaded"""
-        """Cleanup plugin resources"""
         try:
-            if self._widget_instance:
-                # Clean up widget if it has a cleanup method
-                if hasattr(self._widget_instance, 'clean_up'):
-                    self._widget_instance.clean_up()
-                self._widget_instance = None
+            # Check if widget still exists and hasn't been deleted by Qt
+            if self._widget_instance is not None:
+                try:
+                    if hasattr(self._widget_instance, 'clean_up'):
+                        self._widget_instance.clean_up()
+                except RuntimeError:
+                    # Widget was already deleted by Qt's parent-child cleanup
+                    pass
+                finally:
+                    self._widget_instance = None
 
             self.controller_service = None
             self._mark_initialized(False)
         except Exception as e:
-            print(f"Error during gallery plugin cleanup: {e}")
+            print(f"Error during DXF Browser plugin cleanup: {e}")
 
     def get_status(self) -> Dict[str, Any]:
         """Get the current status of the plugin"""

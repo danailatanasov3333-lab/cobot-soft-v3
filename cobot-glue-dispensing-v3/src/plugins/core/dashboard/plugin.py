@@ -72,7 +72,10 @@ class DashboardPlugin(IPlugin):
         """
         try:
             controller = self.controller_service.get_controller()
+            # Always create a fresh widget instance
             widget = DashboardAppWidget(controller=controller)
+            # Store weak reference for cleanup purposes
+            self._widget_instance = widget
             return widget
         except Exception as e:
             print(f"Error creating dashboard widget: {e}")
@@ -83,9 +86,20 @@ class DashboardPlugin(IPlugin):
 
     def cleanup(self) -> None:
         """Cleanup resources used by the dashboard plugin"""
-        if self._widget_instance:
-            self._widget_instance.deleteLater()
-            self._widget_instance = None
+        try:
+            # Check if widget still exists and hasn't been deleted by Qt
+            if self._widget_instance is not None:
+                try:
+                    if hasattr(self._widget_instance, 'clean_up'):
+                        self._widget_instance.clean_up()
+                    self._widget_instance.deleteLater()
+                except RuntimeError:
+                    # Widget was already deleted by Qt's parent-child cleanup
+                    pass
+                finally:
+                    self._widget_instance = None
+        except Exception as e:
+            print(f"Error during dashboard plugin cleanup: {e}")
 
     def can_load(self) -> bool:
         """

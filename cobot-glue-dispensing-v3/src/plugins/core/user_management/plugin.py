@@ -58,18 +58,27 @@ class UserManagementPlugin(IPlugin):
         if not self._is_initialized:
             raise RuntimeError("Plugin not initialized")
 
-        if not self._widget_instance:
-            self._widget_instance = UserManagementAppWidget()
+        # Always create a fresh widget instance - don't cache to avoid Qt parent/child issues
+        widget = UserManagementAppWidget()
 
-        print(f"Creating User Management widget: {self._widget_instance}")
-        return self._widget_instance
+        # Store weak reference for cleanup purposes
+        self._widget_instance = widget
+
+        print(f"Creating User Management widget: {widget}")
+        return widget
 
     def cleanup(self) -> None:
         try:
-            if self._widget_instance:
-                if hasattr(self._widget_instance, 'cleanup'):
-                    self._widget_instance.cleanup()
-                self._widget_instance = None
+            # Check if widget still exists and hasn't been deleted by Qt
+            if self._widget_instance is not None:
+                try:
+                    if hasattr(self._widget_instance, 'cleanup'):
+                        self._widget_instance.cleanup()
+                except RuntimeError:
+                    # Widget was already deleted by Qt's parent-child cleanup
+                    pass
+                finally:
+                    self._widget_instance = None
 
             self._mark_initialized(False)
         except Exception as e:

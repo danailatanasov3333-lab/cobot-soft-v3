@@ -73,24 +73,31 @@ class GlueWeightCellsSettingsPlugin(IPlugin):
         if not self._is_initialized:
             raise RuntimeError("Plugin not initialized")
 
-        # Create widget instance if it doesn't exist
-        if not self._widget_instance:
-            self._widget_instance = GlueWeightCellSettingsAppWidget(
-                parent=parent,
-                controller=self.controller_service.controller if hasattr(self, 'controller_service') else None,
-                controller_service=self.controller_service if hasattr(self, 'controller_service') else None
-            )
+        # Always create a fresh widget instance - don't cache to avoid Qt parent/child issues
+        widget = GlueWeightCellSettingsAppWidget(
+            parent=parent,
+            controller=self.controller_service.controller if hasattr(self, 'controller_service') else None,
+            controller_service=self.controller_service if hasattr(self, 'controller_service') else None
+        )
 
-        return self._widget_instance
+        # Store weak reference for cleanup purposes
+        self._widget_instance = widget
+
+        return widget
 
     def cleanup(self) -> None:
         """Cleanup plugin resources"""
         try:
-            if self._widget_instance:
-                # Clean up widget if it has a cleanup method
-                if hasattr(self._widget_instance, 'clean_up'):
-                    self._widget_instance.clean_up()
-                self._widget_instance = None
+            # Check if widget still exists and hasn't been deleted by Qt
+            if self._widget_instance is not None:
+                try:
+                    if hasattr(self._widget_instance, 'clean_up'):
+                        self._widget_instance.clean_up()
+                except RuntimeError:
+                    # Widget was already deleted by Qt's parent-child cleanup
+                    pass
+                finally:
+                    self._widget_instance = None
 
             self.controller_service = None
             self._mark_initialized(False)

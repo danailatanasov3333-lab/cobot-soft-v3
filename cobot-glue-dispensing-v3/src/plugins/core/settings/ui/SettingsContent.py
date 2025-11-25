@@ -209,13 +209,58 @@ class SettingsContent(BackgroundWidget):
     
     def clean_up(self):
         """Clean up resources when closing the settings content"""
-        if self.cameraSettingsTabLayout is not None:
-            self.cameraSettingsTabLayout.clean_up()
-        # TODO: Add cleanup for other tabs if needed
-        # if self.robotSettingsTabLayout is not None:
-        #     self.robotSettingsTabLayout.clean_up()
-        # if self.glueSettingsTabLayout is not None:
-        #     self.glueSettingsTabLayout.clean_up()
+        try:
+            # Disconnect all signals to prevent memory leaks
+            try:
+                self.update_camera_feed_requested.disconnect()
+            except:
+                pass
+            try:
+                self.raw_mode_requested.disconnect()
+            except:
+                pass
+            try:
+                self.setting_changed.disconnect()
+            except:
+                pass
+
+            # Clean up camera settings tab
+            if self.cameraSettingsTabLayout is not None:
+                try:
+                    if hasattr(self.cameraSettingsTabLayout, 'clean_up'):
+                        self.cameraSettingsTabLayout.clean_up()
+                except RuntimeError:
+                    pass  # Widget already deleted
+                self.cameraSettingsTabLayout = None
+
+            # Clean up robot settings tab
+            if self.robotSettingsTabLayout is not None:
+                try:
+                    if hasattr(self.robotSettingsTabLayout, 'clean_up'):
+                        self.robotSettingsTabLayout.clean_up()
+                except RuntimeError:
+                    pass  # Widget already deleted
+                self.robotSettingsTabLayout = None
+
+            # Clean up glue settings tab
+            if self.glueSettingsTabLayout is not None:
+                try:
+                    if hasattr(self.glueSettingsTabLayout, 'clean_up'):
+                        self.glueSettingsTabLayout.clean_up()
+                except RuntimeError:
+                    pass  # Widget already deleted
+                self.glueSettingsTabLayout = None
+
+            # Clear tab references
+            self.cameraSettingsTab = None
+            self.robotSettingsTab = None
+            self.glueSettingsTab = None
+
+            # Clear controller reference
+            self.controller = None
+
+        except Exception as e:
+            print(f"Error during SettingsContent cleanup: {e}")
 
     def updateCameraFeed(self, frame):
         """Update the camera feed in the camera settings tab."""
