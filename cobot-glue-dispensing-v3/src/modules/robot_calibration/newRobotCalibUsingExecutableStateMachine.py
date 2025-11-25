@@ -107,6 +107,12 @@ class RefactoredRobotCalibrationPipeline:
         context.required_ids = set(config.required_ids)
         context.Z_target = config.z_target
 
+        # Axis mapping configuration
+        context.axis_mapping_marker_id = config.axis_mapping_marker_id
+        context.axis_mapping_move_mm = config.axis_mapping_move_mm
+        context.axis_mapping_max_attempts = config.axis_mapping_max_attempts
+        context.axis_mapping_delay = config.axis_mapping_delay
+
         # Camera configuration
         context.system.camera_settings.set_draw_contours(False)
         context.chessboard_size = (
@@ -225,7 +231,11 @@ class RefactoredRobotCalibrationPipeline:
             context.system, 
             context.calibration_vision, 
             context.calibration_robot_controller, 
-            context.logger_context
+            context.logger_context,
+            marker_id=context.axis_mapping_marker_id,
+            move_mm=context.axis_mapping_move_mm,
+            max_attempts=context.axis_mapping_max_attempts,
+            delay_after_move=context.axis_mapping_delay
         )
         context.image_to_robot_mapping = result.data
         time.sleep(1)

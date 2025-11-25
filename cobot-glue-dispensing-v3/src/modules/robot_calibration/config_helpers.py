@@ -26,6 +26,10 @@ class RobotCalibrationConfig:
                  robot_service,
                  required_ids,
                  z_target,
+                 axis_mapping_marker_id=4,
+                 axis_mapping_move_mm=100.0,
+                 axis_mapping_max_attempts=100,
+                 axis_mapping_delay=1.0,
                  debug=False,
                  step_by_step=False,
                  live_visualization=False):
@@ -33,6 +37,10 @@ class RobotCalibrationConfig:
         self.robot_service = robot_service
         self.required_ids = required_ids
         self.z_target = z_target
+        self.axis_mapping_marker_id = axis_mapping_marker_id
+        self.axis_mapping_move_mm = axis_mapping_move_mm
+        self.axis_mapping_max_attempts = axis_mapping_max_attempts
+        self.axis_mapping_delay = axis_mapping_delay
         self.debug = debug
         self.step_by_step = step_by_step
         self.live_visualization = live_visualization

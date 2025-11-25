@@ -6,10 +6,17 @@ from modules.robot_calibration.states.robot_calibration_states import RobotCalib
 from core.model.robot.enums.axis import ImageAxis, Direction, ImageToRobotMapping, AxisMapping
 from modules.robot_calibration.states.state_result import StateResult
 
-def handle_axis_mapping_state(system, calibration_vision, calibration_robot_controller, logger_context):
+def handle_axis_mapping_state(system, calibration_vision, calibration_robot_controller, logger_context,
+                             marker_id=4, move_mm=100.0, max_attempts=100, delay_after_move=1.0):
     """Handles the axis mapping calibration state."""
     try:
-        mapping = auto_calibrate_image_to_robot_mapping(system, calibration_vision, calibration_robot_controller)
+        mapping = auto_calibrate_image_to_robot_mapping(
+            system, calibration_vision, calibration_robot_controller,
+            marker_id=marker_id,
+            move_mm=move_mm,
+            max_attempts=max_attempts,
+            delay_after_move=delay_after_move
+        )
         return StateResult(success=True,message="Axis mapping calibration successful",next_state=RobotCalibrationStates.LOOKING_FOR_CHESSBOARD,data=mapping)
 
     except Exception as e:
@@ -46,13 +53,14 @@ def get_marker_position(system, calibration_vision, MARKER_ID, MAX_ATTEMPTS):
 
 
 
-def auto_calibrate_image_to_robot_mapping(system, calibration_vision, calibration_robot_controller):
+def auto_calibrate_image_to_robot_mapping(system, calibration_vision, calibration_robot_controller,
+                                         marker_id=4, move_mm=100, max_attempts=100, delay_after_move=1.0):
     print("=== Performing Axis Mapping Calibration ===")
 
-    MARKER_ID = 4
-    MOVE_MM = 100
-    MAX_ATTEMPTS = 100
-    DELAY_AFTER_MOVE = 1.0
+    MARKER_ID = marker_id
+    MOVE_MM = move_mm
+    MAX_ATTEMPTS = max_attempts
+    DELAY_AFTER_MOVE = delay_after_move
 
     # Step 1: initial position
     before_x, before_y = get_marker_position(system, calibration_vision, MARKER_ID, MAX_ATTEMPTS)

@@ -25,7 +25,9 @@ from modules.robot_calibration.config_helpers import AdaptiveMovementConfig, Rob
 def calibrate_robot(application):
         robot_config = application.robotService.robot_config
         required_ids = robot_config.calibration_aruco_ids if robot_config else [0, 8, 99, 107]
+        z_target = robot_config.calibration_z_target if robot_config else 200.0
         print(f"Robot Calibration: Using required IDs from settings: {required_ids}")
+        print(f"Robot Calibration: Using Z target from settings: {z_target}")
         try:
 
             adaptive_movement_config = AdaptiveMovementConfig(
@@ -49,7 +51,11 @@ def calibrate_robot(application):
                 vision_system=application.visionService,
                 robot_service=application.robotService,
                 required_ids=required_ids,
-                z_target=200,# height for refined marker search
+                z_target=z_target,
+                axis_mapping_marker_id=robot_config.calibration_axis_mapping_marker_id if robot_config else 4,
+                axis_mapping_move_mm=robot_config.calibration_axis_mapping_move_mm if robot_config else 100.0,
+                axis_mapping_max_attempts=robot_config.calibration_axis_mapping_max_attempts if robot_config else 100,
+                axis_mapping_delay=robot_config.calibration_axis_mapping_delay if robot_config else 1.0,
                 debug=False,
                 step_by_step=False,
                 live_visualization=False

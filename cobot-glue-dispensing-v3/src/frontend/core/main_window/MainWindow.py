@@ -182,18 +182,44 @@ class MainWindow(TranslatableWidget):
 
         # Connect the app's close signal
         app_widget.app_closed.connect(self.close_current_app)
-        # Add the app widget to the stacked widget (index 1)
+
+        # Properly remove and clean up the old app widget if it exists
         if self.stacked_widget.count() > 1:
-            # Remove existing app widget
             old_app = self.stacked_widget.widget(1)
-            old_app.clean_up()  # Call cleanup if needed
-            print(f"show_app MainWindow: Closing old app widget - {old_app}")
+            print(f"show_app MainWindow: Cleaning up old app widget - {old_app}")
+
+            # Disconnect all signals to prevent memory leaks
+            try:
+                old_app.app_closed.disconnect()
+            except:
+                pass
+
+            # Call cleanup if available
+            if hasattr(old_app, 'clean_up'):
+                try:
+                    old_app.clean_up()
+                except Exception as e:
+                    print(f"Error during cleanup: {e}")
+
+            # Hide the widget before removing
+            old_app.hide()
+
+            # Remove from stacked widget
             self.stacked_widget.removeWidget(old_app)
+
+            # Delete the widget properly
+            old_app.setParent(None)
             old_app.deleteLater()
 
+        # Add the new app widget to the stacked widget (index 1)
         self.stacked_widget.addWidget(app_widget)
+
         # Switch to the app view (index 1)
         self.stacked_widget.setCurrentIndex(1)
+
+        # Show the widget
+        app_widget.show()
+
         print(f"show_app App '{app_name}' is now running. Press ESC to close or click the back button.")
         return app_widget
 
@@ -203,21 +229,36 @@ class MainWindow(TranslatableWidget):
         if self.current_running_app:
             print(f"MainWindow: Closing app - {self.current_running_app}")
 
-            # check if current app is dashboard
-            if self.current_running_app == WidgetType.DASHBOARD.value:
-                print("MainWindow: Closing Dashboard App Widget and cleaning up")
-                self.stacked_widget.widget(1).clean_up()
-            else:
-                print(f"MainWindow: Closing App Widget - {self.current_running_app}")
+            # Get the current app widget if it exists
+            if self.stacked_widget.count() > 1:
+                app_widget = self.stacked_widget.widget(1)
+
+                # Disconnect signals to prevent memory leaks
+                try:
+                    app_widget.app_closed.disconnect()
+                except:
+                    pass
+
+                # Call cleanup method if available
+                if hasattr(app_widget, 'clean_up'):
+                    try:
+                        print(f"MainWindow: Calling clean_up on {self.current_running_app}")
+                        app_widget.clean_up()
+                    except Exception as e:
+                        print(f"Error during app cleanup: {e}")
+
+                # Hide widget before removing
+                app_widget.hide()
+
+                # Remove the app widget from stacked widget
+                self.stacked_widget.removeWidget(app_widget)
+
+                # Properly delete the widget
+                app_widget.setParent(None)
+                app_widget.deleteLater()
 
             # Switch back to the folder view (index 0)
             self.stacked_widget.setCurrentIndex(0)
-
-            # Remove the app widget
-            if self.stacked_widget.count() > 1:
-                app_widget = self.stacked_widget.widget(1)
-                self.stacked_widget.removeWidget(app_widget)
-                app_widget.deleteLater()
 
             # Close the app in the folder if needed
             if self.current_app_folder:
@@ -226,6 +267,8 @@ class MainWindow(TranslatableWidget):
             # Clear the running app info
             self.current_running_app = None
             self.current_app_folder = None
+
+            print("MainWindow: App closed successfully, returned to folder view")
 
 
     def setup_ui(self):

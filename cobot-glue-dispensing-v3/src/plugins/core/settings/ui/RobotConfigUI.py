@@ -1057,6 +1057,21 @@ class RobotConfigController:
             aruco_ids_str = ', '.join(map(str, config.calibration_aruco_ids))
             self.ui.aruco_ids_edit.setText(aruco_ids_str)
 
+        if hasattr(self.ui, 'z_target_edit'):
+            self.ui.z_target_edit.setValue(config.calibration_z_target)
+
+        if hasattr(self.ui, 'axis_mapping_marker_edit'):
+            self.ui.axis_mapping_marker_edit.setValue(config.calibration_axis_mapping_marker_id)
+
+        if hasattr(self.ui, 'axis_mapping_move_edit'):
+            self.ui.axis_mapping_move_edit.setValue(config.calibration_axis_mapping_move_mm)
+
+        if hasattr(self.ui, 'axis_mapping_attempts_edit'):
+            self.ui.axis_mapping_attempts_edit.setValue(config.calibration_axis_mapping_max_attempts)
+
+        if hasattr(self.ui, 'axis_mapping_delay_edit'):
+            self.ui.axis_mapping_delay_edit.setValue(config.calibration_axis_mapping_delay)
+
         # Apply safety limits
         if hasattr(self.ui, 'safety_limits'):
             self.ui.safety_limits['X_MIN'].setValue(config.safety_limits.x_min)
@@ -1177,6 +1192,26 @@ class RobotConfigController:
                 print("Warning: Invalid ArUco IDs format, using defaults")
                 calibration_aruco_ids = [0, 8, 99, 107]
 
+        calibration_z_target = 200.0
+        if hasattr(self.ui, 'z_target_edit'):
+            calibration_z_target = self.ui.z_target_edit.value()
+
+        calibration_axis_mapping_marker_id = 4
+        if hasattr(self.ui, 'axis_mapping_marker_edit'):
+            calibration_axis_mapping_marker_id = self.ui.axis_mapping_marker_edit.value()
+
+        calibration_axis_mapping_move_mm = 100.0
+        if hasattr(self.ui, 'axis_mapping_move_edit'):
+            calibration_axis_mapping_move_mm = self.ui.axis_mapping_move_edit.value()
+
+        calibration_axis_mapping_max_attempts = 100
+        if hasattr(self.ui, 'axis_mapping_attempts_edit'):
+            calibration_axis_mapping_max_attempts = self.ui.axis_mapping_attempts_edit.value()
+
+        calibration_axis_mapping_delay = 1.0
+        if hasattr(self.ui, 'axis_mapping_delay_edit'):
+            calibration_axis_mapping_delay = self.ui.axis_mapping_delay_edit.value()
+
         return RobotConfig(
             robot_ip=self.ui.ip_edit.text(),
             robot_tool=self.ui.tool_edit.value(),
@@ -1184,6 +1219,11 @@ class RobotConfigController:
             tcp_x_offset=self.ui.tcp_x_offset_edit.value(),
             tcp_y_offset=self.ui.tcp_y_offset_edit.value(),
             calibration_aruco_ids=calibration_aruco_ids,
+            calibration_z_target=calibration_z_target,
+            calibration_axis_mapping_marker_id=calibration_axis_mapping_marker_id,
+            calibration_axis_mapping_move_mm=calibration_axis_mapping_move_mm,
+            calibration_axis_mapping_max_attempts=calibration_axis_mapping_max_attempts,
+            calibration_axis_mapping_delay=calibration_axis_mapping_delay,
             movement_groups=movement_groups,
             safety_limits=safety_limits,
             global_motion_settings=global_motion_settings
@@ -1307,6 +1347,47 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
         self.aruco_ids_edit = FocusLineEdit("0, 8, 99, 107")
         self.aruco_ids_edit.setPlaceholderText("Enter comma-separated IDs (e.g., 0, 8, 99, 107)")
         calibration_layout.addWidget(self.aruco_ids_edit, 0, 1)
+
+        self.z_target_label = QLabel("Z Target Height:")
+        calibration_layout.addWidget(self.z_target_label, 1, 0)
+        self.z_target_edit = FocusDoubleSpinBox()
+        self.z_target_edit.setRange(0, 1000)
+        self.z_target_edit.setValue(200.0)
+        self.z_target_edit.setSuffix(" mm")
+        self.z_target_edit.setDecimals(1)
+        calibration_layout.addWidget(self.z_target_edit, 1, 1)
+
+        self.axis_mapping_marker_label = QLabel("Axis Mapping Marker ID:")
+        calibration_layout.addWidget(self.axis_mapping_marker_label, 2, 0)
+        self.axis_mapping_marker_edit = FocusSpinBox()
+        self.axis_mapping_marker_edit.setRange(0, 1000)
+        self.axis_mapping_marker_edit.setValue(4)
+        calibration_layout.addWidget(self.axis_mapping_marker_edit, 2, 1)
+
+        self.axis_mapping_move_label = QLabel("Axis Mapping Move Distance:")
+        calibration_layout.addWidget(self.axis_mapping_move_label, 3, 0)
+        self.axis_mapping_move_edit = FocusDoubleSpinBox()
+        self.axis_mapping_move_edit.setRange(1, 500)
+        self.axis_mapping_move_edit.setValue(100.0)
+        self.axis_mapping_move_edit.setSuffix(" mm")
+        self.axis_mapping_move_edit.setDecimals(1)
+        calibration_layout.addWidget(self.axis_mapping_move_edit, 3, 1)
+
+        self.axis_mapping_attempts_label = QLabel("Max Detection Attempts:")
+        calibration_layout.addWidget(self.axis_mapping_attempts_label, 4, 0)
+        self.axis_mapping_attempts_edit = FocusSpinBox()
+        self.axis_mapping_attempts_edit.setRange(1, 1000)
+        self.axis_mapping_attempts_edit.setValue(100)
+        calibration_layout.addWidget(self.axis_mapping_attempts_edit, 4, 1)
+
+        self.axis_mapping_delay_label = QLabel("Post-Movement Delay:")
+        calibration_layout.addWidget(self.axis_mapping_delay_label, 5, 0)
+        self.axis_mapping_delay_edit = FocusDoubleSpinBox()
+        self.axis_mapping_delay_edit.setRange(0.1, 10.0)
+        self.axis_mapping_delay_edit.setValue(1.0)
+        self.axis_mapping_delay_edit.setSuffix(" s")
+        self.axis_mapping_delay_edit.setDecimals(1)
+        calibration_layout.addWidget(self.axis_mapping_delay_edit, 5, 1)
 
         self.calibration_group.setLayout(calibration_layout)
         scroll_layout.addWidget(self.calibration_group)

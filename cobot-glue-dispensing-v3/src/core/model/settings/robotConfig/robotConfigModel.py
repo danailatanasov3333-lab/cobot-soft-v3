@@ -99,6 +99,11 @@ def get_default_config():
         tcp_y_step_distance=50.0,
         tcp_y_step_offset=0.1,
         calibration_aruco_ids=[0, 8, 99, 107],
+        calibration_z_target=200.0,
+        calibration_axis_mapping_marker_id=4,
+        calibration_axis_mapping_move_mm=100.0,
+        calibration_axis_mapping_max_attempts=100,
+        calibration_axis_mapping_delay=1.0,
         movement_groups=movement_groups,
         safety_limits=SafetyLimits(),
         global_motion_settings=GlobalMotionSettings()
@@ -122,6 +127,11 @@ class RobotConfig:
 
     # Calibration settings
     calibration_aruco_ids: List[int] = field(default_factory=lambda: [0, 8, 99, 107])
+    calibration_z_target: float = 200.0  # Z height for refined marker search
+    calibration_axis_mapping_marker_id: int = 4  # Marker ID used for axis mapping
+    calibration_axis_mapping_move_mm: float = 100.0  # Movement distance for axis mapping
+    calibration_axis_mapping_max_attempts: int = 100  # Max attempts to find marker
+    calibration_axis_mapping_delay: float = 1.0  # Delay after movement in seconds
 
     movement_groups: Dict[str, MovementGroup] = field(default_factory=dict)
     safety_limits: SafetyLimits = field(default_factory=SafetyLimits)
@@ -141,6 +151,11 @@ class RobotConfig:
 
         # Get calibration aruco IDs (with default values if missing)
         calibration_aruco_ids = data.get("CALIBRATION_ARUCO_IDS", [0, 8, 99, 107])
+        calibration_z_target = data.get("CALIBRATION_Z_TARGET", 200.0)
+        calibration_axis_mapping_marker_id = data.get("CALIBRATION_AXIS_MAPPING_MARKER_ID", 4)
+        calibration_axis_mapping_move_mm = data.get("CALIBRATION_AXIS_MAPPING_MOVE_MM", 100.0)
+        calibration_axis_mapping_max_attempts = data.get("CALIBRATION_AXIS_MAPPING_MAX_ATTEMPTS", 100)
+        calibration_axis_mapping_delay = data.get("CALIBRATION_AXIS_MAPPING_DELAY", 1.0)
 
         return cls(
             robot_ip=data.get("ROBOT_IP", "192.168.58.2"),
@@ -154,6 +169,11 @@ class RobotConfig:
             tcp_y_step_offset=data.get("TCP_Y_STEP_OFFSET", 0.1), # step/coeff per mm y
             offset_direction_map=offset_direction_map,
             calibration_aruco_ids=calibration_aruco_ids,
+            calibration_z_target=calibration_z_target,
+            calibration_axis_mapping_marker_id=calibration_axis_mapping_marker_id,
+            calibration_axis_mapping_move_mm=calibration_axis_mapping_move_mm,
+            calibration_axis_mapping_max_attempts=calibration_axis_mapping_max_attempts,
+            calibration_axis_mapping_delay=calibration_axis_mapping_delay,
             movement_groups=movement_groups,
             safety_limits=safety_limits,
             global_motion_settings=global_motion_settings
@@ -173,6 +193,11 @@ class RobotConfig:
             "TCP_Y_STEP_OFFSET": self.tcp_y_step_offset,
             "OFFSET_DIRECTION_MAP": self.offset_direction_map.to_dict(),
             "CALIBRATION_ARUCO_IDS": self.calibration_aruco_ids,
+            "CALIBRATION_Z_TARGET": self.calibration_z_target,
+            "CALIBRATION_AXIS_MAPPING_MARKER_ID": self.calibration_axis_mapping_marker_id,
+            "CALIBRATION_AXIS_MAPPING_MOVE_MM": self.calibration_axis_mapping_move_mm,
+            "CALIBRATION_AXIS_MAPPING_MAX_ATTEMPTS": self.calibration_axis_mapping_max_attempts,
+            "CALIBRATION_AXIS_MAPPING_DELAY": self.calibration_axis_mapping_delay,
             "MOVEMENT_GROUPS": {name: group.to_dict() for name, group in self.movement_groups.items()},
             "SAFETY_LIMITS": self.safety_limits.to_dict(),
             "GLOBAL_MOTION_SETTINGS": self.global_motion_settings.to_dict()
