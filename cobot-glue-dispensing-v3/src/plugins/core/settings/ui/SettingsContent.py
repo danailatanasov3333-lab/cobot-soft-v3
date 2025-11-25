@@ -5,8 +5,10 @@ from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon, QPixmap, QPainter
 from PyQt6.QtWidgets import QVBoxLayout, QSizePolicy
 
-from plugins.core.settings.ui.RobotConfigUI import RobotConfigController, RobotConfigUI
+
 from frontend.widgets.CustomWidgets import CustomTabWidget, BackgroundTabPage
+from plugins.core.settings.controller.robot_config_controller import RobotConfigController
+from plugins.core.settings.ui.robot_settings_tab.RobotConfigUI import RobotConfigUI
 from .CameraSettingsTabLayout import CameraSettingsTabLayout
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
 from communication_layer.api.v1.endpoints import glue_endpoints
@@ -274,7 +276,7 @@ class SettingsContent(BackgroundWidget):
         # TODO: Implement robot settings update if needed
         # if self.robotSettingsTabLayout is not None:
         #     self.robotSettingsTabLayout.updateValues(robotSettings)
-        pass
+        self.robotSettingsTabLayout.updateValues(robotSettings)
 
     def updateContourSettings(self, contourSettings):
         # TODO: Implement contour settings update if needed

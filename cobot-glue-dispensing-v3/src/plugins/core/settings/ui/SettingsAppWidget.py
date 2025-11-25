@@ -51,14 +51,15 @@ class SettingsAppWidget(AppWidget):
                 # Connect action signals
                 self.content_widget.update_camera_feed_requested.connect(lambda: updateCameraFeedCallback())
                 self.content_widget.raw_mode_requested.connect(lambda state: onRawModeRequested(state))
+
             except Exception as e:
                 import traceback
                 traceback.print_exc()
-                # If content widget creation fails, we cannot proceed
                 raise e
-            print("Controller:", self.controller)
+
             if self.controller is None:
                 raise ValueError("Controller is not set for SettingsAppWidget")
+
             try:
                 # Use the clean service pattern for loading settings
                 settings_result = self.controller_service.settings.get_all_settings()
@@ -67,6 +68,7 @@ class SettingsAppWidget(AppWidget):
                     settings_data = settings_result.data
                     self.content_widget.updateCameraSettings(settings_data["camera"])
                     self.content_widget.updateGlueSettings(settings_data["glue"])
+                    self.content_widget.updateRobotSettings(settings_data["robot"])
                     print(f"✅ Settings loaded successfully: {settings_result.message}")
                 else:
                     print(f"❌ Failed to load settings: {settings_result.message}")
@@ -87,6 +89,7 @@ class SettingsAppWidget(AppWidget):
 
             # Keep the placeholder if the UserManagementWidget is not available
             print("SettingsContent not available, using placeholder")
+
     def _handle_setting_change(self, key: str, value, component_type: str):
         """
         Handle setting changes using the clean service pattern.

@@ -22,16 +22,13 @@ class BaseController(IController):
         """
         pass
 
-    import inspect
-
     def handle(self, request, parts=None, data=None):
         handler = self._handlers.get(request)
-
         if handler is None and hasattr(self, "_dynamic_handler_resolver"):
             handler = self._dynamic_handler_resolver(request)
 
         if handler is None:
-            raise ValueError(f"No handler registered for: {request}")
+            raise ValueError(f"[BaseController]: No handler registered for: {request}")
 
         try:
             sig = inspect.signature(handler)

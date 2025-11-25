@@ -36,6 +36,7 @@ class CameraSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
     save_settings_requested = QtCore.pyqtSignal()
     load_settings_requested = QtCore.pyqtSignal()
     reset_settings_requested = QtCore.pyqtSignal()
+    reset_settings_requested = QtCore.pyqtSignal()
 
     def __init__(self, parent_widget, camera_settings: CameraSettings = None, update_camera_feed_callback=None):
         BaseSettingsTabLayout.__init__(self, parent_widget)
@@ -947,12 +948,6 @@ class CameraSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         """
         self.value_changed_signal.emit(key, value, self.__class__.__name__)
     
-    def connectValueChangeCallbacks(self, callback):
-        """
-        Legacy method for backward compatibility.
-        Now connects the unified signal to the provided callback.
-        """
-        self.value_changed_signal.connect(lambda key, value, component_type: callback(key, value, component_type))
 
     def connect_default_callbacks(self):
         self.capture_image_button.clicked.connect(lambda: self.capture_image_requested.emit())
@@ -1204,29 +1199,12 @@ class CameraSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         # Update camera preview label
 
         # # Update button texts
-        # if hasattr(self, 'capture_image_button'):
-        #     self.capture_image_button.setText(self.translator.get(TranslationKeys.CameraSettings.CAPTURE_IMAGE))
         if hasattr(self, 'show_raw_button'):
             if self.raw_mode_active:
                 self.show_raw_button.setText(self.translator.get(TranslationKeys.CameraSettings.EXIT_RAW_MODE))
             else:
                 self.show_raw_button.setText(self.translator.get(TranslationKeys.CameraSettings.RAW_MODE))
-        # if hasattr(self, 'start_calibration_button'):
-        #     self.start_calibration_button.setText(self.translator.get(TranslationKeys.CameraSettings.START_CALIBRATION))
-        # if hasattr(self, 'save_calibration_button'):
-        #     self.save_calibration_button.setText(self.translator.get(TranslationKeys.CameraSettings.SAVE_CALIBRATION))
-        # if hasattr(self, 'load_calibration_button'):
-        #     self.load_calibration_button.setText(self.translator.get(TranslationKeys.CameraSettings.LOAD_CALIBRATION))
-        # if hasattr(self, 'test_contour_button'):
-        #     self.test_contour_button.setText(self.translator.get(TranslationKeys.CameraSettings.TEST_CONTOUR))
-        # if hasattr(self, 'test_aruco_button'):
-        #     self.test_aruco_button.setText(self.translator.get(TranslationKeys.CameraSettings.TEST_ARUCO))
-        # if hasattr(self, 'save_settings_button'):
-        #     self.save_settings_button.setText(self.translator.get(TranslationKeys.CameraSettings.SAVE_SETTINGS))
-        # if hasattr(self, 'load_settings_button'):
-        #     self.load_settings_button.setText(self.translator.get(TranslationKeys.CameraSettings.LOAD_SETTINGS))
-        # if hasattr(self, 'reset_settings_button'):
-        #     self.reset_settings_button.setText(self.translator.get(TranslationKeys.CameraSettings.RESET_DEFAULTS))
+
 
 if __name__ == "__main__":
     import sys

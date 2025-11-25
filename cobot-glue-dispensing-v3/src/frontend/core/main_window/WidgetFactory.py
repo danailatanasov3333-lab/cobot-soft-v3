@@ -6,7 +6,7 @@ from plugins.core.contour_editor.ui import ContourEditorAppWidget
 from frontend.legacy_ui.app_widgets.CreateWorkpieceOptionsAppWidget import CreateWorkpieceOptionsAppWidget
 from plugins.core.dashboard.ui.DashboardAppWidget import DashboardAppWidget
 from plugins.core.gallery.ui.GalleryAppWidget import GalleryAppWidget
-from plugins.core.wight_cells_settings_plugin.ui.GlueWeightCellSettingsAppWidget import GlueWeightCellSettingsAppWidget
+from plugins.core.weight_cells_settings_plugin.ui.GlueWeightCellSettingsAppWidget import GlueWeightCellSettingsAppWidget
 
 
 class WidgetType(Enum):

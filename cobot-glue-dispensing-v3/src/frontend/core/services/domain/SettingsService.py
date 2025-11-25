@@ -80,7 +80,7 @@ class SettingsService:
                 return validation_result
             
             # Log the operation
-            self.logger.info(f"Updating {component_type} setting: {key} = {value}")
+            print(f"Updating {component_type} setting: {key} = {value}")
             
             # Call the controller
             self.controller.updateSettings(key, value, component_type)
@@ -91,8 +91,9 @@ class SettingsService:
             )
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             error_msg = f"Failed to update setting '{key}': {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
             return ServiceResult.error_result(error_msg)
     
     def get_all_settings(self) -> ServiceResult:
@@ -103,14 +104,15 @@ class SettingsService:
             ServiceResult with settings data or error message
         """
         try:
-            self.logger.info("Retrieving all settings")
+            print("Retrieving all settings")
             
             # Call the controller
-            camera_settings, glue_settings = self.controller.handleGetSettings()
+            camera_settings, glue_settings,robot_settings = self.controller.handleGetSettings()
             
             settings_data = {
                 "camera": camera_settings,
-                "glue": glue_settings
+                "glue": glue_settings,
+                "robot": robot_settings
             }
             
             return ServiceResult.success_result(
@@ -120,7 +122,8 @@ class SettingsService:
             
         except Exception as e:
             error_msg = f"Failed to retrieve settings: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            import traceback
+            traceback.print_exc()
             return ServiceResult.error_result(error_msg)
     
     def get_camera_settings(self) -> ServiceResult:
@@ -136,7 +139,8 @@ class SettingsService:
             return result
         except Exception as e:
             error_msg = f"Failed to retrieve camera settings: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            import traceback
+            traceback.print_exc()
             return ServiceResult.error_result(error_msg)
     
     def get_robot_settings(self) -> ServiceResult:
@@ -152,7 +156,8 @@ class SettingsService:
             return result
         except Exception as e:
             error_msg = f"Failed to retrieve robot settings: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            import traceback
+            traceback.print_exc()
             return ServiceResult.error_result(error_msg)
     
     def get_glue_settings(self) -> ServiceResult:
@@ -168,7 +173,8 @@ class SettingsService:
             return result
         except Exception as e:
             error_msg = f"Failed to retrieve glue settings: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            import traceback
+            traceback.print_exc()
             return ServiceResult.error_result(error_msg)
     
     def _validate_component_type(self, component_type: str) -> bool:
@@ -201,7 +207,7 @@ class SettingsService:
                 component = SettingComponentType(component_type)
             except ValueError:
                 # Handle legacy component types that don't match enum values
-                self.logger.warning(f"Unknown component type: {component_type}. Allowing for backward compatibility.")
+                print(f"Unknown component type: {component_type}. Allowing for backward compatibility.")
                 return ServiceResult.success_result("Validation passed (unknown component type)")
             
             if component == SettingComponentType.CAMERA:

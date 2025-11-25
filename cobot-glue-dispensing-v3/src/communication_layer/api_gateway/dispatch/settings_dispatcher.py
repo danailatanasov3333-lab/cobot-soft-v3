@@ -58,10 +58,31 @@ class SettingsDispatch(IDispatcher):
             return self.handle_general_settings(parts, request, data)
         elif request in [settings_endpoints.SETTINGS_UPDATE]:
             return self.handle_general_settings(parts, request, data)
+        elif request in [settings_endpoints.SETTINGS_ROBOT_CALIBRATION_SET]:
+            return self.handle_robot_calibration_settings(parts, request, data)
+        elif request in [settings_endpoints.SETTINGS_ROBOT_CALIBRATION_GET]:
+            return self.handle_robot_calibration_settings(parts, request, data)
         else:
             # Delegate to settings controller which handles all the logic
             return self.settingsController.handle(request, parts, data)
-    
+
+    def handle_robot_calibration_settings(self, parts, request, data=None):
+        """
+        Handle robot calibration settings operations.
+
+        Args:
+            parts (list): Parsed request parts
+            request (str): Full request string
+            data: Request data
+
+        Returns:
+            dict: Response with robot calibration settings data or operation result
+        """
+        print(f"SettingsHandler: Handling robot calibration settings: {request} with data: {data}")
+
+        result =  self.settingsController.handle(request, parts, data)
+        print(f"[SettingsHandler]: Robot calibration settings response: {result}")
+        return result
     def handle_robot_settings(self, parts, request, data=None):
         """
         Handle robot-specific settings operations.

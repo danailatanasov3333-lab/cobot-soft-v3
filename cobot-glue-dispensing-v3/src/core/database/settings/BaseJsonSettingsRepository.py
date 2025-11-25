@@ -35,30 +35,43 @@ class BaseJsonSettingsRepository(ISettingsRepository[T]):
         """
         super().__init__(file_path)
         self.logger = logging.getLogger(self.__class__.__name__)
-        
+
     def load(self) -> T:
         """
         Load settings from JSON file.
-        
+
         Returns:
             The settings object with loaded data, or default settings if file doesn't exist
-        
+
         Raises:
             SettingsLoadError: If loading fails
         """
         try:
-            if not self.file_path or not os.path.exists(self.file_path):
-                self.logger.info(f"Settings file not found: {self.file_path}. Using defaults.")
+            if not self.file_path:
+                print(f"No file path specified for {self.get_settings_type()} settings. Using defaults.")
                 return self.get_default()
-            
+
+            if not os.path.exists(self.file_path):
+                # File missing: create it populated with defaults, then return defaults
+                default_settings = self.get_default()
+                try:
+                    dir_path = os.path.dirname(self.file_path) or "."
+                    os.makedirs(dir_path, exist_ok=True)
+                    with open(self.file_path, "w") as file:
+                        json.dump(self.to_dict(default_settings), file, indent=2)
+                    print(f"Settings file not found: {self.file_path}. Created with defaults.")
+                except Exception as e:
+                    raise SettingsLoadError(f"Failed to create default settings file {self.file_path}: {e}")
+                return default_settings
+
             with open(self.file_path, 'r') as file:
                 data = json.load(file)
                 settings = self.from_dict(data)
-                self.logger.debug(f"Loaded {self.get_settings_type()} settings from {self.file_path}")
+                print(f"Loaded {self.get_settings_type()} settings from {self.file_path}")
                 return settings
-                
+
         except (json.JSONDecodeError, FileNotFoundError) as e:
-            self.logger.warning(f"Failed to load {self.get_settings_type()} settings: {e}")
+            print(f"Failed to load {self.get_settings_type()} settings: {e}")
             return self.get_default()
         except Exception as e:
             raise SettingsLoadError(f"Failed to load {self.get_settings_type()} settings: {e}")
@@ -84,7 +97,7 @@ class BaseJsonSettingsRepository(ISettingsRepository[T]):
             with open(self.file_path, 'w') as file:
                 json.dump(data, file, indent=2)
                 
-            self.logger.debug(f"Saved {self.get_settings_type()} settings to {self.file_path}")
+            print(f"Saved {self.get_settings_type()} settings to {self.file_path}")
             
         except Exception as e:
             raise SettingsSaveError(f"Failed to save {self.get_settings_type()} settings: {e}")

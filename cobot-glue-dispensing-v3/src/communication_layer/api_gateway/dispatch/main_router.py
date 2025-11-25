@@ -78,6 +78,7 @@ class RequestHandler(IRequestHandler):
             operations_endpoints.RUN_DEMO, operations_endpoints.STOP_DEMO, operations_endpoints.CALIBRATE, operations_endpoints.HELP,
             operations_endpoints.CREATE_WORKPIECE, "handleSetPreselectedWorkpiece", "handleExecuteFromGallery"
         ]
+
         if request in operations_requests:
             return self.operations_dispatcher.dispatch(parts=[], request=request, data=data)
 

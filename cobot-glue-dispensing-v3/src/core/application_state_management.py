@@ -113,50 +113,50 @@ class ApplicationStateManager:
     # Aggregation Logic
     # ----------------------------
     def _recompute_application_state(self) -> ApplicationState:
-        print("\n[ApplicationStateManager] --- Recomputing Application State ---")
-        print(f"[ApplicationStateManager] SystemState:     {self.system_state}")
-        print(f"[ApplicationStateManager] OperationState:  {self.process_state}")
+        # print("\n[ApplicationStateManager] --- Recomputing Application State ---")
+        # print(f"[ApplicationStateManager] SystemState:     {self.system_state}")
+        # print(f"[ApplicationStateManager] OperationState:  {self.process_state}")
 
         # 1. Any error -> application is ERROR
         if self.system_state == SystemState.ERROR:
-            print("[ApplicationStateManager] Rule: SYSTEM ERROR → ApplicationState.ERROR")
+            # print("[ApplicationStateManager] Rule: SYSTEM ERROR → ApplicationState.ERROR")
             return ApplicationState.ERROR
 
         if self.process_state == OperationState.ERROR:
-            print("[ApplicationStateManager] Rule: OPERATION ERROR → ApplicationState.ERROR")
+            # print("[ApplicationStateManager] Rule: OPERATION ERROR → ApplicationState.ERROR")
             return ApplicationState.ERROR
 
         # 2. Services not ready yet
         if self.system_state in [SystemState.INITIALIZING, SystemState.UNKNOWN]:
-            print("[ApplicationStateManager] Rule: System not ready → ApplicationState.INITIALIZING")
+            # print("[ApplicationStateManager] Rule: System not ready → ApplicationState.INITIALIZING")
             return ApplicationState.INITIALIZING
 
         # 3. Active operation rules
         if self.process_state == OperationState.PAUSED:
-            print("[ApplicationStateManager] Rule: OPERATION PAUSED → ApplicationState.PAUSED")
+            # print("[ApplicationStateManager] Rule: OPERATION PAUSED → ApplicationState.PAUSED")
             return ApplicationState.PAUSED
 
         # Treat INITIALIZING as IDLE (operation not running yet)
         if self.process_state == OperationState.INITIALIZING:
-            print("[ApplicationStateManager] Rule: OPERATION INITIALIZING → ApplicationState.IDLE")
+            # print("[ApplicationStateManager] Rule: OPERATION INITIALIZING → ApplicationState.IDLE")
             return ApplicationState.IDLE
 
         if self.process_state in [OperationState.COMPLETED, OperationState.STOPPED]:
-            print("[ApplicationStateManager] Rule: COMPLETED/STOPPED → ApplicationState.IDLE")
+            # print("[ApplicationStateManager] Rule: COMPLETED/STOPPED → ApplicationState.IDLE")
             return ApplicationState.IDLE
 
         if self.process_state == OperationState.IDLE:
-            print("[ApplicationStateManager] Rule: OPERATION IDLE → ApplicationState.IDLE")
+            # print("[ApplicationStateManager] Rule: OPERATION IDLE → ApplicationState.IDLE")
             return ApplicationState.IDLE
 
         # Default: considered “running”
-        print("[ApplicationStateManager] Rule: Default → ApplicationState.STARTED")
+        # print("[ApplicationStateManager] Rule: Default → ApplicationState.STARTED")
         return ApplicationState.STARTED
 
     def _update_application_state(self):
         new_state = self._recompute_application_state()
         if new_state != self.current_state:
-            print(f"[ApplicationStateManager] Application state → {new_state}")
+            # print(f"[ApplicationStateManager] Application state → {new_state}")
             self.current_state = new_state
             self.publish_state()
 

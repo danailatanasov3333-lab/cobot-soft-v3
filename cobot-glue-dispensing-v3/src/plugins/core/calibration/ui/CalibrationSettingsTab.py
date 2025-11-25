@@ -13,16 +13,18 @@ from frontend.widgets.ClickableLabel import ClickableLabel
 from frontend.widgets.MaterialButton import MaterialButton
 from modules.shared.MessageBroker import MessageBroker
 from frontend.widgets.robotManualControl.RobotJogWidget import RobotJogWidget
-from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout
+from frontend.widgets.Drawer import Drawer
+
 from frontend.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox
-from core.model.settings.robot_calibration_settings import RobotCalibrationSettings
 
 
 
 from PyQt6.QtWidgets import QHBoxLayout
 
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGridLayout, QGroupBox, QTabWidget
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGridLayout, QGroupBox, QTabWidget, QPushButton
 from PyQt6.QtCore import Qt
+
+from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout
 
 # Work area points file paths
 PICKUP_AREA_POINTS_PATH = PathResolver.get_calibration_result_path('pickupAreaPoints.npy')
@@ -97,7 +99,6 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
 
         # Initialize robot calibration settings early
         self.robot_settings_fields = {}  # Store references to input fields
-        self.load_robot_calibration_settings_from_service()
 
         # Create main content with new layout
         self.create_main_content()
@@ -127,45 +128,6 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         self.log_timer = QTimer(self)
         self.log_timer.timeout.connect(self.flush_log_queue)
         self.log_timer.start(100)  # Flush every 100ms
-
-    def load_robot_calibration_settings_from_service(self):
-        """Load robot calibration settings from the SettingsService"""
-        try:
-            if self.controller_service and hasattr(self.controller_service, 'settings'):
-                # Get settings from the service
-                settings_result = self.controller_service.settings.get_robot_calibration_settings()
-                if settings_result and hasattr(settings_result, 'data') and settings_result.data:
-                    self.robot_calibration_settings = settings_result.data
-                    print("Loaded robot calibration settings from service")
-                else:
-                    # Fallback to default settings
-                    self.robot_calibration_settings = RobotCalibrationSettings()
-                    print("Using default robot calibration settings (no service data)")
-            else:
-                # Fallback to default settings if no service available
-                self.robot_calibration_settings = RobotCalibrationSettings()
-                print("Using default robot calibration settings (no service available)")
-        except Exception as e:
-            print(f"Error loading robot calibration settings from service: {e}")
-            # Fallback to default settings
-            self.robot_calibration_settings = RobotCalibrationSettings()
-            self.addLog(f"Error loading robot calibration settings: {e}")
-
-    def update_robot_settings_fields_from_loaded_settings(self):
-        """Update UI fields with loaded settings values"""
-        if hasattr(self, 'robot_settings_fields') and self.robot_settings_fields:
-            try:
-                self.robot_settings_fields['min_step_mm'].setValue(self.robot_calibration_settings.min_step_mm)
-                self.robot_settings_fields['max_step_mm'].setValue(self.robot_calibration_settings.max_step_mm)
-                self.robot_settings_fields['target_error_mm'].setValue(self.robot_calibration_settings.target_error_mm)
-                self.robot_settings_fields['max_error_ref'].setValue(self.robot_calibration_settings.max_error_ref)
-                self.robot_settings_fields['k'].setValue(self.robot_calibration_settings.k)
-                self.robot_settings_fields['derivative_scaling'].setValue(self.robot_calibration_settings.derivative_scaling)
-                self.robot_settings_fields['z_target'].setValue(self.robot_calibration_settings.z_target)
-                self.robot_settings_fields['required_ids_display'].setText(str(self.robot_calibration_settings.required_ids))
-                print("Updated robot calibration settings UI fields from loaded settings")
-            except Exception as e:
-                print(f"Error updating robot settings fields: {e}")
 
     def onRbotCalibrationImage(self,image):
         self.update_camera_preview_from_cv2(image,True,zoom_factor=5,show_work_area=False)
@@ -458,6 +420,7 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         self.test_calibration_button.setMinimumHeight(40)
         button_grid.addWidget(self.test_calibration_button, 6, 0, 1, 2)  # Span 2 columns
 
+
         preview_layout.addLayout(button_grid)
 
         # Log output area
@@ -602,28 +565,26 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
                 child.widget().setParent(None)
 
     def create_main_content(self):
-        """Create the main content with camera preview on left, settings in middle, and robot jog on right"""
-        main_horizontal_layout = QHBoxLayout()
+        """Create the main content with camera preview on left, settings on right, and robot jog as a right-side drawer"""
+        # Create a main container widget
+        main_widget = QWidget()
+        
+        # --- Horizontal layout for preview and settings (no jog widget in main layout) ---
+        main_horizontal_layout = QHBoxLayout(main_widget)
         main_horizontal_layout.setSpacing(2)
         main_horizontal_layout.setContentsMargins(0, 0, 0, 0)
 
         # --- Left: Camera Preview ---
         preview_widget = self.create_calibration_preview_section()
-        # Set minimum width to prevent excessive shrinking
-        # preview_widget.setMinimumWidth(400)
 
-        # --- Middle: Settings scroll area ---
+        # --- Right: Settings scroll area (now takes much more space) ---
         settings_scroll_area = QScrollArea()
         settings_scroll_area.setWidgetResizable(True)
         settings_scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         settings_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         settings_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
-        # SOLUTION 1: Set minimum width for settings area
-        settings_scroll_area.setMinimumWidth(200)  # Prevent squashing below this width
-
-        # SOLUTION 2: Set preferred size
-        settings_scroll_area.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        settings_scroll_area.setMinimumWidth(400)  # Increased minimum width since jog is now in drawer
 
         QScroller.grabGesture(settings_scroll_area.viewport(), QScroller.ScrollerGestureType.TouchGesture)
 
@@ -632,66 +593,171 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         settings_content_layout.setSpacing(2)
         settings_content_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Add all the settings groups to the middle section
+        # Add all the settings groups to the right section
         self.add_settings_to_layout(settings_content_layout)
 
         settings_scroll_area.setWidget(settings_content_widget)
 
-        # --- Right: Robot Jog Widget ---
-        robot_jog_widget = QWidget()
-        robot_jog_widget.setMinimumWidth(400)  # Prevent excessive shrinking
-        robot_jog_layout = QVBoxLayout(robot_jog_widget)
-        robot_jog_layout.setSpacing(2)
-        robot_jog_layout.setContentsMargins(0, 0, 0, 0)
+        # Add to horizontal layout - more space for settings since no jog widget
+        main_horizontal_layout.addWidget(preview_widget, 1)  # Left - stretch factor 1
+        main_horizontal_layout.addWidget(settings_scroll_area, 3)  # Right - stretch factor 3 (much more space)
 
-        self.robotManualControlWidget = RobotJogWidget(self.parent_widget)
+        # --- Create Robot Jog Drawer (slides in from right) ---
+        self.robotManualControlWidget = RobotJogWidget()
         self.robotManualControlWidget.jogRequested.connect(lambda command, axis, direction, value:
                                                            self.jogRequested.emit(command, axis, direction, value))
         self.robotManualControlWidget.save_point_requested.connect(lambda: self.save_point_requested.emit())
-        robot_jog_layout.addWidget(self.robotManualControlWidget, 1)
-        # robot_jog_layout.addStretch()
+        
+        # Set proper size policies for the robot jog widget
+        self.robotManualControlWidget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        
+        # Create the jog drawer widget
+        self.jog_drawer = Drawer(main_widget, animation_duration=250, side="right")
+        self.jog_drawer.setFixedWidth(420)  # Set drawer width - slightly wider
+        
+        # Style the drawer
+        self.jog_drawer.setStyleSheet("""
+            QWidget {
+                background-color: #f8f9fa;
+                border-left: 2px solid #dee2e6;
+            }
+        """)
+        
+        # Layout for the drawer content with minimal margins to maximize space
+        jog_drawer_layout = QVBoxLayout(self.jog_drawer)
+        jog_drawer_layout.setContentsMargins(5, 5, 5, 5)  # Minimal margins
+        jog_drawer_layout.setSpacing(5)  # Minimal spacing
+        
+        # Add a compact header label  
+        drawer_header = QLabel("Robot Jog Controls")
+        drawer_header.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                color: #495057;
+                padding: 5px 0;
+                border-bottom: 1px solid #dee2e6;
+            }
+        """)
+        drawer_header.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        drawer_header.setFixedHeight(25)  # Smaller header to save space
+        jog_drawer_layout.addWidget(drawer_header)
+        
+        # Add the robot jog widget - let it take ALL the remaining space
+        # Remove any size constraints and ensure it fills the drawer
+        self.robotManualControlWidget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        # Remove any maximum height constraints that might be set
+        self.robotManualControlWidget.setMaximumHeight(16777215)  # Remove height constraint
+        jog_drawer_layout.addWidget(self.robotManualControlWidget, 1)  # Stretch factor 1 = take all remaining space
+        
+        # Ensure the drawer itself takes full height
+        self.jog_drawer.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
 
-        # SOLUTION 3: Use different stretch factors
-        # Give middle section higher priority to maintain its space
-        main_horizontal_layout.addWidget(preview_widget, 1)  # Left - stretch factor 1
-        main_horizontal_layout.addWidget(settings_scroll_area, 2)  # Middle - stretch factor 2 (more space priority)
-        main_horizontal_layout.addWidget(robot_jog_widget, 1)  # Right - stretch factor 1
-        # --- Wrap inside QWidget ---
-        main_widget = QWidget()
-        main_widget.setLayout(main_horizontal_layout)
+        # Initially position the drawer off-screen (right side)
+        self.jog_drawer.resize_to_parent_height()
+        
+        # Connect to parent widget resize to update drawer height
+        if hasattr(main_widget, 'resizeEvent'):
+            original_resize_event = main_widget.resizeEvent
+        else:
+            original_resize_event = None
+            
+        def on_main_widget_resize(event):
+            if original_resize_event:
+                original_resize_event(event)
+            # Update drawer height when parent resizes
+            if hasattr(self, 'jog_drawer'):
+                self.jog_drawer.resize_to_parent_height()
+                # Also reposition floating button
+                if hasattr(self, 'floating_toggle_button'):
+                    self.position_floating_button(main_widget)
+        
+        main_widget.resizeEvent = on_main_widget_resize
 
-        # SOLUTION 5: Set minimum width for the entire main widget
-        main_widget.setMinimumWidth(1200)  # Ensure window doesn't get too narrow
+        # --- Create floating toggle button for the drawer ---
+        self.floating_toggle_button = QPushButton("◀")  # Left arrow when closed
+        self.floating_toggle_button.setParent(main_widget)
+        self.floating_toggle_button.setFixedSize(40, 80)
+        self.floating_toggle_button.setToolTip("Toggle Robot Controls")
+        self.floating_toggle_button.clicked.connect(self.toggle_jog_drawer)
+        
+        # Style the floating button
+        self.floating_toggle_button.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(108, 117, 125, 0.9);
+                border: none;
+                color: white;
+                border-radius: 8px 0px 0px 8px;
+                font-size: 18px;
+                font-weight: bold;
+                margin: 0px;
+                padding: 0px;
+            }
+            QPushButton:hover {
+                background-color: rgba(90, 98, 104, 0.95);
+            }
+            QPushButton:pressed {
+                background-color: rgba(84, 91, 98, 1.0);
+            }
+        """)
+        
+        # Position the button on the right edge (initially)
+        self.position_floating_button(main_widget)
+
+        # Set minimum width for the entire main widget
+        main_widget.setMinimumWidth(800)
 
         self.addWidget(main_widget)
 
     def add_settings_to_layout(self, parent_layout):
-        """Add all settings groups to the layout in vertical arrangement"""
-        # --- Work area corners group ---
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        """Add all settings groups to the layout using a tabbed widget"""
+        # Create main settings tab widget
+        self.main_settings_tabs = QTabWidget()
+        self.main_settings_tabs.setStyleSheet("""
+            QTabWidget::pane {
+                border: 2px solid #cccccc;
+                border-radius: 8px;
+                background-color: #ffffff;
+            }
+            QTabWidget::tab-bar {
+                alignment: left;
+            }
+            QTabBar::tab {
+                background-color: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-bottom: none;
+                border-radius: 4px 4px 0px 0px;
+                padding: 8px 16px;
+                margin-right: 2px;
+                font-weight: 500;
+                color: #495057;
+            }
+            QTabBar::tab:selected {
+                background-color: #ffffff;
+                color: #212529;
+                font-weight: 600;
+                border-bottom: 2px solid #007bff;
+            }
+            QTabBar::tab:hover {
+                background-color: #e9ecef;
+                color: #212529;
+            }
+        """)
 
-        work_area_group = self.create_work_area_group()
-        robot_calibration_group = self.create_robot_calibration_settings_group()
+        # Create work area corners tab
+        work_area_widget = QWidget()
+        work_area_layout = QVBoxLayout(work_area_widget)
+        work_area_layout.setContentsMargins(10, 15, 10, 10)
+        work_area_layout.setSpacing(10)
         
-        # First row of settings
-        first_row = QHBoxLayout()
-        first_row.setSpacing(2)
-        first_row.addWidget(work_area_group)
-        first_row.addWidget(robot_calibration_group)
-        parent_layout.addLayout(first_row)
+        work_area_group = self.create_work_area_group()
+        work_area_layout.addWidget(work_area_group)
+        work_area_layout.addStretch()  # Add stretch to push content to top
+        
+        self.main_settings_tabs.addTab(work_area_widget, "Work Areas")
 
-        # Second row of settings
-        second_row = QHBoxLayout()
-        second_row.setSpacing(2)
-        second_row.addWidget(spacer)
-        parent_layout.addLayout(second_row)
-
-        # Third row of settings
-        third_row = QHBoxLayout()
-        third_row.setSpacing(2)
-        third_row.addWidget(spacer)
-        parent_layout.addLayout(third_row)
+        # Add the tabbed widget to the parent layout
+        parent_layout.addWidget(self.main_settings_tabs)
 
     def connect_default_callbacks(self):
         """Connect default button callbacks"""
@@ -1010,225 +1076,84 @@ class CalibrationServiceTabLayout(BaseSettingsTabLayout, QVBoxLayout):
         # Load current area (pickup by default)
         self.load_saved_work_area_points(self.current_work_area)
 
-    def create_robot_calibration_settings_group(self):
-        """Create the Robot Calibration Settings group widget"""
-        group_box = QGroupBox("Robot Calibration Settings")
-        group_box.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #cccccc;
-                border-radius: 8px;
-                margin: 5px 0px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-            }
-        """)
+    def _emit_robot_setting_changed(self,key,value):
+        """Emit robot setting changed signal"""
+        self.robotCalibrationSettingChanged.emit(key, value)
 
-        # Create main layout for the group
-        main_layout = QVBoxLayout()
-        main_layout.setSpacing(8)
-        main_layout.setContentsMargins(10, 15, 10, 10)
-
-        # Create settings form layout
-        form_layout = QGridLayout()
-        form_layout.setSpacing(8)
-        form_layout.setHorizontalSpacing(15)
-        form_layout.setVerticalSpacing(6)
-
-        # Row counter
-        row = 0
-
-        # Adaptive Movement Settings
-        adaptive_label = QLabel("Adaptive Movement:")
-        adaptive_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
-        form_layout.addWidget(adaptive_label, row, 0, 1, 4)
-        row += 1
-
-        # Min Step (mm)
-        form_layout.addWidget(QLabel("Min Step (mm):"), row, 0)
-        self.robot_settings_fields['min_step_mm'] = FocusDoubleSpinBox()
-        self.robot_settings_fields['min_step_mm'].setRange(0.01, 10.0)
-        self.robot_settings_fields['min_step_mm'].setDecimals(2)
-        self.robot_settings_fields['min_step_mm'].setValue(self.robot_calibration_settings.min_step_mm)
-        self.robot_settings_fields['min_step_mm'].setSuffix(" mm")
-        self.robot_settings_fields['min_step_mm'].setFixedWidth(80)
-        form_layout.addWidget(self.robot_settings_fields['min_step_mm'], row, 1)
-
-        # Max Step (mm)
-        form_layout.addWidget(QLabel("Max Step (mm):"), row, 2)
-        self.robot_settings_fields['max_step_mm'] = FocusDoubleSpinBox()
-        self.robot_settings_fields['max_step_mm'].setRange(1.0, 100.0)
-        self.robot_settings_fields['max_step_mm'].setDecimals(1)
-        self.robot_settings_fields['max_step_mm'].setValue(self.robot_calibration_settings.max_step_mm)
-        self.robot_settings_fields['max_step_mm'].setSuffix(" mm")
-        self.robot_settings_fields['max_step_mm'].setFixedWidth(80)
-        form_layout.addWidget(self.robot_settings_fields['max_step_mm'], row, 3)
-        row += 1
-
-        # Target Error (mm)
-        form_layout.addWidget(QLabel("Target Error (mm):"), row, 0)
-        self.robot_settings_fields['target_error_mm'] = FocusDoubleSpinBox()
-        self.robot_settings_fields['target_error_mm'].setRange(0.1, 5.0)
-        self.robot_settings_fields['target_error_mm'].setDecimals(2)
-        self.robot_settings_fields['target_error_mm'].setValue(self.robot_calibration_settings.target_error_mm)
-        self.robot_settings_fields['target_error_mm'].setSuffix(" mm")
-        self.robot_settings_fields['target_error_mm'].setFixedWidth(80)
-        form_layout.addWidget(self.robot_settings_fields['target_error_mm'], row, 1)
-
-        # Max Error Reference (mm)
-        form_layout.addWidget(QLabel("Max Error Ref (mm):"), row, 2)
-        self.robot_settings_fields['max_error_ref'] = FocusDoubleSpinBox()
-        self.robot_settings_fields['max_error_ref'].setRange(10.0, 500.0)
-        self.robot_settings_fields['max_error_ref'].setDecimals(1)
-        self.robot_settings_fields['max_error_ref'].setValue(self.robot_calibration_settings.max_error_ref)
-        self.robot_settings_fields['max_error_ref'].setSuffix(" mm")
-        self.robot_settings_fields['max_error_ref'].setFixedWidth(80)
-        form_layout.addWidget(self.robot_settings_fields['max_error_ref'], row, 3)
-        row += 1
-
-        # Responsiveness (k)
-        form_layout.addWidget(QLabel("Responsiveness (k):"), row, 0)
-        self.robot_settings_fields['k'] = FocusDoubleSpinBox()
-        self.robot_settings_fields['k'].setRange(0.5, 5.0)
-        self.robot_settings_fields['k'].setDecimals(1)
-        self.robot_settings_fields['k'].setValue(self.robot_calibration_settings.k)
-        self.robot_settings_fields['k'].setFixedWidth(80)
-        form_layout.addWidget(self.robot_settings_fields['k'], row, 1)
-
-        # Derivative Scaling
-        form_layout.addWidget(QLabel("Derivative Scaling:"), row, 2)
-        self.robot_settings_fields['derivative_scaling'] = FocusDoubleSpinBox()
-        self.robot_settings_fields['derivative_scaling'].setRange(0.1, 2.0)
-        self.robot_settings_fields['derivative_scaling'].setDecimals(1)
-        self.robot_settings_fields['derivative_scaling'].setValue(self.robot_calibration_settings.derivative_scaling)
-        self.robot_settings_fields['derivative_scaling'].setFixedWidth(80)
-        form_layout.addWidget(self.robot_settings_fields['derivative_scaling'], row, 3)
-        row += 1
-
-        # Add some vertical spacing
-        spacer = QWidget()
-        spacer.setFixedHeight(8)
-        form_layout.addWidget(spacer, row, 0, 1, 4)
-        row += 1
-
-        # General Settings
-        general_label = QLabel("General Settings:")
-        general_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
-        form_layout.addWidget(general_label, row, 0, 1, 4)
-        row += 1
-
-        # Z Target Height
-        form_layout.addWidget(QLabel("Z Target (mm):"), row, 0)
-        self.robot_settings_fields['z_target'] = FocusDoubleSpinBox()
-        self.robot_settings_fields['z_target'].setRange(100, 1000)
-        self.robot_settings_fields['z_target'].setDecimals(0)
-        self.robot_settings_fields['z_target'].setValue(self.robot_calibration_settings.z_target)
-        self.robot_settings_fields['z_target'].setSuffix(" mm")
-        self.robot_settings_fields['z_target'].setFixedWidth(80)
-        form_layout.addWidget(self.robot_settings_fields['z_target'], row, 1)
-        row += 1
-
-        # Required IDs (as a text display for now)
-        form_layout.addWidget(QLabel("Required Marker IDs:"), row, 0)
-        required_ids_label = QLabel(str(self.robot_calibration_settings.required_ids))
-        required_ids_label.setStyleSheet("background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 4px; border-radius: 4px;")
-        required_ids_label.setFixedWidth(200)
-        form_layout.addWidget(required_ids_label, row, 1, 1, 3)
-        self.robot_settings_fields['required_ids_display'] = required_ids_label
-        row += 1
-
-        main_layout.addLayout(form_layout)
-
-        # Add control buttons
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)
-
-        # Reset to defaults button
-        reset_button = MaterialButton("Reset to Defaults")
-        reset_button.setMaximumWidth(120)
-        reset_button.clicked.connect(self.reset_robot_calibration_settings)
-        button_layout.addWidget(reset_button)
-
-        # Save settings button
-        save_button = MaterialButton("Save Settings")
-        save_button.setMaximumWidth(100)
-        save_button.clicked.connect(self.save_robot_calibration_settings)
-        button_layout.addWidget(save_button)
-
-        button_layout.addStretch()
-        main_layout.addLayout(button_layout)
-
-        group_box.setLayout(main_layout)
-        
-        # Update fields with loaded settings after creating the widgets
-        self.update_robot_settings_fields_from_loaded_settings()
-        
-        return group_box
-
-    def reset_robot_calibration_settings(self):
-        """Reset robot calibration settings to defaults"""
-        try:
-            # Create new default settings
-            default_settings = RobotCalibrationSettings()
+    def position_floating_button(self, parent_widget):
+        """Position the floating button on the right edge of the widget"""
+        if hasattr(self, 'floating_toggle_button'):
+            parent_size = parent_widget.size()
+            button_size = self.floating_toggle_button.size()
             
-            # Update all fields with default values
-            self.robot_settings_fields['min_step_mm'].setValue(default_settings.min_step_mm)
-            self.robot_settings_fields['max_step_mm'].setValue(default_settings.max_step_mm)
-            self.robot_settings_fields['target_error_mm'].setValue(default_settings.target_error_mm)
-            self.robot_settings_fields['max_error_ref'].setValue(default_settings.max_error_ref)
-            self.robot_settings_fields['k'].setValue(default_settings.k)
-            self.robot_settings_fields['derivative_scaling'].setValue(default_settings.derivative_scaling)
-            self.robot_settings_fields['z_target'].setValue(default_settings.z_target)
-            self.robot_settings_fields['required_ids_display'].setText(str(default_settings.required_ids))
+            # Position on the right edge, vertically centered
+            x = parent_size.width() - button_size.width()
+            y = (parent_size.height() - button_size.height()) // 2
             
-            # Update the internal settings object
-            self.robot_calibration_settings = default_settings
+            self.floating_toggle_button.move(x, y)
+            self.floating_toggle_button.raise_()  # Keep on top
+    
+    def toggle_jog_drawer(self):
+        """Toggle the robot jog drawer between expanded and collapsed states"""
+        if hasattr(self, 'jog_drawer'):
+            # Toggle the drawer and update floating button based on state
+            self.jog_drawer.toggle()
             
-            print("Robot calibration settings reset to defaults")
-            self.addLog("Robot calibration settings reset to default values")
-            
-        except Exception as e:
-            print(f"Error resetting robot calibration settings: {e}")
-            self.addLog(f"Error resetting robot calibration settings: {e}")
-
-    def save_robot_calibration_settings(self):
-        """Save current robot calibration settings using SettingsService"""
-        try:
-            # Update settings object from UI fields
-            self.robot_calibration_settings.min_step_mm = self.robot_settings_fields['min_step_mm'].value()
-            self.robot_calibration_settings.max_step_mm = self.robot_settings_fields['max_step_mm'].value()
-            self.robot_calibration_settings.target_error_mm = self.robot_settings_fields['target_error_mm'].value()
-            self.robot_calibration_settings.max_error_ref = self.robot_settings_fields['max_error_ref'].value()
-            self.robot_calibration_settings.k = self.robot_settings_fields['k'].value()
-            self.robot_calibration_settings.derivative_scaling = self.robot_settings_fields['derivative_scaling'].value()
-            self.robot_calibration_settings.z_target = int(self.robot_settings_fields['z_target'].value())
-            
-            # Save using SettingsService if available
-            if self.controller_service and hasattr(self.controller_service, 'settings'):
-                save_result = self.controller_service.settings.save_robot_calibration_settings(self.robot_calibration_settings)
-                if save_result and hasattr(save_result, 'success') and save_result.success:
-                    print("Robot calibration settings saved to service")
-                    self.addLog("Robot calibration settings saved successfully")
+            # Update floating button text and style based on drawer state
+            if hasattr(self, 'floating_toggle_button'):
+                if self.jog_drawer.is_open:
+                    self.floating_toggle_button.setText("▶")  # Right arrow when open (to close)
+                    self.floating_toggle_button.setStyleSheet("""
+                        QPushButton {
+                            background-color: rgba(40, 167, 69, 0.9);
+                            border: none;
+                            color: white;
+                            border-radius: 8px 0px 0px 8px;
+                            font-size: 18px;
+                            font-weight: bold;
+                            margin: 0px;
+                            padding: 0px;
+                        }
+                        QPushButton:hover {
+                            background-color: rgba(33, 136, 56, 0.95);
+                        }
+                        QPushButton:pressed {
+                            background-color: rgba(30, 126, 52, 1.0);
+                        }
+                    """)
+                    # Reposition button to account for open drawer
+                    if hasattr(self, 'position_floating_button'):
+                        parent_widget = self.floating_toggle_button.parent()
+                        parent_size = parent_widget.size()
+                        button_size = self.floating_toggle_button.size()
+                        drawer_width = self.jog_drawer.width() if hasattr(self, 'jog_drawer') else 420
+                        
+                        x = parent_size.width() - button_size.width() - drawer_width
+                        y = (parent_size.height() - button_size.height()) // 2
+                        self.floating_toggle_button.move(x, y)
                 else:
-                    error_msg = getattr(save_result, 'message', 'Unknown error') if save_result else 'Service unavailable'
-                    print(f"Failed to save robot calibration settings: {error_msg}")
-                    self.addLog(f"Failed to save robot calibration settings: {error_msg}")
-            else:
-                print("Robot calibration settings updated (no service available)")
-                self.addLog("Robot calibration settings updated locally")
-            
-        except Exception as e:
-            print(f"Error saving robot calibration settings: {e}")
-            self.addLog(f"Error saving robot calibration settings: {e}")
-
-    def get_robot_calibration_settings(self):
-        """Get current robot calibration settings"""
-        self.save_robot_calibration_settings()  # Ensure settings are up to date
-        return self.robot_calibration_settings
+                    self.floating_toggle_button.setText("◀")  # Left arrow when closed (to open)
+                    self.floating_toggle_button.setStyleSheet("""
+                        QPushButton {
+                            background-color: rgba(108, 117, 125, 0.9);
+                            border: none;
+                            color: white;
+                            border-radius: 8px 0px 0px 8px;
+                            font-size: 18px;
+                            font-weight: bold;
+                            margin: 0px;
+                            padding: 0px;
+                        }
+                        QPushButton:hover {
+                            background-color: rgba(90, 98, 104, 0.95);
+                        }
+                        QPushButton:pressed {
+                            background-color: rgba(84, 91, 98, 1.0);
+                        }
+                    """)
+                    # Reposition button to the right edge when drawer is closed
+                    if hasattr(self, 'position_floating_button'):
+                        self.position_floating_button(self.floating_toggle_button.parent())
 
 
 if __name__ == "__main__":

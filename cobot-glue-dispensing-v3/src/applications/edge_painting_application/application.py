@@ -69,6 +69,9 @@ class EdgePaintingApplication(BaseRobotApplication, RobotApplicationInterface):
 
     def _on_operation_start(self, **kwargs) -> OperationResult:
         print(f"Painting in progress")
+        print(self.robotService.robot_config)
+        print(f"###### Robot Calibration Settings ######")
+        print(self.settingsManager.get_robot_calibration_settings().to_dict())
         self.painting_operation.start()
         return OperationResult(success=True, message="Painting started")
 

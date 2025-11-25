@@ -63,8 +63,8 @@ class ZeroErrRobot(IRobot):
                   list: Current robot TCP pose.
               """
         """ADD IMPLEMENTATION HERE"""
-        print(f"ZeroErrRobot.get_current_position called")
-
+        # print(f"ZeroErrRobot.get_current_position called")
+        pass
     def get_current_velocity(self):
         """
                Retrieves the current linear speed of the TCP.

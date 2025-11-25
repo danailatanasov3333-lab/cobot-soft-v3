@@ -9,7 +9,7 @@ from plugins.base.plugin_interface import IPlugin, PluginMetadata, PluginCategor
 
 # Import the widget
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
-from plugins.core.wight_cells_settings_plugin.ui.GlueWeightCellSettingsAppWidget import GlueWeightCellSettingsAppWidget
+from plugins.core.weight_cells_settings_plugin.ui.GlueWeightCellSettingsAppWidget import GlueWeightCellSettingsAppWidget
 
 
 class GlueWeightCellsSettingsPlugin(IPlugin):

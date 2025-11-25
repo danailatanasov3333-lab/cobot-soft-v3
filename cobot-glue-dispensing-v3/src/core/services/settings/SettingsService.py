@@ -57,21 +57,22 @@ class SettingsService:
                 if self.repository_registry.is_type_registered(settings_type):
                     repository = self.repository_registry.create_repository(settings_type, file_path)
                     self.repositories[settings_type] = repository
-                    self.logger.info(f"Initialized {settings_type} repository")
+                    print(f"Initialized repository for {settings_type} at {file_path}")
                 else:
-                    self.logger.warning(f"No repository registered for settings type: {settings_type}")
+                    print(f"No repository registered for settings type: {settings_type}")
             except Exception as e:
-                self.logger.error(f"Failed to initialize repository for {settings_type}: {e}")
-    
+                print(f"Failed to initialize repository for {settings_type}: {e}")
+
+
     def load_all_settings(self) -> None:
         """Load all settings from their repositories."""
         for settings_type, repository in self.repositories.items():
             try:
                 settings = repository.load()
                 self._settings_cache[settings_type] = settings
-                self.logger.debug(f"Loaded {settings_type} settings")
+                print(f"Loaded {settings_type} settings")
             except SettingsRepositoryError as e:
-                self.logger.error(f"Failed to load {settings_type} settings: {e}")
+                print(f"Failed to load {settings_type} settings: {e}")
     
     def save_all_settings(self) -> None:
         """Save all settings to their repositories."""
@@ -82,7 +83,7 @@ class SettingsService:
                     repository.save(settings)
                     self.logger.debug(f"Saved {settings_type} settings")
             except SettingsRepositoryError as e:
-                self.logger.error(f"Failed to save {settings_type} settings: {e}")
+                print(f"Failed to save {settings_type} settings: {e}")
     
     def get_settings(self, settings_type: str) -> Optional[Any]:
         """
@@ -118,9 +119,9 @@ class SettingsService:
             # Save immediately
             repository.save(settings)
             
-            self.logger.info(f"Updated {settings_type} settings")
+            print(f"Updated {settings_type} settings")
         except SettingsRepositoryError as e:
-            self.logger.error(f"Failed to update {settings_type} settings: {e}")
+            print(f"Failed to update {settings_type} settings: {e}")
             raise
     
     def get_settings_by_resource(self, key: str) -> Dict[str, Any]:
@@ -134,12 +135,27 @@ class SettingsService:
             Settings data as dictionary
         """
         # Handle core settings
+        print(f"SettingsService: Getting settings for key: {key}")
         if key == Constants.REQUEST_RESOURCE_CAMERA:
             settings = self.get_settings("camera")
             if settings is not None:
                 repository = self.repositories.get("camera")
                 return repository.to_dict(settings) if repository else {}
         
+        # Handle robot calibration settings
+        if key == "robot_calibration_settings":
+            settings = self.get_settings("robot_calibration_settings")
+            if settings is not None:
+                repository = self.repositories.get("robot_calibration_settings")
+                return repository.to_dict(settings) if repository else {}
+            return {}
+
+        if key == Constants.REQUEST_RESOURCE_ROBOT:
+            settings = self.get_settings("robot_config")
+            if settings is not None:
+                repository = self.repositories.get("robot_config")
+                return repository.to_dict(settings) if repository else {}
+
         # Handle application-specific settings through registry
         resource_map = {
             "Glue": "glue",
@@ -153,10 +169,10 @@ class SettingsService:
                 handler = self.settings_registry.get_handler(settings_type)
                 return handler.handle_get_settings()
             except KeyError:
-                self.logger.warning(f"Settings handler not found for type: {settings_type}")
+                print(f"Settings handler not found for type: {settings_type}")
                 return {}
         
-        self.logger.warning(f"Unknown settings key: {key}")
+        print(f"Unknown settings key: {key}")
         return {}
     
     def updateSettings(self, settings: Dict[str, Any]) -> None:
@@ -188,9 +204,9 @@ class SettingsService:
                 handler_data = {k: v for k, v in settings.items() if k != 'header'}
                 handler.handle_set_settings(handler_data)
             except KeyError:
-                self.logger.warning(f"Settings handler not found for type: {settings_type}")
+                print(f"Settings handler not found for type: {settings_type}")
         else:
-            self.logger.warning(f"Unknown settings type: {settings_type}")
+            print(f"Unknown settings type: {settings_type}")
     
     # Convenience methods for specific settings types
     
@@ -203,8 +219,8 @@ class SettingsService:
         return self.get_settings("robot_config")
 
     def get_robot_calibration_settings(self):
-        return self.get_settings("robot_calibration")
-    
+        return self.get_settings("robot_calibration_settings")
+
     def register_settings_type(self, settings_type: str, repository_class) -> None:
         """
         Register a new settings type with its repository.
@@ -226,9 +242,9 @@ class SettingsService:
                 settings = repository.load()
                 self._settings_cache[settings_type] = settings
                 
-                self.logger.info(f"Registered and initialized new settings type: {settings_type}")
+                print(f"Registered and initialized new settings type: {settings_type}")
             except Exception as e:
-                self.logger.error(f"Failed to initialize repository for new type {settings_type}: {e}")
+                print(f"Failed to initialize repository for new type {settings_type}: {e}")
     
     def get_available_settings_types(self) -> list[str]:
         """
@@ -248,9 +264,11 @@ class SettingsService:
                 if repository:
                     reloaded_config = repository.load()
                     self._settings_cache["robot_config"] = reloaded_config
-                    self.logger.info("Robot configuration reloaded successfully.")
+                    print("Robot configuration reloaded successfully.")
         except Exception as e:
-            self.logger.error(f"Failed to reload robot configuration: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"Failed to reload robot configuration: {e}")
     
     def updateCameraSettings(self, settings: Dict[str, Any]) -> None:
         """
@@ -259,13 +277,13 @@ class SettingsService:
         Args:
             settings: Dictionary containing camera settings data
         """
-        self.logger.info(f"Updating Camera Settings: {settings}")
+        print(f"Updating Camera Settings: {settings}")
         
         try:
             # Get current camera settings
             camera_settings = self.get_settings("camera")
             if camera_settings is None:
-                self.logger.error("No camera settings found")
+                print("No camera settings found")
                 return
             
             # Update camera settings using the existing updateSettings method
@@ -276,10 +294,10 @@ class SettingsService:
             repository = self.repositories.get("camera")
             if repository:
                 repository.save(camera_settings)
-                self.logger.info("Camera settings saved successfully")
+                print("Camera settings saved successfully")
             else:
-                self.logger.error("No camera repository found")
+                print("No camera repository found")
                 
         except Exception as e:
-            self.logger.error(f"Failed to update camera settings: {e}")
+            print(f"Failed to update camera settings: {e}")
             raise

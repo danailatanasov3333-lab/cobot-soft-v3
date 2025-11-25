@@ -1,5 +1,6 @@
 import queue
 import numpy as np
+
 from modules import utils
 from communication_layer.api.v1.topics import VisionTopics
 from modules.VisionSystem.VisionSystem import VisionSystem
@@ -9,7 +10,6 @@ import cv2
 import threading
 from pathlib import Path
 from modules.shared.MessageBroker import MessageBroker
-from core.application.ApplicationContext import get_core_settings_path
 
 PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'VisionSystem',
                                                        'calibration', 'cameraCalibration', 'storage',
@@ -44,6 +44,8 @@ class _VisionService(VisionSystem):
             Args:
                 None
             """
+        from core.application.ApplicationContext import get_core_settings_path
+
         # Get camera settings path from application context
         config_file_path = get_core_settings_path("camera_settings.json", create_if_missing=True)
         if config_file_path is None:

@@ -40,6 +40,17 @@ class SettingsController(BaseController):
             settings_endpoints.SETTINGS_ROBOT_GET,
             lambda data=None: self._handleGet("robot")
         )
+
+        self.register_handler(
+            settings_endpoints.SETTINGS_ROBOT_CALIBRATION_GET,
+            lambda data=None: self._handleGet("robot_calibration_settings")
+        )
+
+        self.register_handler(
+            settings_endpoints.SETTINGS_ROBOT_CALIBRATION_SET,
+            lambda data=None: self._handleSet("robot_calibration_settings", data)
+        )
+
         self.register_handler(
             settings_endpoints.SETTINGS_CAMERA_GET,
             lambda data=None: self._handleGet("camera")
@@ -76,13 +87,6 @@ class SettingsController(BaseController):
 
         for endpoint in self.settings_registry.get_all_endpoints():
             self.register_handler(endpoint, make_application_handler(endpoint))
-
-        # for endpoint in self.settings_registry.get_all_endpoints():
-        #     # Late-binding safe: create closure for each endpoint
-        #     self.register_handler(
-        #         endpoint,
-        #         (lambda ep: (lambda data=None: self._handle_application_settings(ep, data)))(endpoint)
-        #     )
 
     # Called at request time for dynamic endpoints
     def _resolve_dynamic_handler(self, request):

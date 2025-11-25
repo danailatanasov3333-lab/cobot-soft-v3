@@ -136,6 +136,8 @@ class RobotService(IRobotService):
             return ret
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             print(f"Error moving to start position: {e}")
             return -1
 
@@ -206,7 +208,10 @@ class RobotService(IRobotService):
             return -1
 
     def reload_config(self):
-        self.robot_config = self.settings_service.reload_robot_config()
+        print(f"Reloading robot configuration")
+        self.settings_service.reload_robot_config()
+        self.robot_config = self.settings_service.get_robot_config()
+        print(f"Robot configuration reloaded: {self.robot_config}")
 
     def stop_motion(self)-> bool:
         """Stop robot motion safely"""

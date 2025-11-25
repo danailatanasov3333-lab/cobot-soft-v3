@@ -8,16 +8,12 @@ from communication_layer.api.v1 import Constants
 from communication_layer.api.v1.Response import Response
 from communication_layer.api.v1.endpoints import camera_endpoints, robot_endpoints, workpiece_endpoints, \
     settings_endpoints, auth_endpoints, operations_endpoints, glue_endpoints
-
+from core.model.settings.robotConfig.robotConfigModel import RobotConfig
 from frontend.legacy_ui.controller.RequestWorker import RequestWorker
 from frontend.feedback.FeedbackProvider import FeedbackProvider
-
-
-
-from plugins.core.settings.ui import CameraSettingsTabLayout
-
 import logging
 
+from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
 
 
@@ -34,6 +30,8 @@ class UIController:
             # Settings endpoints
             settings_endpoints.SETTINGS_UPDATE: self.updateSettings,
             settings_endpoints.SETTINGS_GET: self.handleGetSettings,
+            settings_endpoints.SETTINGS_ROBOT_CALIBRATION_SET: self.handle_update_robot_calibration_settings,
+            settings_endpoints.SETTINGS_ROBOT_CALIBRATION_GET: self.handle_get_robot_calibration_settings,
             
             # Authentication endpoints
             auth_endpoints.LOGIN: self.handleLogin,
@@ -79,6 +77,29 @@ class UIController:
             # Legacy special endpoints
             "executeFromGallery": self.handleExecuteFromGallery,
         }
+
+    def handle_get_robot_calibration_settings(self):
+        request = settings_endpoints.SETTINGS_ROBOT_CALIBRATION_GET
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_get_robot_calibration_settings] Response: {response}")
+        if response.status == Constants.RESPONSE_STATUS_ERROR:
+            print("Error fetching robot calibration settings:", response.message)
+            return None
+
+        return response.data
+
+    def handle_update_robot_calibration_settings(self, key, value):
+        request = settings_endpoints.SETTINGS_ROBOT_CALIBRATION_SET
+        data = {key: value}
+        response_dict = self.requestSender.send_request(request, data)
+        response = Response.from_dict(response_dict)
+
+        if response.status == Constants.RESPONSE_STATUS_ERROR:
+            print("Error updating robot calibration settings:", response.message)
+            return False
+
+        return True
 
     def handleRobotUpdateConfig(self):
         request = robot_endpoints.ROBOT_UPDATE_CONFIG
@@ -201,9 +222,11 @@ class UIController:
         print(" get Camera settings response:", cameraSettingsResponse)
 
         robotSettingsDict = robotSettingsResponse.data if robotSettingsResponse.status == Constants.RESPONSE_STATUS_SUCCESS else {}
+        robot_config = RobotConfig.from_dict(robotSettingsDict)
         cameraSettingsDict = cameraSettingsResponse.data if cameraSettingsResponse.status == Constants.RESPONSE_STATUS_SUCCESS else {}
 
         cameraSettings = CameraSettings(data=cameraSettingsDict)
+        print(f"[UIController] Loaded robot settings: {robotSettingsDict}")
         
         # Only load glue settings if the current application supports them
         from core.application.ApplicationContext import get_application_settings_tabs
@@ -216,9 +239,9 @@ class UIController:
             glueSettingsDict = glueSettingsResponse.data if glueSettingsResponse.status == Constants.RESPONSE_STATUS_SUCCESS else {}
             glueSettings = GlueSettings(data=glueSettingsDict)
         else:
-            glueSettings = GlueSettings()  # Default settings for non-glue applications
+            glueSettings = None  # Default settings for non-glue applications
 
-        return cameraSettings, glueSettings
+        return cameraSettings, glueSettings,robot_config
 
     def saveWorkpieceFromDXF(self, data):
 

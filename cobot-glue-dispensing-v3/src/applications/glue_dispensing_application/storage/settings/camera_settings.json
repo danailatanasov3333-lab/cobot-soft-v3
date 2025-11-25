@@ -2,7 +2,7 @@
   "Index": 0,
   "Width": 1280,
   "Height": 720,
-  "Skip frames": 30,
+  "Skip frames": 34,
   "Capture position offset": 0,
   "Threshold": 100,
   "Threshold pickup area": 150,
@@ -36,7 +36,7 @@
     "Target brightness": 200
   },
   "Aruco": {
-    "Enable detection": true,
+    "Enable detection": false,
     "Dictionary": "DICT_4X4_1000",
     "Flip image": false
   }

@@ -8,6 +8,7 @@ allowing base services to access application-specific core settings.
 import threading
 from typing import Optional
 from core.application.ApplicationStorageResolver import get_application_storage_resolver
+from core.base_robot_application import ApplicationType
 
 
 class ApplicationContext:
@@ -242,8 +243,7 @@ def get_application_required_plugins() -> list:
         list: List of plugin identifiers needed by current application,
               or default plugins if no application is set
     """
-    from core.base_robot_application import ApplicationType
-    
+
     try:
         current_app_name = get_current_application()
         if current_app_name is None:

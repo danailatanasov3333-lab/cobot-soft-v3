@@ -14,7 +14,6 @@ from typing import Dict, Any, List, Union, Optional
 
 from communication_layer.api.v1.topics import SystemTopics
 from core.operation_state_management import BaseOperation, OperationResult
-from core.services.robot_service.impl.base_robot_service import  RobotService
 from core.services.vision.VisionService import _VisionService
 
 from modules.shared.MessageBroker import MessageBroker
@@ -105,7 +104,7 @@ class BaseRobotApplication(ABC):
     def __init__(self,
                  vision_service: _VisionService,
                  settings_manager: SettingsService,
-                 robot_service: RobotService,
+                 robot_service: "RobotService",
                  settings_registry:ApplicationSettingsRegistry,
                  **kwargs
                  ):

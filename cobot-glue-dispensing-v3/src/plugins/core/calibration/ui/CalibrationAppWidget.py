@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QWidget
 
+from core.model.settings.robot_calibration_settings import RobotCalibrationSettings
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 from plugins.core.calibration.ui.CalibrationSettingsTab import CalibrationServiceTabLayout
 
@@ -40,6 +41,7 @@ class CalibrationAppWidget(AppWidget):
             self.content_widget = QWidget(self.parent)
             self.content_layout = CalibrationServiceTabLayout(parent_widget=self.parent, calibration_service=None, controller_service=self.controller_service)
             self.content_layout.update_camera_feed_signal.connect(lambda: updateCameraFeedCallback())
+
             # Connect controller-related signals only if controller_service present
             if self.controller_service:
                 self.content_layout.move_to_pickup_requested.connect(lambda: self.controller_service.robot.move_to_home())
@@ -92,3 +94,4 @@ class CalibrationAppWidget(AppWidget):
 
         result = self.controller_service.robot.jog_robot(axis, dir_str, step_size)
         print(f"{result.message}")
+
