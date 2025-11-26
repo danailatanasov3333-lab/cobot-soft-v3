@@ -1,12 +1,11 @@
-from applications.glue_dispensing_application.services.glueSprayService.generatorControl.timer import Timer
+
 from typing import List, Optional
 from dataclasses import dataclass
 
-from modules import Statistics
-
-
+from applications.glue_dispensing_application.services.glueSprayService.generatorControl.timer import Timer
+from modules.Statistics import Statistics
 from modules.modbusCommunication import ModbusController
-from modules.utils.custom_logging import log_if_enabled, LoggingLevel, setup_logger
+from modules.utils.custom_logging import setup_logger, log_if_enabled, LoggingLevel
 
 ENABLE_LOGGING = True
 generator_control_logger = setup_logger("generator_control_logger")
@@ -66,7 +65,6 @@ class GeneratorState:
         return f"Generator: {status}, {health}{error_info}{time_info}"
 
 class GeneratorControl(ModbusController):
-
 
     def __init__(self, timer: Timer, generator_address=9, generator_id=1):
         super().__init__()

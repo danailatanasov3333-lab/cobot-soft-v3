@@ -32,7 +32,6 @@ class ExecutionContext(Context):
         self.current_path = None
         self.paused_from_state = None
         self.pump_controller = None
-        self.operation_completed = False  # Flag to indicate when operation is truly finished
 
         # ✅ Add these for pump adjustment
         self.pump_thread = None
@@ -67,7 +66,6 @@ class ExecutionContext(Context):
             "motor_started": self.motor_started,
             "generator_started": self.generator_started,
             "is_resuming": self.is_resuming,
-            "operation_completed": getattr(self, 'operation_completed', False),
 
             # State information
             "current_state": str(self.state_machine.state) if self.state_machine else "None",

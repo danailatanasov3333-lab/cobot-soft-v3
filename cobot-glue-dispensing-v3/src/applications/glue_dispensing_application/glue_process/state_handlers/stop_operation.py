@@ -5,6 +5,9 @@ from modules.utils.custom_logging import log_debug_message
 def stop_operation(glue_dispensing_operation,context,logger_context):
     """Stop current operation"""
     if context.state_machine.transition(GlueProcessState.STOPPED):
+        # Set flag to indicate operation was stopped (which counts as completion)
+        context.operation_just_completed = True
+        
         # Stop robot motion
         try:
             context.robot_service.stop_motion()
@@ -20,7 +23,7 @@ def stop_operation(glue_dispensing_operation,context,logger_context):
         log_debug_message(logger_context,
                           message=f"Operation stopped from current state: {context.state_machine.state}")
 
-        context.robot_service.robotStateManager.trajectoryUpdate = False
+        context.robot_service.robot_state_manager.trajectoryUpdate = False
         context.robot_service.message_publisher.publish_trajectory_stop_topic()
         return True, "Operation stopped"
     else:

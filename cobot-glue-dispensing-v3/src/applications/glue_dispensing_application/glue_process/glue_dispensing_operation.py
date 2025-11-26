@@ -123,6 +123,7 @@ class GlueDispensingOperation(IOperation):
         self.execution_context.service = self.glue_service
         self.execution_context.robot_service = self.robot_service
         self.execution_context.state_machine = self.glue_process_state_machine
+        self.execution_context.operation = self  # ✅ Store reference to operation for completion
         self.execution_context.glue_type = self.glue_service.glueA_addresses
         self.execution_context.current_path_index = 0
         self.execution_context.current_point_index = 0
@@ -349,13 +350,17 @@ class GlueDispensingOperation(IOperation):
         return handle_completed_state(context)
 
     def _handle_idle_state(self, context):
-        """Handle IDLE state - truly idle, only stop if operation completed"""
-        # Only stop execution if the operation_completed flag is set
-        operation_completed = getattr(context, 'operation_completed', False)
-        print(f"[IDLE_HANDLER] operation_completed = {operation_completed}")
-        if operation_completed:
+        """Handle IDLE state - truly idle, only stop if operation just completed"""
+        operation_just_completed = getattr(context, 'operation_just_completed', False)
+        print(f"[IDLE_HANDLER] operation_just_completed = {operation_just_completed}")
+        
+        if operation_just_completed:
+            print("[IDLE_HANDLER] Operation just completed - marking completion in IOperation")
+            self._mark_completed()
+            
             print("[IDLE_HANDLER] Stopping execution...")
             context.state_machine.stop_execution()
+            
         return None  # Stay in IDLE
 
     def get_state_machine(self)->ExecutableStateMachine:

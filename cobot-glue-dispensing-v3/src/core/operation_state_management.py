@@ -43,6 +43,7 @@ class IOperation(ABC):
 
     def __init__(self):
         self.__publisher = None
+        self.__is_completed = False  # Track completion state
 
     def set_state_publisher(self, publisher:OperationStatePublisher):
         self.__publisher = publisher
@@ -54,9 +55,21 @@ class IOperation(ABC):
         else:
             print("IOperation: No publisher set, cannot publish state")
 
+    def _mark_completed(self):
+        """Called by subclasses when operation actually completes"""
+        if not self.__is_completed:
+            print("IOperation: Marking operation as completed")
+            self.__is_completed = True
+            self.__publish_state(OperationState.COMPLETED)
+    
+    def _reset_completion(self):
+        """Reset completion state for new operation"""
+        self.__is_completed = False
+
     # Public interface with state publishing
     def start(self,*args, **kwargs) -> OperationResult:
         print(f"IOperation: Starting operation with args: {args}, kwargs: {kwargs}")
+        self._reset_completion()  # Reset completion state for new operation
         self.__publish_state(OperationState.STARTING)
         try:
             result = self._do_start(*args, **kwargs)

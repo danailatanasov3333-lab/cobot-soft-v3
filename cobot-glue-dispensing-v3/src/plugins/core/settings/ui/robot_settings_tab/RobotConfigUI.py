@@ -434,12 +434,14 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
             robot_user=robot_settings.robot_user,
             tcp_x_offset=robot_settings.tcp_x_offset,
             tcp_y_offset = robot_settings.tcp_y_offset)
+
         global_motion_settings = GlobalMotionSettings(
             velocity=robot_settings.global_motion_settings.global_velocity,
             acceleration=robot_settings.global_motion_settings.global_acceleration,
             emergency_decel=robot_settings.global_motion_settings.emergency_decel,
             max_jog_step=robot_settings.global_motion_settings.max_jog_step
         )
+
         general_values = GeneralSettings(
             robot_info=robot_info,
             global_motion= global_motion_settings

@@ -5,7 +5,7 @@ def handle_completed_state(context):
    print("Handling COMPLETED state.")
    print("Glue dispensing process completed successfully.")
    
-   # Set the operation completed flag so IDLE state knows to stop execution
-   context.operation_completed = True
+   # Set flag to indicate operation is completed
+   context.operation_just_completed = True
    
    return GlueProcessState.IDLE # return next state to transition to
