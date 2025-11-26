@@ -92,12 +92,3 @@ class GlobalMotionSettingsGroup(SettingGroupBox):
         self.global_acceleration.setValue(settings.acceleration)
         self.emergency_decel.setValue(settings.emergency_decel)
         self.max_jog_step.setValue(settings.max_jog_step)
-
-if __name__ == "__main__":
-    from PyQt6.QtWidgets import QApplication
-    import sys
-
-    app = QApplication(sys.argv)
-    window = GlobalMotionSettingsGroup()
-    window.show()
-    sys.exit(app.exec())

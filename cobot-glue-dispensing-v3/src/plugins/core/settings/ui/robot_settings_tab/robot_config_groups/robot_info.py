@@ -96,11 +96,3 @@ class RobotInformationGroup(SettingGroupBox):
         self.tcp_x_offset_edit.setValue(robot_info.tcp_x_offset)
         self.tcp_y_offset_edit.setValue(robot_info.tcp_y_offset)
 
-if __name__ == "__main__":
-    from PyQt6.QtWidgets import QApplication
-    import sys
-
-    app = QApplication(sys.argv)
-    window = RobotInformationGroup()
-    window.show()
-    sys.exit(app.exec())
