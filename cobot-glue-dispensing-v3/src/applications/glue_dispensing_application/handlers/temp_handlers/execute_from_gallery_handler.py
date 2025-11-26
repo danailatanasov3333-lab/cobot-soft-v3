@@ -1,7 +1,7 @@
 import numpy as np
 
 from applications.glue_dispensing_application.settings.enums import GlueSettingKey
-from modules import utils
+from modules.utils import utils
 
 
 def execute_from_gallery(application,workpiece,z_offset_for_calibration_pattern):
@@ -27,7 +27,7 @@ def execute_from_gallery(application,workpiece,z_offset_for_calibration_pattern)
             contour_arr = pattern.get("contour", [])
             fill_arr = pattern.get("fill", [])
             contour_arr_settings = pattern.get("settings", {})
-
+            print(f"[EXECUTE_FROM_GALLERY] contour_arr_settings {contour_arr_settings}")
             # Sanitize and convert points to float
             points = []
 
@@ -67,11 +67,11 @@ def execute_from_gallery(application,workpiece,z_offset_for_calibration_pattern)
                     y = float(point[1])
                     # print(f"Final x,y: {x}, {y}")
 
-                    z_str = str(contour_arr_settings.get(GlueSettingKey.SPRAYING_HEIGHT.value, 250)).replace(",",
+                    z_str = str(contour_arr_settings.get(GlueSettingKey.SPRAYING_HEIGHT.value)).replace(",",
                                                                                                              "")
                     z = float(z_str)
                     z = application.robotService.robot_config.safety_limits.z_min + z
-                    # print(f"z_min + z = {self.robotService.robot_config.safety_limits.z_min} + {z} = {z}")
+                    print(f"z_min + z = {application.robotService.robot_config.safety_limits.z_min} + {z} = {z}")
                     rx = 180
                     ry = 0
                     rz = float(contour_arr_settings.get(GlueSettingKey.RZ_ANGLE.value, 0))

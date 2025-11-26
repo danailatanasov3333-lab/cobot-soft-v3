@@ -71,7 +71,7 @@ class CalibrationPlugin(IPlugin):
             raise RuntimeError("Plugin not initialized")
 
         if self._widget_instance is None:
-            self._widget_instance = CalibrationAppWidget(controller_service=self.controller_service, parent=parent)
+            self._widget_instance = CalibrationAppWidget(controller_service=self.controller_service) # do no pass parent here for now
 
         return self._widget_instance
 

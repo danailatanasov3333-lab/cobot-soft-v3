@@ -167,5 +167,6 @@ class GlueProcessTransitionRules:
                 GlueProcessState.IDLE,  # Recovery
                 GlueProcessState.INITIALIZING,  # Full reset
             },
+
         }
 

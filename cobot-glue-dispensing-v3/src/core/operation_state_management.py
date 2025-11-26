@@ -59,7 +59,7 @@ class IOperation(ABC):
         print(f"IOperation: Starting operation with args: {args}, kwargs: {kwargs}")
         self.__publish_state(OperationState.STARTING)
         try:
-            self._do_start(*args, **kwargs)
+            result = self._do_start(*args, **kwargs)
             return OperationResult(success=True, message="Operation started successfully")
         except Exception as e:
             import traceback

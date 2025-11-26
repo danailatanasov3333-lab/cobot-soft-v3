@@ -2,6 +2,8 @@ import json
 import os
 from datetime import datetime
 
+from applications.glue_dispensing_application.glue_process.state_handlers.compleated_state_handler import \
+    handle_completed_state
 from applications.glue_dispensing_application.glue_process.state_handlers.initial_pump_boost_state_handler import \
     handle_pump_initial_boost
 from applications.glue_dispensing_application.glue_process.state_handlers.moving_to_first_point_state_handler import \
@@ -48,7 +50,6 @@ glue_dispensing_logger_context = LoggerContext(enabled=ENABLE_GLUE_DISPENSING_LO
 # debug configuration
 ENABLE_CONTEXT_DEBUG = True
 DEBUG_DIR = os.path.join(os.path.dirname(__file__), "debug")
-
 
 class GlueDispensingOperation(IOperation):
     def __init__(self, robot_service, glue_service, glue_application=None):
@@ -108,10 +109,6 @@ class GlueDispensingOperation(IOperation):
             with open(filepath, 'w') as f:
                 json.dump(debug_data, f, indent=2, default=str)
 
-            # log_debug_message(
-            #     glue_dispensing_logger_context,
-            #     message=f"Debug context written to: {filename}"
-            # )
 
         except Exception as e:
             log_error_message(
@@ -125,7 +122,6 @@ class GlueDispensingOperation(IOperation):
         self.execution_context.spray_on = spray_on
         self.execution_context.service = self.glue_service
         self.execution_context.robot_service = self.robot_service
-        # Use the application's glue process state machine instead of robot service state machine
         self.execution_context.state_machine = self.glue_process_state_machine
         self.execution_context.glue_type = self.glue_service.glueA_addresses
         self.execution_context.current_path_index = 0
@@ -349,11 +345,24 @@ class GlueDispensingOperation(IOperation):
 
         return handle_wait_for_path_completion(execution_context,glue_dispensing_logger_context)
 
+    def _handle_completed_state(self, context):
+        return handle_completed_state(context)
+
+    def _handle_idle_state(self, context):
+        """Handle IDLE state - truly idle, only stop if operation completed"""
+        # Only stop execution if the operation_completed flag is set
+        operation_completed = getattr(context, 'operation_completed', False)
+        print(f"[IDLE_HANDLER] operation_completed = {operation_completed}")
+        if operation_completed:
+            print("[IDLE_HANDLER] Stopping execution...")
+            context.state_machine.stop_execution()
+        return None  # Stay in IDLE
+
     def get_state_machine(self)->ExecutableStateMachine:
         transition_rules = GlueProcessTransitionRules.get_glue_transition_rules()
         # Register all states and link to their respective handler functions
         state_handlers_map = {
-            GlueProcessState.IDLE: lambda ctx: None,  # IDLE state does nothing
+            GlueProcessState.IDLE: self._handle_idle_state,  # IDLE state stops execution when operation is complete
             GlueProcessState.STARTING: self._handle_starting_state,
             GlueProcessState.MOVING_TO_FIRST_POINT: lambda ctx: self._handle_moving_to_first_point_state(ctx,
                                                                                                          resume=False),
@@ -366,7 +375,7 @@ class GlueDispensingOperation(IOperation):
             GlueProcessState.PAUSED: lambda ctx: GlueProcessState.PAUSED,
             GlueProcessState.STOPPED: lambda ctx: GlueProcessState.COMPLETED,
             GlueProcessState.ERROR: lambda ctx: GlueProcessState.ERROR,
-            GlueProcessState.COMPLETED: lambda ctx: GlueProcessState.COMPLETED,
+            GlueProcessState.COMPLETED: self._handle_completed_state,
             GlueProcessState.INITIALIZING: lambda ctx: GlueProcessState.IDLE,
         }
         registry = StateRegistry()

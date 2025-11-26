@@ -57,6 +57,7 @@ def handle_moving_to_first_point_state(context, resume):
         monitor_thread.start()
 
     monitor_state_machine()
+
     reached = context.robot_service._waitForRobotToReachPosition(
         context.current_path[0],
         reach_start_threshold,

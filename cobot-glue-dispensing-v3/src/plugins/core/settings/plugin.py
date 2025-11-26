@@ -88,7 +88,7 @@ class SettingsPlugin(IPlugin):
         # Create widget instance if it doesn't exist
         if not self._widget_instance:
             self._widget_instance = SettingsAppWidget(
-                parent=parent,
+
                 controller=self.controller_service.controller,  # For backward compatibility
                 controller_service=self.controller_service
             )

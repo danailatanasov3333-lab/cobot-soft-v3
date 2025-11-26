@@ -255,7 +255,7 @@ class MainWindow(TranslatableWidget):
 
         # Clear cache
         self.plugin_widget_factory._widget_cache.clear()
-
+        self.running_widgets.clear()
         # Reset current app info
         self.current_running_app = None
         self.current_app_folder = None
@@ -266,35 +266,6 @@ class MainWindow(TranslatableWidget):
 
     def close_current_app(self):
         self.close_all_apps()
-        # print(f"MainWindow: Current running app before closing: {self.current_running_app}")
-        # """Close the currently running app and restore the folder interface"""
-        # if self.current_running_app:
-        #     print(f"MainWindow: Closing app - {self.current_running_app}")
-        #
-        #     # check if current app is dashboard
-        #     if self.current_running_app == WidgetType.DASHBOARD.value:
-        #         print("MainWindow: Closing Dashboard App Widget and cleaning up")
-        #         self.stacked_widget.widget(1).clean_up()
-        #     else:
-        #         print(f"MainWindow: Closing App Widget - {self.current_running_app}")
-        #
-        #     # Switch back to the folder view (index 0)
-        #     self.stacked_widget.setCurrentIndex(0)
-        #
-        #     # Remove the app widget
-        #     if self.stacked_widget.count() > 1:
-        #         app_widget = self.stacked_widget.widget(1)
-        #         self.stacked_widget.removeWidget(app_widget)
-        #         app_widget.deleteLater()
-        #
-        #     # Close the app in the folder if needed
-        #     if self.current_app_folder:
-        #         self.current_app_folder.close_app()
-        #
-        #     # Clear the running app info
-        #     self.current_running_app = None
-        #     self.current_app_folder = None
-
 
     def setup_ui(self):
         self.setWindowTitle("Android-Style App Folder Demo with QStackedWidget")

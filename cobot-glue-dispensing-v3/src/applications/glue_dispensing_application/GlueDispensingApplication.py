@@ -330,7 +330,14 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
     """ TEMP METHODS FOR TESTING WHILE IN DEVELOPMENT """
 
     def handleExecuteFromGallery(self, workpiece):
-        return execute_from_gallery(self,workpiece,Z_OFFSET_FOR_CALIBRATION_PATTERN)
+        try:
+            print(f"[GlueSprayingApplication] handleExecuteFromGallery called with workpiece: {workpiece}")
+            return execute_from_gallery(self,workpiece,Z_OFFSET_FOR_CALIBRATION_PATTERN)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"⚠️ Error during execute from gallery: {e}")
+            return False, f"Error during execute from gallery: {e}"
 
     def on_mode_change(self,message):
         print(f"Changing mode to: {message}")

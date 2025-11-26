@@ -109,7 +109,7 @@ class CaptureDataHandler:
 
         if contour_array is not None and len(contour_array) > 0:
             # Create segment from contour
-            segment = Segment(layer=workpiece_layer, settings={})
+            segment = Segment(layer=workpiece_layer) # do not pass settings in order to use defaults
 
             # Add points to segment
             for pt in contour_array:
