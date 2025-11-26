@@ -25,7 +25,6 @@ from core.controllers.settings.SettingsController import SettingsController
 # IMPORT SERVICES
 from core.services.settings.SettingsService import SettingsService
 from core.services.vision.VisionService import VisionServiceSingleton
-from frontend.core.runPlUi import PlGui
 
 setup_localization()
 
@@ -89,7 +88,6 @@ def main(api_version,application_type):
 
     # ROBOT INITIALIZATION NOW HANDLED BY APPLICATION FACTORY
     # Robot and robot service will be created dynamically based on application metadata
-    robot_config = settings_service.get_robot_config()
 
     # INIT CAMERA SERVICE
     cameraService = VisionServiceSingleton().get_instance()
@@ -123,12 +121,10 @@ def main(api_version,application_type):
 
     requestHandler = get_request_handler(api_version,current_application, settingsController, cameraSystemController,
                                          workpieceController, robotController, application_factory)
-    logging.info("Request Handler initialized")
-    """GUI RELATED INITIALIZATIONS"""
 
+    """GUI RELATED INITIALIZATIONS"""
     # INIT DOMESTIC REQUEST SENDER
     domesticRequestSender = DomesticRequestSender(requestHandler)
-    logging.info("Domestic Request Sender initialized")
     # INIT MAIN WINDOW
 
     if API_VERSION == 1:
