@@ -1,5 +1,5 @@
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QSizePolicy
 
 from plugins.core.settings.ui.robot_settings_tab.robot_config_groups.safety_limits import SafetyLimitsGroup
 
@@ -7,9 +7,10 @@ class SafetySettingsTab(QWidget):
     safety_settings_changed_signal = pyqtSignal(str,object)  # Placeholder for signal
     def __init__(self,parent= None):
         super().__init__(parent)
-
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.layout = self.build_layout()
         self.build_ui()
+        self.setMaximumHeight(self.sizeHint().height())
 
     def build_layout(self):
         from PyQt6.QtWidgets import QVBoxLayout

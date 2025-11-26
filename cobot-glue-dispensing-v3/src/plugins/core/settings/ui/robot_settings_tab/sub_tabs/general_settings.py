@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
 
 from plugins.core.settings.ui.robot_settings_tab.robot_config_groups.global_motion import GlobalMotionSettingsGroup, \
     GlobalMotionSettings
@@ -25,10 +25,12 @@ class GeneralRobotSettingsTab(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
         # create and assign layout to the widget so child widgets exist in the UI
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         # build UI elements (creates robot_info_group, safety_group, global_group)
         self.build_ui()
+        self.setMaximumHeight(self.sizeHint().height())
 
     def build_layout(self):
         layout = QVBoxLayout()
@@ -54,3 +56,12 @@ class GeneralRobotSettingsTab(QWidget):
     def update_values(self, settings: GeneralSettings):
         self.robot_info_group.update_values(settings.robot_info)
         self.global_group.update_values(settings.global_motion)
+
+if __name__ == "__main__":
+    from PyQt6.QtWidgets import QApplication
+    import sys
+
+    app = QApplication(sys.argv)
+    window = GeneralRobotSettingsTab()
+    window.show()
+    sys.exit(app.exec())

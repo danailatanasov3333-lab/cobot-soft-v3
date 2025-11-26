@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from PyQt6.QtWidgets import QGroupBox, QGridLayout, QLabel
-
+from PyQt6.QtWidgets import QGroupBox, QGridLayout, QLabel, QSizePolicy
+from PyQt6.QtWidgets import QGridLayout
 from frontend.virtualKeyboard.VirtualKeyboard import FocusSpinBox
 from plugins.core.settings.ui.robot_settings_tab.robot_config_groups.base import SettingGroupBox
 
@@ -23,17 +23,18 @@ class GlobalMotionSettings:
 class GlobalMotionSettingsGroup(SettingGroupBox):
     def __init__(self):
         super().__init__("Global Motion Settings")
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.layout = self.build_layout()
         self.build_ui()
+        self.setMaximumHeight(self.sizeHint().height())
 
     def build_layout(self):
-        from PyQt6.QtWidgets import QGridLayout
+
         layout = QGridLayout()
         return layout
 
     def build_ui(self):
         # Global Velocity and Acceleration Settings
-        self.global_group = QGroupBox("Global Motion Settings")
         global_layout = QGridLayout()
 
         # Global velocity
@@ -72,10 +73,10 @@ class GlobalMotionSettingsGroup(SettingGroupBox):
         self.max_jog_step.setSuffix(" mm")
         global_layout.addWidget(self.max_jog_step, 3, 1)
 
-        self.global_group.setLayout(global_layout)
+        self.setLayout(global_layout)
         
         # Add the group to the main layout
-        self.layout.addWidget(self.global_group)
+        self.layout.addWidget(self)
         self.setLayout(self.layout)
 
     def get_settings(self)->GlobalMotionSettings:
@@ -91,3 +92,12 @@ class GlobalMotionSettingsGroup(SettingGroupBox):
         self.global_acceleration.setValue(settings.acceleration)
         self.emergency_decel.setValue(settings.emergency_decel)
         self.max_jog_step.setValue(settings.max_jog_step)
+
+if __name__ == "__main__":
+    from PyQt6.QtWidgets import QApplication
+    import sys
+
+    app = QApplication(sys.argv)
+    window = GlobalMotionSettingsGroup()
+    window.show()
+    sys.exit(app.exec())

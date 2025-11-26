@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QGridLayout, QLabel
+from PyQt6.QtWidgets import QGridLayout, QLabel, QSizePolicy
 
 from frontend.virtualKeyboard.VirtualKeyboard import FocusLineEdit, FocusDoubleSpinBox, FocusSpinBox
 from plugins.core.settings.ui.robot_settings_tab.robot_config_groups.base import SettingGroupBox
@@ -27,8 +27,11 @@ class RobotInformationGroup(SettingGroupBox):
     robot_info_changed_signal = pyqtSignal(str,object)
     def __init__(self):
         super().__init__("Robot Info")
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.layout = self.build_layout()
         self.build_ui()
+        self.setMaximumHeight(self.sizeHint().height())
+
     def build_layout(self):
         layout = QGridLayout()
         return layout
@@ -92,3 +95,12 @@ class RobotInformationGroup(SettingGroupBox):
         self.user_edit.setValue(robot_info.robot_user)
         self.tcp_x_offset_edit.setValue(robot_info.tcp_x_offset)
         self.tcp_y_offset_edit.setValue(robot_info.tcp_y_offset)
+
+if __name__ == "__main__":
+    from PyQt6.QtWidgets import QApplication
+    import sys
+
+    app = QApplication(sys.argv)
+    window = RobotInformationGroup()
+    window.show()
+    sys.exit(app.exec())
