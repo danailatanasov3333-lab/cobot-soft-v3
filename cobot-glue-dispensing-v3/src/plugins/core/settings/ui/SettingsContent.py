@@ -274,10 +274,8 @@ class SettingsContent(BackgroundWidget):
             self.cameraSettingsTabLayout.updateValues(cameraSettings)
 
     def updateRobotSettings(self, robotSettings):
-        # TODO: Implement robot settings update if needed
-        # if self.robotSettingsTabLayout is not None:
-        #     self.robotSettingsTabLayout.updateValues(robotSettings)
-        self.robotSettingsTabLayout.updateValues(robotSettings)
+        if self.robotSettingsTabLayout is not None:
+            self.robotSettingsTabLayout.updateValues(robotSettings)
 
     def updateContourSettings(self, contourSettings):
         # TODO: Implement contour settings update if needed

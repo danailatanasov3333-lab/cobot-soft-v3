@@ -122,18 +122,54 @@ class SettingsService:
 
                 # Update with new data (handles nested keys and case conversion)
                 for key, value in settings_data.items():
-                    # Convert key to uppercase for robot_config (maintains compatibility)
-                    if settings_type == "robot_config":
-                        if '.' in key:
-                            # Handle nested keys (e.g., "robot_info.robot_ip" -> skip nested prefix, use last part)
-                            actual_key = key.split('.')[-1].upper()
-                        else:
-                            actual_key = key.upper()
-                    else:
-                        actual_key = key
+                    # Handle nested keys for robot_config
+                    if settings_type == "robot_config" and '.' in key:
+                        # Handle nested keys properly
+                        parts = key.split('.')
+                        
+                        if len(parts) == 2:
+                            # Handle 2-level nesting: "safety_limits.x_min"
+                            parent_key = parts[0].upper()
+                            child_key = parts[1].lower()
+                            
+                            # Ensure parent dict exists
+                            if parent_key not in current_dict:
+                                current_dict[parent_key] = {}
+                            
+                            # Update nested value
+                            current_dict[parent_key][child_key] = value
 
-                    # Update the dict
-                    current_dict[actual_key] = value
+                        elif len(parts) == 3 and parts[0] == "movement_groups":
+                            # Handle 3-level nesting: "movement_groups.SLOT 0 PICKUP.points"
+                            parent_key = "MOVEMENT_GROUPS"  # Always uppercase
+                            group_name = parts[1]  # Keep original case (e.g., "SLOT 0 PICKUP")
+                            setting_key = parts[2]  # e.g., "points", "position", "velocity"
+
+                            # Ensure parent dict exists
+                            if parent_key not in current_dict:
+                                current_dict[parent_key] = {}
+
+                            # Ensure group dict exists
+                            if group_name not in current_dict[parent_key]:
+                                current_dict[parent_key][group_name] = {}
+
+                            # Update the specific setting for this group
+                            current_dict[parent_key][group_name][setting_key] = value
+                            print(f"📝 Updated {parent_key}.{group_name}.{setting_key} = {value}")
+
+                        else:
+                            # Fallback for other nested keys
+                            actual_key = key.upper()
+                            current_dict[actual_key] = value
+                    else:
+                        # Convert key to uppercase for robot_config (maintains compatibility)
+                        if settings_type == "robot_config":
+                            actual_key = key.upper()
+                        else:
+                            actual_key = key
+                        
+                        # Update the dict
+                        current_dict[actual_key] = value
 
                 # Create settings object from updated dict
                 settings = repository.from_dict(current_dict)

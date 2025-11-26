@@ -946,7 +946,7 @@ class CameraSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
             key: The setting key
             value: The new value
         """
-        self.value_changed_signal.emit(key, value, self.__class__.__name__)
+        self.value_changed_signal.emit(key, value, self.className)
     
 
     def connect_default_callbacks(self):

@@ -110,7 +110,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         return ApplicationMetadata(
             name="Glue Spraying Application",
             version="1.0.0",
-            robot_type=RobotType.TEST,  # Glue application uses Fairino robot
+            robot_type=RobotType.FAIRINO,  # Glue application uses Fairino robot
             dependencies=["_VisionService",
                           "SettingsService",
                           "GlueRobotService",

@@ -794,7 +794,7 @@ class GlueSettingsTabLayout(BaseSettingsTabLayout, QVBoxLayout):
             key: The setting key
             value: The new value
         """
-        class_name = self.__class__.__name__
+        class_name = self.className
         print(f"🔧 Setting changed in {class_name}: {key} = {value}")
         self.value_changed_signal.emit(key, value, class_name)
     

@@ -95,13 +95,20 @@ class BaseRobotController(BaseController):
             return Response(Constants.RESPONSE_STATUS_ERROR, "Failed retrieving current position", {}).to_dict()
         return Response(Constants.RESPONSE_STATUS_SUCCESS, "Current position retrieved", {"position": pos}).to_dict()
 
-    def _handle_move_to_position(self, parts):
+    def _handle_move_to_position(self, data):
         # /api/v1/robot/position/move-to/x/y/z/rx/ry/rz
+        print(f"Handling move to position with data: {data}")
+
         try:
-            position = [float(p) for p in parts[-6:]]
-            ret = self.robot_service.move_to_position(position, 0, 0, 100, 30)
+            position = data.get("position")
+            velocity = data.get("velocity")
+            acceleration = data.get("acceleration")
+            # position = [float(p) for p in parts[-6:]]
+            ret = self.robot_service.move_to_position(position, 0, 0, velocity, acceleration)
             return self._moveSuccess(ret, "Failed moving to position", "Success moving to position")
         except Exception:
+            import traceback
+            traceback.print_exc()
             return Response(Constants.RESPONSE_STATUS_ERROR, "Invalid position format", {}).to_dict()
 
     def _handle_jog(self, parts):
@@ -162,7 +169,7 @@ class BaseRobotController(BaseController):
             return Response(Constants.RESPONSE_STATUS_ERROR, f"Invalid slot request {request}: {e}", {}).to_dict()
 
     def _handleSaveCalibrationPoint(self):
-        # ret = self.robot_service.saveCalibrationPoint()
+
         return self._moveSuccess(False, "Not Implemented", "Calibration point saved")
 
     # === Utility ===

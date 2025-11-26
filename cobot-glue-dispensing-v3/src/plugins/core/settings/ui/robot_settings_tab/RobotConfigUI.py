@@ -124,10 +124,6 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
         # Connect jog operations
         self.signals.jog_requested.connect(self._handle_jog)
 
-        # Connect movement operations
-        self.signals.move_to_point_requested.connect(self._handle_move_to_point)
-        self.signals.move_to_single_position_requested.connect(self._handle_move_to_position)
-
         # Connect position operations
         self.signals.save_current_position_as_point.connect(self._handle_save_current_position)
 
@@ -149,12 +145,144 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
     def _handle_move_to_position(self, group_name):
         """Handle move to single position request"""
         # This will be implemented based on position logic
-        print(f"Move to position: {group_name}")
+        print(f"[ROBOT_CONFIG_UI] Move to position: {group_name}")
 
     def _handle_save_current_position(self, group_name):
         """Handle save current position request"""
-        # This will be implemented based on position save logic
-        print(f"Save current position to: {group_name}")
+        if not self.controller_service:
+            QMessageBox.warning(self, "Error", "Controller service not available")
+            return
+
+        try:
+            # Get current robot position - returns a ServiceResult object
+            result = self.controller_service.robot.get_current_position()
+
+            # Check if the operation was successful
+            if not result.success:
+                QMessageBox.warning(self, "Error", f"Failed to get current robot position: {result.message}")
+                return
+
+            # Extract the actual position data from the result
+            current_pos = result.data
+
+            if current_pos is None:
+                QMessageBox.warning(self, "Error", "Failed to get current robot position: No position data available")
+                return
+
+            # Format position as string: "[x, y, z, rx, ry, rz]"
+            # Check if current_pos is already a string or a list
+            if isinstance(current_pos, str):
+                # Already formatted as string, use as-is
+                position_str = current_pos
+            elif isinstance(current_pos, (list, tuple)):
+                # Format list/tuple of numbers into string
+                position_str = f"[{', '.join(str(round(float(p), 3)) for p in current_pos)}]"
+            else:
+                print(f"Unexpected position data type: {type(current_pos)} position data: {current_pos}")
+                QMessageBox.warning(self, "Error", f"Unexpected position data type: {type(current_pos)}")
+                return
+
+            # Find the movement group widget
+            if not hasattr(self, 'movement_groups_tab') or not self.movement_groups_tab:
+                QMessageBox.warning(self, "Error", "Movement groups not initialized")
+                return
+
+            widget = self.movement_groups_tab.movement_groups.get(group_name)
+            if not widget:
+                QMessageBox.warning(self, "Error", f"Movement group '{group_name}' not found")
+                return
+
+            # Check if it's a single-position or multi-position group
+            if widget.position_display is not None:
+                # Single-position group (HOME_POS, LOGIN_POS, CALIBRATION_POS)
+                widget.set_position(position_str)
+                # Emit signal to save to config
+                self.value_changed_signal.emit(
+                    f"movement_groups.{group_name}.position",
+                    position_str,
+                    self.className
+                )
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Saved current position to {group_name}:\n{position_str}"
+                )
+
+            elif widget.position_list is not None:
+                # Multi-position group - ask user if they want to add or replace
+                dialog = QDialog(self)
+                dialog.setWindowTitle("Save Position")
+                dialog.setModal(True)
+                layout = QVBoxLayout()
+
+                layout.addWidget(QLabel(f"Current position: {position_str}"))
+                layout.addWidget(QLabel(f"\nHow do you want to save this position to {group_name}?"))
+
+                # Check if there are existing points
+                existing_points = widget.get_points()
+                if existing_points:
+                    combo = QComboBox()
+                    combo.addItem("Add as new point")
+                    for i, point in enumerate(existing_points):
+                        combo.addItem(f"Replace point {i}: {point}")
+                    layout.addWidget(combo)
+                else:
+                    label = QLabel("This will be added as the first point.")
+                    layout.addWidget(label)
+                    combo = None
+
+                buttons = QDialogButtonBox(
+                    QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+                )
+                buttons.accepted.connect(dialog.accept)
+                buttons.rejected.connect(dialog.reject)
+                layout.addWidget(buttons)
+
+                dialog.setLayout(layout)
+
+                if dialog.exec() == QDialog.DialogCode.Accepted:
+                    if combo is None or combo.currentIndex() == 0:
+                        # Add as new point
+                        existing_points.append(position_str)
+                        widget.set_points(existing_points)
+                        QMessageBox.information(
+                            self,
+                            "Success",
+                            f"Added position to {group_name} as point {len(existing_points) - 1}"
+                        )
+                    else:
+                        # Replace existing point
+                        point_index = combo.currentIndex() - 1
+                        existing_points[point_index] = position_str
+                        widget.set_points(existing_points)
+                        QMessageBox.information(
+                            self,
+                            "Success",
+                            f"Replaced point {point_index} in {group_name}"
+                        )
+
+                    # Emit signal to save to config
+                    self.value_changed_signal.emit(
+                        f"movement_groups.{group_name}.points",
+                        existing_points,
+                        self.className
+                    )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Error",
+                    f"Movement group '{group_name}' cannot store positions"
+                )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to save position: {str(e)}"
+            )
+            print(f"Error in _handle_save_current_position: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _handle_execute_trajectory(self, group_name):
         """Handle trajectory execution request"""
@@ -228,6 +356,18 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
                 self.value_changed_signal.emit("global_motion_settings.global_acceleration", value, self.className)
             )
         )
+        self.general_settings_tab.global_group.emergency_decel.valueChanged.connect(
+            lambda value: (
+                self.signals.emergency_decel_changed.emit(value),
+                self.value_changed_signal.emit("global_motion_settings.emergency_decel", value, self.className)
+            )
+        )
+        self.general_settings_tab.global_group.max_jog_step.valueChanged.connect(
+            lambda value: (
+                self.signals.max_jog_step_changed.emit(value),
+                self.value_changed_signal.emit("global_motion_settings.max_jog_step", value, self.className)
+            )
+        )
 
         # Connect jog widget signals
         self.jog_widget.jogRequested.connect(self.signals.jog_requested.emit)
@@ -250,13 +390,23 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
         layout.addWidget(QLabel("Select target group to save current position:")) # TODO TRANSLATE
 
         combo = QComboBox()
-        # Add groups that can accept new points (both single and multi-position groups)
-        for group_name in self.position_lists.keys():
-            widget = self.position_lists[group_name]
-            if isinstance(widget, QListWidget):  # Multi-position groups
-                combo.addItem(group_name)
-            elif isinstance(widget, FocusLineEdit):  # Single-position groups (LOGIN_POS, HOME_POS, CALIBRATION_POS)
-                combo.addItem(group_name)
+
+        # Use the new movement_groups_tab if available
+        if hasattr(self, 'movement_groups_tab') and self.movement_groups_tab:
+            # Add all movement groups that can accept positions
+            for group_name, widget in self.movement_groups_tab.movement_groups.items():
+                # Include both single-position and multi-position groups
+                # Exclude only velocity-only groups (like JOG)
+                if widget.position_display is not None or widget.position_list is not None:
+                    combo.addItem(group_name)
+        else:
+            # Fallback to legacy position_lists dictionary
+            for group_name in self.position_lists.keys():
+                widget = self.position_lists[group_name]
+                if isinstance(widget, QListWidget):  # Multi-position groups
+                    combo.addItem(group_name)
+                elif isinstance(widget, FocusLineEdit):  # Single-position groups (LOGIN_POS, HOME_POS, CALIBRATION_POS)
+                    combo.addItem(group_name)
 
         layout.addWidget(combo)
 
@@ -286,7 +436,9 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
             tcp_y_offset = robot_settings.tcp_y_offset)
         global_motion_settings = GlobalMotionSettings(
             velocity=robot_settings.global_motion_settings.global_velocity,
-            acceleration=robot_settings.global_motion_settings.global_acceleration
+            acceleration=robot_settings.global_motion_settings.global_acceleration,
+            emergency_decel=robot_settings.global_motion_settings.emergency_decel,
+            max_jog_step=robot_settings.global_motion_settings.max_jog_step
         )
         general_values = GeneralSettings(
             robot_info=robot_info,
@@ -314,6 +466,11 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
         self.safety_settings_tab.update_values(safety_limits)
 
     def update_movement_groups_tab(self,robot_settings:RobotConfig):
+        # Use the new MovementGroupsTab update method if available
+        if hasattr(self, 'movement_groups_tab'):
+            self.movement_groups_tab.update_values(robot_settings)
+        
+        # Legacy support for old approach
         for group_name, group_data in robot_settings.movement_groups.items():
             if group_name in self.position_lists:
                 widget = self.position_lists[group_name]

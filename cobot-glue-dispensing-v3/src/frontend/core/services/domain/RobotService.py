@@ -9,6 +9,7 @@ import logging
 from typing import TYPE_CHECKING
 from enum import Enum
 
+from communication_layer.api.v1 import Constants
 from communication_layer.api.v1.endpoints import robot_endpoints
 from ..types.ServiceResult import ServiceResult
 
@@ -60,29 +61,21 @@ class RobotService:
         self.controller = controller
         self.logger = logger.getChild(self.__class__.__name__)
     
-    def move_to_home(self, async_mode: bool = True) -> ServiceResult:
+    def move_to_home(self) -> ServiceResult:
         """
         Move robot to home position.
         
         Args:
-            async_mode: Whether to move asynchronously
+
         
         Returns:
             ServiceResult with success/failure status
         """
         try:
-            self.logger.info("Moving robot to home position")
+            print("Moving robot to home position")
             
-            status = self.controller.homeRobot(async_mode)
-            
-            if hasattr(status, 'value'):
-                # If status is an enum or has a value attribute
-                success = str(status) == "SUCCESS" or getattr(status, 'value', None) == "SUCCESS"
-            else:
-                # If it's a simple value
-                success = str(status) == "SUCCESS"
-            
-            if success:
+            status = self.controller.homeRobot()
+            if status == Constants.RESPONSE_STATUS_SUCCESS:
                 return ServiceResult.success_result("Robot moved to home position successfully")
             else:
                 return ServiceResult.error_result("Failed to move robot to home position")
@@ -153,12 +146,8 @@ class RobotService:
             self.logger.info("Moving robot to login position")
             
             status = self.controller.handleLoginPos()
-            
-            # Check if the status indicates success
-            success = str(status) == "SUCCESS"
-            
-            if success:
-                return ServiceResult.success_result("Robot moved to login position")
+            if status == Constants.RESPONSE_STATUS_SUCCESS:
+                return ServiceResult.success_result("Robot moved to login position successfully")
             else:
                 return ServiceResult.error_result("Failed to move robot to login position")
                 
@@ -245,5 +234,39 @@ class RobotService:
                 
         except Exception as e:
             error_msg = f"Failed to update robot config: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
+            return ServiceResult.error_result(error_msg)
+
+    def get_current_position(self) -> ServiceResult:
+        """Get current robot position."""
+        try:
+            self.logger.info("Retrieving current robot position")
+
+            position = self.controller.handle_get_robot_current_position()
+
+            if position is not None:
+                return ServiceResult.success_result("Current position retrieved successfully", data=position)
+            else:
+                return ServiceResult.error_result("Failed to retrieve current position")
+
+        except Exception as e:
+            error_msg = f"Failed to get current position: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
+            return ServiceResult.error_result(error_msg)
+
+    def move_to_position(self, position: list[float],vel,acc) -> ServiceResult:
+        """Move robot to specified position."""
+        try:
+            self.logger.info(f"Moving robot to position: {position} with vel={vel}, acc={acc}")
+
+            status = self.controller.handle_move_robot_to_position(position,vel,acc)
+
+            if str(status) == "SUCCESS":
+                return ServiceResult.success_result("Robot moved to position successfully")
+            else:
+                return ServiceResult.error_result("Failed to move robot to position")
+
+        except Exception as e:
+            error_msg = f"Failed to move to position: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return ServiceResult.error_result(error_msg)

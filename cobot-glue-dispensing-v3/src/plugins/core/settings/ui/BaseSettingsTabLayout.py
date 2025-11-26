@@ -6,7 +6,7 @@ from frontend.virtualKeyboard.VirtualKeyboard import FocusDoubleSpinBox, FocusSp
 
 class BaseSettingsTabLayout:
     def __init__(self,parent_widget):
-        self.className = self.__class__.__name__
+        self.className = self.__class__.__module__
         self.translator = get_app_translator()
         self.input_fields = []
         self.parent_widget = parent_widget

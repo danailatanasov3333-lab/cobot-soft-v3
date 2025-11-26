@@ -40,6 +40,8 @@ class RobotConfigSignals(QObject):
     # Global motion settings signals
     global_velocity_changed = pyqtSignal(int)  # value
     global_acceleration_changed = pyqtSignal(int)  # value
+    emergency_decel_changed = pyqtSignal(int)  # value
+    max_jog_step_changed = pyqtSignal(int)  # value
 
     # Jog operations
     jog_requested = pyqtSignal(str, str, str, float)  # command, axis, direction, value

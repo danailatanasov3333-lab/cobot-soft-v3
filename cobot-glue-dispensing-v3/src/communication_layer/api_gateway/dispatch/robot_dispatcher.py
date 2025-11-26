@@ -38,7 +38,7 @@ class RobotDispatch(IDispatcher):
         Returns:
             dict: Response dictionary with operation result
         """
-        print(f"RobotHandler: Handling request: {request} with parts: {parts}")
+        print(f"RobotHandler: Handling request: {request} with parts: {parts} and data: {data}")
         
         # Handle both new RESTful endpoints
         if request in [robot_endpoints.ROBOT_CALIBRATE] or (len(parts) > 1 and parts[1] == "calibrate"):
@@ -54,11 +54,11 @@ class RobotDispatch(IDispatcher):
         elif self._is_slot_command(request):
             return self.handle_slot_operation(parts, request)
         elif self._is_position_command(request):
-            return self.handle_position_command(parts, request)
+            return self.handle_position_command(parts, request,data)
         else:
             # Delegate to robot controller for other operations
             return self.robotController.handle(request, parts)
-    
+
     def handle_robot_calibration(self):
         """
         Handle robot calibration requests.
@@ -175,50 +175,52 @@ class RobotDispatch(IDispatcher):
                 message=f"Error cleaning nozzle: {e}"
             ).to_dict()
     
-    def handle_jog_command(self, parts, request):
+    def handle_jog_command(self, parts, request, data=None):
         """
         Handle robot jogging commands.
         
         Args:
             parts (list): Parsed request parts
             request (str): Full request string
-            
+            data: Request data
+
         Returns:
             dict: Response indicating success or failure of jog operation
         """
         print(f"RobotHandler: Handling jog command: {request}")
         
         # Delegate to robot controller which has the jog implementation
-        return self.robotController.handle(request, parts)
-    
-    def handle_position_command(self, parts, request):
+        return self.robotController.handle(request, parts, data)
+
+    def handle_position_command(self, parts, request,data):
         """
         Handle robot position-related commands.
         
         Args:
             parts (list): Parsed request parts
             request (str): Full request string
-            
+
         Returns:
             dict: Response with position data or operation result
         """
         print(f"RobotHandler: Handling position command: {request}")
         
         # Delegate to robot controller which handles position operations
-        return self.robotController.handle(request, parts)
-    
-    def handle_slot_operation(self, parts, request):
+        return self.robotController.handle(request, parts,data)
+
+    def handle_slot_operation(self, parts, request, data=None):
         """
         Handle robot slot pickup/drop operations.
         
         Args:
             parts (list): Parsed request parts
             request (str): Full request string
-            
+            data: Request data
+
         Returns:
             dict: Response indicating success or failure of slot operation
         """
         print(f"RobotHandler: Handling slot operation: {request}")
         
         # Delegate to robot controller which handles slot operations
-        return self.robotController.handle(request, parts)
+        return self.robotController.handle(request, parts, data)

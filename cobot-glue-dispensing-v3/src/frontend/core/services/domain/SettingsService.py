@@ -14,17 +14,18 @@ from frontend.core.services.types.ServiceResult import ServiceResult
 # Import settings classes for type hints and validation
 
 # Import UI component classes for validation
-from plugins.core.settings.ui import CameraSettingsTabLayout
+from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
+from plugins.core.settings.ui.robot_settings_tab.RobotConfigUI import RobotConfigUI
 
 
 
 
 class SettingComponentType(Enum):
     """Valid component types for settings updates"""
-    CAMERA = CameraSettingsTabLayout.__name__
-    GLUE = GlueSettingsTabLayout.__name__
-    ROBOT = "RobotConfigUI"  # Robot settings component
+    CAMERA = CameraSettingsTabLayout.__module__
+    GLUE = GlueSettingsTabLayout.__module__
+    ROBOT = RobotConfigUI.__module__
 
 
 

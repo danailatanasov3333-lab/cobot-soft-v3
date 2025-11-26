@@ -28,7 +28,6 @@ from core.controllers.settings.SettingsController import SettingsController
 # IMPORT SERVICES
 from core.services.settings.SettingsService import SettingsService
 from core.services.vision.VisionService import VisionServiceSingleton
-from modules.utils import PathResolver
 
 setup_localization()
 
@@ -44,7 +43,6 @@ logging.basicConfig(
 
 API_VERSION = 1
 newGui = True
-testRobot = False
 if newGui:
     from frontend.core.runPlUi import PlGui
 else:

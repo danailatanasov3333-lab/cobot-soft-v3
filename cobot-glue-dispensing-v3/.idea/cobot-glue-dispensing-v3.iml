@@ -8,7 +8,7 @@
       <excludeFolder url="file://$MODULE_DIR$/deprecated" />
       <excludeFolder url="file://$MODULE_DIR$/new_development" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.10" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.10 (Cobot-Glue-Nozzle)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">

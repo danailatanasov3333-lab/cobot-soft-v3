@@ -1,3 +1,5 @@
+import json
+
 from PyQt6.QtCore import QThread
 
 from applications.glue_dispensing_application.model.workpiece import GlueWorkpiece
@@ -15,6 +17,7 @@ import logging
 
 from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
+from plugins.core.settings.ui.robot_settings_tab.RobotConfigUI import RobotConfigUI
 
 
 class UIController:
@@ -67,6 +70,8 @@ class UIController:
             robot_endpoints.ROBOT_EXECUTE_NOZZLE_CLEAN: self.handleCleanNozzle,
             robot_endpoints.ROBOT_RESET_ERRORS: self.handleResetErrors,
             robot_endpoints.ROBOT_UPDATE_CONFIG: self.handleRobotUpdateConfig,
+            robot_endpoints.ROBOT_GET_CURRENT_POSITION: self.handle_get_robot_current_position,
+            robot_endpoints.ROBOT_MOVE_TO_POSITION: self.handle_move_robot_to_position,
 
             # Workpiece endpoints
             workpiece_endpoints.WORKPIECE_SAVE: self.save_workpiece,
@@ -77,6 +82,67 @@ class UIController:
             # Legacy special endpoints
             "executeFromGallery": self.handleExecuteFromGallery,
         }
+
+    import json
+
+    def handle_move_robot_to_position(self, position, vel, acc):
+        print("RAW position:", position, type(position))
+
+        # STEP 1: If position is a string, parse it as JSON
+        if isinstance(position, str):
+            try:
+                position = json.loads(position)
+            except Exception:
+                print("ERROR: position string could not be parsed:", position)
+                return False
+
+        # STEP 2: Ensure each element is a float
+        try:
+            print("Position before float conversion:", position, "types:", [type(x) for x in position])
+            position = [float(p) for p in position]
+        except Exception as e:
+            print("Error converting position to floats:", position, "type:", [type(x) for x in position])
+            print(e)
+            return False
+
+        # STEP 3: Convert vel/acc
+        try:
+            vel = float(vel)
+            acc = float(acc)
+        except Exception:
+            print("Error converting velocity/acceleration:", vel, acc)
+            return False
+
+        # Endpoint
+        request = robot_endpoints.ROBOT_MOVE_TO_POSITION
+
+        data = {
+            "position": position,
+            "velocity": vel,
+            "acceleration": acc
+        }
+
+        # Send request
+        response_dict = self.requestSender.send_request(request, data)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_move_to_position] Response: {response}")
+
+        if response.status == Constants.RESPONSE_STATUS_ERROR:
+            print("Error moving robot to position:", response.message)
+            return False
+
+        return True
+
+    def handle_get_robot_current_position(self):
+        request = robot_endpoints.ROBOT_GET_CURRENT_POSITION
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_get_robot_current_position] Response: {response}")
+        if response.status == Constants.RESPONSE_STATUS_ERROR:
+            print("Error fetching robot current position:", response.message)
+            return None
+
+        return response.data.get("position")
 
     def handle_get_robot_calibration_settings(self):
         request = settings_endpoints.SETTINGS_ROBOT_CALIBRATION_GET
@@ -310,7 +376,6 @@ class UIController:
         response = Response.from_dict(response)
 
         if response.status == Constants.RESPONSE_STATUS_ERROR:
-            # FeedbackProvider.showMessage(response.message)
             request = camera_endpoints.CAMERA_ACTION_RAW_MODE_OFF
             response = self.requestSender.send_request(request)
             response = Response.from_dict(response)
@@ -349,9 +414,6 @@ class UIController:
             FeedbackProvider.showMessage(response.message)
             return False, response.message
 
-        # self.current_content.pause_feed(response.data['image'])
-        # self.robotControl = RobotControl(self)
-        # self.mainLayout.insertWidget(1, self.robotControl)
         return True, response.message
 
     def saveRobotCalibrationPoint(self):
@@ -390,21 +452,20 @@ class UIController:
         return message
 
     def updateSettings(self, key, value, className):
-        if className == CameraSettingsTabLayout.__name__:
+        if className == CameraSettingsTabLayout.__module__:
             print("Updating Settings Camera", key, value)
             resource = Constants.REQUEST_RESOURCE_CAMERA
             request = settings_endpoints.SETTINGS_CAMERA_SET
 
-        elif className == GlueSettingsTabLayout.__name__:
+        elif className == GlueSettingsTabLayout.__module__:
             print("Updating Settings Glue", key, value)
             resource = glue_endpoints.REQUEST_RESOURCE_GLUE
             request = glue_endpoints.SETTINGS_GLUE_SET
 
-        elif className == "RobotConfigUI":
+        elif className == RobotConfigUI.__module__:
             print("Updating Settings Robot", key, value)
             resource = Constants.REQUEST_RESOURCE_ROBOT
             request = settings_endpoints.SETTINGS_ROBOT_SET
-
         else:
             self.logger.error(f"{self.logTag}] Updating Unknown Settings {className} : {key} {value}")
             return
@@ -453,29 +514,17 @@ class UIController:
         request = robot_endpoints.ROBOT_MOVE_TO_CALIB_POS
         self.requestSender.send_request(request)
 
-    def homeRobot(self, asyncParam=True):
+    def homeRobot(self):
         request = robot_endpoints.ROBOT_MOVE_TO_HOME_POS
-        def onSuccess(req, resp):
-            if resp.status == Constants.RESPONSE_STATUS_ERROR:
-                FeedbackProvider.showMessage(resp.message)
-                return Constants.RESPONSE_STATUS_ERROR
-            else:
-                return Constants.RESPONSE_STATUS_SUCCESS
 
-        def onError(req, err):
-            self.logger.error(f"{self.logTag}] CALLBACK ERROR MESSAGE {err}")
+
+        resp = self.requestSender.send_request(request)
+        resp = Response.from_dict(resp)
+        if resp.status == Constants.RESPONSE_STATUS_ERROR:
+            FeedbackProvider.showMessage(resp.message)
             return Constants.RESPONSE_STATUS_ERROR
-
-        if asyncParam:
-            self._runAsyncRequest(request, onSuccess, onError)
         else:
-            resp = self.requestSender.send_request(request)
-            resp = Response.from_dict(resp)
-            if resp.status == Constants.RESPONSE_STATUS_ERROR:
-                FeedbackProvider.showMessage(resp.message)
-                return Constants.RESPONSE_STATUS_ERROR
-            else:
-                return Constants.RESPONSE_STATUS_SUCCESS
+            return Constants.RESPONSE_STATUS_SUCCESS
 
     def handleStart(self):
         request = operations_endpoints.START
@@ -531,23 +580,6 @@ class UIController:
             print("Error in CreateWorkpieceStep1:", response.message)
             return False, response.message,response.data
         return True, response.message,response.data
-
-    # def createWorkpieceAsync(self, onSuccess, onError=None):
-    #     request = workpiece_endpoints.WORKPIECE_CREATE
-    #     print("CreateWorkpieceAsync request:", request)
-    #
-    #     def successCallback(req, resp):
-    #         if resp.status == Constants.RESPONSE_STATUS_ERROR:
-    #             print("CreateWorkpieceAsync error response:", resp)
-    #             if onError:
-    #                 onError(req, resp.message)
-    #         else:
-    #             print("CreateWorkpieceAsync success response:", resp)
-    #             frame = resp.data['image']
-    #             contours = resp.data['contours']
-    #             onSuccess(frame, contours, resp.data)
-    #
-    #     self._runAsyncRequest(request, successCallback, onError)
 
     def _runAsyncRequest(self, request, onSuccess, onError=None):
         thread = QThread()
