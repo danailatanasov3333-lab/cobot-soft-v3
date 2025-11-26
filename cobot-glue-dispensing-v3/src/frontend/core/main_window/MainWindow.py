@@ -49,7 +49,8 @@ class MainWindow(TranslatableWidget):
         self.folders_page = None  # The folders page widget
         self.auth_service = AuthorizationService()
         self.pending_camera_operations = False  # Track if camera operations are in progress
-        
+        self.running_widgets = {}  # app_name -> widget
+
         # Initialize plugin-based widget factory
         self.plugin_widget_factory = PluginWidgetFactory(controller, self)
         
@@ -173,59 +174,126 @@ class MainWindow(TranslatableWidget):
             print(f"Error setting up special widget {app_name}: {e}")
 
     def show_app(self, app_name):
-        """Show the specified app in the stacked widget"""
-        app_widget = self.create_app(app_name)
-        print(f"show_app Created app widget: {app_widget}")
-        if not app_widget:
-            print(f"show_app MainWindow: App '{app_name}' could not be created.")
-            return None
+        # Check if widget already exists
+        if app_name in self.running_widgets:
+            app_widget = self.running_widgets[app_name]
+        else:
+            app_widget = self.create_app(app_name)
+            self.running_widgets[app_name] = app_widget
 
-        # Connect the app's close signal
-        app_widget.app_closed.connect(self.close_current_app)
-        # Add the app widget to the stacked widget (index 1)
+        print("MAIN_WINDOW LEN RUNNING WIDGETS:", len(self.running_widgets))
+
+        # Connect signals if not already connected
+        if not getattr(app_widget, "_signals_connected", False):
+            app_widget.app_closed.connect(self.close_current_app)
+            app_widget._signals_connected = True
+
+        # Remove old widget visually but keep it alive
         if self.stacked_widget.count() > 1:
-            # Remove existing app widget
             old_app = self.stacked_widget.widget(1)
-            old_app.clean_up()  # Call cleanup if needed
-            print(f"show_app MainWindow: Closing old app widget - {old_app}")
             self.stacked_widget.removeWidget(old_app)
-            old_app.deleteLater()
+            # Don't deleteLater() here!
 
         self.stacked_widget.addWidget(app_widget)
-        # Switch to the app view (index 1)
         self.stacked_widget.setCurrentIndex(1)
-        print(f"show_app App '{app_name}' is now running. Press ESC to close or click the back button.")
         return app_widget
 
-    def close_current_app(self):
-        print(f"MainWindow: Current running app before closing: {self.current_running_app}")
-        """Close the currently running app and restore the folder interface"""
-        if self.current_running_app:
-            print(f"MainWindow: Closing app - {self.current_running_app}")
+    # def show_app(self, app_name):
+    #     """Show the specified app in the stacked widget"""
+    #     app_widget = self.create_app(app_name)
+    #     print(f"show_app Created app widget: {app_widget}")
+    #     if not app_widget:
+    #         print(f"show_app MainWindow: App '{app_name}' could not be created.")
+    #         return None
+    #
+    #     # Connect the app's close signal
+    #     app_widget.app_closed.connect(self.close_current_app)
+    #     # Add the app widget to the stacked widget (index 1)
+    #     if self.stacked_widget.count() > 1:
+    #         # Remove existing app widget
+    #         old_app = self.stacked_widget.widget(1)
+    #         old_app.clean_up()  # Call cleanup if needed
+    #         print(f"show_app MainWindow: Closing old app widget - {old_app}")
+    #         self.stacked_widget.removeWidget(old_app)
+    #         old_app.deleteLater()
+    #
+    #     self.stacked_widget.addWidget(app_widget)
+    #     # Switch to the app view (index 1)
+    #     self.stacked_widget.setCurrentIndex(1)
+    #     print(f"show_app App '{app_name}' is now running. Press ESC to close or click the back button.")
+    #     return app_widget
 
-            # check if current app is dashboard
-            if self.current_running_app == WidgetType.DASHBOARD.value:
-                print("MainWindow: Closing Dashboard App Widget and cleaning up")
-                self.stacked_widget.widget(1).clean_up()
-            else:
-                print(f"MainWindow: Closing App Widget - {self.current_running_app}")
+    def close_all_apps(self):
+        """
+        Close all cached app widgets and restore the folder interface.
+        Useful when logging out or shutting down.
+        """
+        print("MainWindow: Closing all running apps...")
+        # Iterate over all cached widgets
+        for app_name, app_widget in list(self.plugin_widget_factory._widget_cache.items()):
+            if not app_widget:
+                continue
 
-            # Switch back to the folder view (index 0)
-            self.stacked_widget.setCurrentIndex(0)
+            print(f"Closing app widget: {app_name}")
 
-            # Remove the app widget
-            if self.stacked_widget.count() > 1:
-                app_widget = self.stacked_widget.widget(1)
+            # Call any cleanup method if it exists
+            if hasattr(app_widget, "clean_up"):
+                try:
+                    app_widget.clean_up()
+                except Exception as e:
+                    print(f"Error cleaning up widget {app_name}: {e}")
+
+            # Remove from stacked widget if present
+            if self.stacked_widget.indexOf(app_widget) != -1:
                 self.stacked_widget.removeWidget(app_widget)
+
+            # Delete the widget safely
+            try:
                 app_widget.deleteLater()
+            except Exception as e:
+                print(f"Error deleting widget {app_name}: {e}")
 
-            # Close the app in the folder if needed
-            if self.current_app_folder:
-                self.current_app_folder.close_app()
+        # Clear cache
+        self.plugin_widget_factory._widget_cache.clear()
 
-            # Clear the running app info
-            self.current_running_app = None
-            self.current_app_folder = None
+        # Reset current app info
+        self.current_running_app = None
+        self.current_app_folder = None
+
+        # Go back to folders page
+        self.stacked_widget.setCurrentIndex(0)
+        print("MainWindow: All apps closed, back to folder view.")
+
+    def close_current_app(self):
+        self.close_all_apps()
+        # print(f"MainWindow: Current running app before closing: {self.current_running_app}")
+        # """Close the currently running app and restore the folder interface"""
+        # if self.current_running_app:
+        #     print(f"MainWindow: Closing app - {self.current_running_app}")
+        #
+        #     # check if current app is dashboard
+        #     if self.current_running_app == WidgetType.DASHBOARD.value:
+        #         print("MainWindow: Closing Dashboard App Widget and cleaning up")
+        #         self.stacked_widget.widget(1).clean_up()
+        #     else:
+        #         print(f"MainWindow: Closing App Widget - {self.current_running_app}")
+        #
+        #     # Switch back to the folder view (index 0)
+        #     self.stacked_widget.setCurrentIndex(0)
+        #
+        #     # Remove the app widget
+        #     if self.stacked_widget.count() > 1:
+        #         app_widget = self.stacked_widget.widget(1)
+        #         self.stacked_widget.removeWidget(app_widget)
+        #         app_widget.deleteLater()
+        #
+        #     # Close the app in the folder if needed
+        #     if self.current_app_folder:
+        #         self.current_app_folder.close_app()
+        #
+        #     # Clear the running app info
+        #     self.current_running_app = None
+        #     self.current_app_folder = None
 
 
     def setup_ui(self):

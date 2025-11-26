@@ -1,9 +1,6 @@
 import json
-
 from PyQt6.QtCore import QThread
-
 from applications.glue_dispensing_application.model.workpiece import GlueWorkpiece
-
 from core.model.settings.CameraSettings import CameraSettings
 from applications.glue_dispensing_application.settings.GlueSettings import GlueSettings
 from communication_layer.api.v1 import Constants
