@@ -73,16 +73,17 @@ class CameraDispatch(IDispatcher):
         print("CameraHandler: Handling camera calibration")
         
         try:
-            result, message = self.application.calibrate_camera()
-            print(f"CameraHandler: Calibration result: {result}, message: {message}")
+            result = self.application.calibrate_camera()
+            print(f"CameraHandler: Calibration result: {result.success}, message: {result.message}")
             
-            status = Constants.RESPONSE_STATUS_SUCCESS if result else Constants.RESPONSE_STATUS_ERROR
+            status = Constants.RESPONSE_STATUS_SUCCESS if result.success else Constants.RESPONSE_STATUS_ERROR
             print(f"CameraHandler: Status: {status}")
             
-            return Response(status, message=message).to_dict()
+            return Response(status, message=result.message).to_dict()
             
         except Exception as e:
-            print(f"CameraHandler: Error calibrating camera: {e}")
+            import traceback
+            traceback.print_exc()
             return Response(
                 Constants.RESPONSE_STATUS_ERROR, 
                 message=f"Camera calibration error: {e}"

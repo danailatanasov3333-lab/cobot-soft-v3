@@ -1,15 +1,20 @@
+from core.application.ApplicationContext import get_users_storage_path
 from frontend.core.shared.base_widgets.AppWidget import AppWidget
 
 import os
 
-# Go up four levels to reach the project root
-base_dir = os.path.dirname(os.path.abspath(__file__))
-print(f"UserManagementAppWidget: Base directory determined as: {base_dir}")
-project_root = os.path.abspath(os.path.join(base_dir, "..", "..", "..", "..",".."))
-print(f"UserManagementAppWidget: Project root determined as: {project_root}")
-csv_file_path = os.path.join(project_root, "shared", "shared", "user", "users.csv")
-print(f"UserManagementAppWidget: Using CSV file path: {csv_file_path}")
-
+application_users_storage = get_users_storage_path()
+if application_users_storage is not None:
+    csv_file_path = os.path.join(application_users_storage, "users.csv")
+    print(f"UserManagementAppWidget: Using CSV APPLICATION FILE PATH: {csv_file_path}")
+else:
+    # Go up four levels to reach the project root
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    print(f"UserManagementAppWidget: Base directory determined as: {base_dir}")
+    project_root = os.path.abspath(os.path.join(base_dir, "..", "..", "..", "..", ".."))
+    print(f"UserManagementAppWidget: Project root determined as: {project_root}")
+    csv_file_path = os.path.join(project_root, "shared", "shared", "user", "users.csv")
+    print(f"[WARNING] UserManagementAppWidget: Using CSV DEFAULT FILE PATH: {csv_file_path}")
 
 class UserManagementAppWidget(AppWidget):
     """Specialized widget for User Management application"""

@@ -42,11 +42,6 @@ class MainApplicationFrame(QFrame):
         mainLayout.setContentsMargins(0, 0, 0, 0)
         mainLayout.setSpacing(0)
 
-        # Bezier editor on the left
-        # from pl_ui.contour_editor.mockWorkpieceData import mock_workpiece_data
-        # wp = Workpiece.fromDict(mock_workpiece_data)
-        # wp = None
-        # self.contourEditor = ContourEditorWithRulers(None, image_path="imageDebug.png",workpiece=None)
         self.contourEditor = ContourEditorWithBottomToolBar(None, image_path="imageDebug.png", workpiece=None)
         self.contourEditor.update_camera_feed_requested.connect(self.update_camera_feed_requested.emit)
 

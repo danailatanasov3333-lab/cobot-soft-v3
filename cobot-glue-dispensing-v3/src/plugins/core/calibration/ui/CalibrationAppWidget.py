@@ -55,8 +55,10 @@ class CalibrationAppWidget(AppWidget):
                 if self.controller_service:
                     try:
                         self.controller_service.camera.enable_raw_mode()
-                        self.controller_service.robot.move_to_calibration_positiond()
+                        self.controller_service.robot.move_to_calibration_position()
                     except Exception:
+                        import traceback
+                        traceback.print_exc()
                         print("onMoveToCalibrationPos: controller_service action failed")
 
             self.content_layout.move_to_calibration_requested.connect(lambda: onMoveToCalibrationPos())

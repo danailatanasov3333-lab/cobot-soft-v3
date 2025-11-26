@@ -183,6 +183,31 @@ class ApplicationStorageResolver:
             str: Path to application workpiece storage directory
         """
         return self.get_data_path(app_name, "workpieces", create_if_missing)
+
+    def get_users_storage_path(self, app_name: str, create_if_missing: bool = False) -> str:
+        """
+        Get the users storage directory path for an application.
+
+        Args:
+            app_name: Name of the application
+            create_if_missing: Whether to create the directory if it doesn't exist
+        Returns:
+            str: Path to application users storage directory
+        """
+        return self.get_data_path(app_name, "users", create_if_missing)
+
+    def get_calibration_storage_path(self, app_name: str, create_if_missing: bool = False) -> str:
+        """
+        Get the calibration storage directory path for an application.
+        
+        Args:
+            app_name: Name of the application
+            create_if_missing: Whether to create the directory if it doesn't exist
+            
+        Returns:
+            str: Path to application calibration storage directory
+        """
+        return self.get_data_path(app_name, "calibration", create_if_missing)
     
     def list_application_directories(self) -> List[str]:
         """
@@ -237,6 +262,7 @@ class ApplicationStorageResolver:
             # Create common data directories
             self.get_data_path(app_name, "workpieces", create_if_missing=True)
             self.get_data_path(app_name, "profiles", create_if_missing=True)
+            self.get_calibration_storage_path(app_name, create_if_missing=True)
             
             return True
         except Exception as e:

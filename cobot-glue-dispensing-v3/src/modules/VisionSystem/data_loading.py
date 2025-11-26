@@ -5,31 +5,19 @@ import numpy as np
 from modules.utils.custom_logging import log_if_enabled, LoggingLevel
 
 
-# Paths to camera calibration data
-CAMERA_DATA_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
-                                'calibration_result', 'camera_calibration.npz')
+import os
 
-PERSPECTIVE_MATRIX_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
-                                       'calibration_result', 'perspectiveTransform.npy')
-
-CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
-                                           'calibration_result', 'cameraToRobotMatrix_camera_center.npy')
-
-WORK_AREA_POINTS_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
-                                        'calibration_result', 'workAreaPoints.npy')
-
-# Separate paths for pickup and spray areas
-PICKUP_AREA_POINTS_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
-                                       'calibration_result', 'pickupAreaPoints.npy')
-
-SPRAY_AREA_POINTS_PATH = os.path.join(os.path.dirname(__file__), 'calibration', 'cameraCalibration', 'storage',
-                                      'calibration_result', 'sprayAreaPoints.npy')
 
 
 
 class DataManager:
-    def __init__(self,vision_system,logging_enabled,logger):
+    def __init__(self,vision_system,logging_enabled,logger,storage_path):
         self.vision_system = vision_system
+        self.storage_path = storage_path
+
+        if storage_path is None:
+            raise ValueError("Storage path cannot be None")
+
         self.ENABLE_LOGGING = logging_enabled
         self.logger = logger
         self.workAreaPoints = None
@@ -40,17 +28,39 @@ class DataManager:
         self.cameraData = None
         self.perspectiveMatrix = None
         self.isSystemCalibrated = False
+        self.build_storage_paths()
 
+
+    def build_storage_paths(self):
+        """Ensure that the storage directories exist."""
+        if self.storage_path is not None:
+            log_if_enabled(enabled=self.ENABLE_LOGGING,
+                           logger=self.logger,
+                           level=LoggingLevel.INFO,
+                           message = f"VisionSystem DataManager: Building storage paths with path provided {self.storage_path}",)
+        else:
+            log_if_enabled(enabled=self.ENABLE_LOGGING,
+                           logger=self.logger,
+                           level=LoggingLevel.WARNING,
+                           message = f"VisionSystem DataManager: Building storage paths with DEFAULT_STORAGE_PATH",)
+
+        # self.calib_result_path = os.path.join(self.storage_path, 'calibration_result')
+        self.camera_data_path = os.path.join(self.storage_path, 'camera_calibration.npz')
+        self.perspective_matrix_path = os.path.join(self.storage_path, 'perspectiveTransform.npy')
+        self.camera_to_robot_matrix_path = os.path.join(self.storage_path, 'cameraToRobotMatrix_camera_center.npy')
+        self.work_area_points_path = os.path.join(self.storage_path, 'workAreaPoints.npy')
+        self.pickup_area_points_path = os.path.join(self.storage_path, 'pickupAreaPoints.npy')
+        self.spray_area_points_path = os.path.join(self.storage_path, 'sprayAreaPoints.npy')
 
     def loadWorkAreaPoints(self):
         try:
-            self.workAreaPoints = np.load(WORK_AREA_POINTS_PATH)
+            self.workAreaPoints = np.load(self.work_area_points_path)
             self.work_area_polygon = np.array(self.workAreaPoints, dtype=np.int32).reshape((-1, 1, 2))
             self.isSystemCalibrated = True
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.INFO,
-                           message=f"Work area points loaded from: {WORK_AREA_POINTS_PATH}",
+                           message=f"Work area points loaded from: {self.work_area_points_path}",
                            broadcast_to_ui=False)
 
         except FileNotFoundError:
@@ -59,48 +69,48 @@ class DataManager:
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.ERROR,
-                           message=f"Work area points file not found at {WORK_AREA_POINTS_PATH}",
+                           message=f"Work area points file not found at {self.work_area_points_path}",
                            broadcast_to_ui=False)
 
         # Load pickup area points
         try:
-            self.pickupAreaPoints = np.load(PICKUP_AREA_POINTS_PATH)
+            self.pickupAreaPoints = np.load(self.work_area_points_path)
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.INFO,
-                           message=f"Pickup area points loaded successfully from: {PICKUP_AREA_POINTS_PATH}",
+                           message=f"Pickup area points loaded successfully from: {self.work_area_points_path}",
                            broadcast_to_ui=False)
         except FileNotFoundError:
             self.pickupAreaPoints = None
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.ERROR,
-                           message=f"Pickup area points file not found in {PICKUP_AREA_POINTS_PATH}- will be created when first saved",
+                           message=f"Pickup area points file not found in {self.work_area_points_path}- will be created when first saved",
                            broadcast_to_ui=False)
         # Load spray area points
         try:
-            self.sprayAreaPoints = np.load(SPRAY_AREA_POINTS_PATH)
+            self.sprayAreaPoints = np.load(self.spray_area_points_path)
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.INFO,
-                           message=f"Spray area points loaded successfully from: {SPRAY_AREA_POINTS_PATH}",
+                           message=f"Spray area points loaded successfully from: {self.spray_area_points_path}",
                            broadcast_to_ui=False)
         except FileNotFoundError:
             self.sprayAreaPoints = None
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.ERROR,
-                           message=f"Spray area points file not found in {SPRAY_AREA_POINTS_PATH} - will be created when first saved",
+                           message=f"Spray area points file not found in {self.spray_area_points_path} - will be created when first saved",
                            broadcast_to_ui=False)
 
 
     def loadCameraToRobotMatrix(self):
         try:
-            self.cameraToRobotMatrix = np.load(CAMERA_TO_ROBOT_MATRIX_PATH)
+            self.cameraToRobotMatrix = np.load(self.camera_to_robot_matrix_path)
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.INFO,
-                           message=f"Camera to Robot matrix loaded from: {CAMERA_TO_ROBOT_MATRIX_PATH}",
+                           message=f"Camera to Robot matrix loaded from: {self.camera_to_robot_matrix_path}",
                            broadcast_to_ui=False)
         except FileNotFoundError:
             self.cameraToRobotMatrix = None
@@ -108,14 +118,13 @@ class DataManager:
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.ERROR,
-                           message=f"File not found: {CAMERA_TO_ROBOT_MATRIX_PATH}",
+                           message=f"File not found: {self.camera_to_robot_matrix_path}",
                            broadcast_to_ui=False)
-            raise ValueError()
 
 
     def loadCameraCalibrationData(self):
         try:
-            self.cameraData = np.load(CAMERA_DATA_PATH)
+            self.cameraData = np.load(self.camera_data_path)
             self.isSystemCalibrated = True
         except FileNotFoundError:
             self.cameraData = None
@@ -123,20 +132,20 @@ class DataManager:
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.ERROR,
-                           message=f"Camera calibration data file not found at {CAMERA_DATA_PATH}",
+                           message=f"Camera calibration data file not found at {self.camera_data_path}",
                            broadcast_to_ui=False)
 
 
     def loadPerspectiveMatrix(self):
         try:
-            self.perspectiveMatrix = np.load(PERSPECTIVE_MATRIX_PATH)
-            print(f"✅ Perspective matrix loaded from: {PERSPECTIVE_MATRIX_PATH}")
+            self.perspectiveMatrix = np.load(self.perspective_matrix_path)
+            print(f"✅ Perspective matrix loaded from: {self.perspective_matrix_path}")
         except FileNotFoundError:
             self.perspectiveMatrix = None
             log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                            level=LoggingLevel.INFO,
-                           message=f"No perspective matrix found at: {PERSPECTIVE_MATRIX_PATH}",
+                           message=f"No perspective matrix found at: {self.perspective_matrix_path}",
                            broadcast_to_ui=False)
 
 
@@ -169,33 +178,33 @@ class DataManager:
 
                 # Save to area-specific file
                 if area_type == 'pickup':
-                    np.save(PICKUP_AREA_POINTS_PATH, points_array)
+                    np.save(self.work_area_points_path, points_array)
                     self.pickupAreaPoints = points_array
                     message = f"Pickup area points saved successfully"
                     log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                                    level=LoggingLevel.INFO,
-                                   message=f"Saved pickup area points to {PICKUP_AREA_POINTS_PATH}",
+                                   message=f"Saved pickup area points to {self.work_area_points_path}",
                                    broadcast_to_ui=False)
                 else:  # spray
-                    np.save(SPRAY_AREA_POINTS_PATH, points_array)
+                    np.save(self.spray_area_points_path, points_array)
                     log_if_enabled(enabled=self.ENABLE_LOGGING,
                            logger=self.logger,
                                    level=LoggingLevel.INFO,
-                                   message=f"Saved spray area points to {PICKUP_AREA_POINTS_PATH}",
+                                   message=f"Saved spray area points to {self.work_area_points_path}",
                                    broadcast_to_ui=False)
                     self.sprayAreaPoints = points_array
                     message = f"Spray area points saved successfully"
 
                 # Also save to legacy path for backward compatibility if this is the first area saved
                 if not hasattr(self, 'workAreaPoints') or self.workAreaPoints is None:
-                    np.save(WORK_AREA_POINTS_PATH, points_array)
+                    np.save(self.work_area_points_path, points_array)
                     self.workAreaPoints = points_array
                     self.work_area_polygon = np.array(self.workAreaPoints, dtype=np.int32).reshape((-1, 1, 2))
                     log_if_enabled(enabled=self.ENABLE_LOGGING,
                                     logger=self.logger,
                                    level=LoggingLevel.INFO,
-                                   message=f"Also saved to legacy work area points at {WORK_AREA_POINTS_PATH}",
+                                   message=f"Also saved to legacy work area points at {self.work_area_points_path}",
                                    broadcast_to_ui=False)
 
                 return True, message
@@ -204,7 +213,7 @@ class DataManager:
             else:
                 points = data
                 points_array = np.array(points, dtype=np.float32)
-                np.save(WORK_AREA_POINTS_PATH, points_array)
+                np.save(self.work_area_points_path, points_array)
                 self.workAreaPoints = points_array
                 self.work_area_polygon = np.array(self.workAreaPoints, dtype=np.int32).reshape((-1, 1, 2))
                 log_if_enabled(enabled=self.ENABLE_LOGGING,

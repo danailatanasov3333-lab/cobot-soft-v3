@@ -1,6 +1,7 @@
 import os
 from modules.shared.MessageBroker import MessageBroker
-
+from dataclasses import dataclass
+from typing import Optional, List
 import cv2
 import numpy as np
 from libs.plvision.PLVision import ImageProcessing
@@ -8,15 +9,68 @@ from libs.plvision.PLVision.Calibration import CameraCalibrator
 import cv2.aruco as aruco
 
 
+@dataclass
+class CameraCalibrationServiceResult:
+    """
+    Result class for camera calibration operations.
+    
+    Contains all the data returned from a calibration operation including
+    success status, calibration matrices, and diagnostic information.
+    """
+    success: bool
+    message: str
+    camera_matrix: Optional[np.ndarray] = None
+    distortion_coefficients: Optional[np.ndarray] = None
+    perspective_matrix: Optional[np.ndarray] = None
+    rotation_vectors: Optional[List[np.ndarray]] = None
+    translation_vectors: Optional[List[np.ndarray]] = None
+    valid_images_count: int = 0
+    calibration_error: Optional[float] = None
+    storage_path: Optional[str] = None
+    
+    @property
+    def calibration_data(self) -> Optional[List[np.ndarray]]:
+        """
+        Legacy format: [distortion_coefficients, camera_matrix]
+        For backward compatibility with existing code.
+        """
+        if self.success and self.distortion_coefficients is not None and self.camera_matrix is not None:
+            return [self.distortion_coefficients, self.camera_matrix]
+        return None
+    
+    @property
+    def is_calibrated(self) -> bool:
+        """Check if calibration was successful and has valid data."""
+        return (self.success and 
+                self.camera_matrix is not None and 
+                self.distortion_coefficients is not None)
+    
+    def to_legacy_tuple(self) -> tuple:
+        """
+        Convert to legacy tuple format for backward compatibility.
+        Returns: (success, calibration_data, perspective_matrix, message)
+        """
+        return (self.success, self.calibration_data, self.perspective_matrix, self.message)
+
+
 class CameraCalibrationService:
     # Default storage path: folder next to this module under 'storage/calibration_result'
-    STORAGE_PATH = os.path.join(os.path.dirname(__file__), 'storage', 'calibration_result')
-    PERSPECTIVE_MATRIX_PATH = os.path.join(STORAGE_PATH, 'perspectiveTransform.npy')
-    CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(STORAGE_PATH, 'cameraToRobotMatrix.npy')
+    DEFAULT_STORAGE_PATH = os.path.join(os.path.dirname(__file__), 'storage', 'calibration_result')
 
-    def __init__(self, chessboardWidth, chessboardHeight, squareSizeMM, skipFrames,message_publisher,onDetectionFailed=None, storagePath=None):
-        if storagePath is not None:
-            self.STORAGE_PATH = storagePath
+    def __init__(self, chessboardWidth, chessboardHeight, squareSizeMM, skipFrames,message_publisher,storagePath,onDetectionFailed=None, ):
+        # Determine storage path priority:
+        # 1. Explicitly passed storagePath
+        # 3. Default global path
+        if storagePath is None:
+            raise ValueError("Storage path cannot be None")
+        self.STORAGE_PATH = storagePath
+        print(f"📁 CameraCalibrationService: Using storage path: {self.STORAGE_PATH}")
+
+        # Ensure storage directory exists
+        if not os.path.exists(self.STORAGE_PATH):
+            os.makedirs(self.STORAGE_PATH, exist_ok=True)
+            print(f"📁 Created calibration storage directory: {self.STORAGE_PATH}")
+
         self.calibrationImages = []
         self.chessboardWidth = chessboardWidth
         self.chessboardHeight = chessboardHeight
@@ -27,6 +81,16 @@ class CameraCalibrationService:
         self.cameraCalibrator = CameraCalibrator(self.chessboardWidth, self.chessboardHeight, self.squareSizeMM)
 
         self.messageBroker = MessageBroker()
+    
+    @property
+    def PERSPECTIVE_MATRIX_PATH(self):
+        """Dynamic path to perspective transform matrix file"""
+        return os.path.join(self.STORAGE_PATH, 'perspectiveTransform.npy')
+    
+    @property 
+    def CAMERA_TO_ROBOT_MATRIX_PATH(self):
+        """Dynamic path to camera-to-robot matrix file"""
+        return os.path.join(self.STORAGE_PATH, 'cameraToRobotMatrix.npy')
 
     def detectArucoMarkers(self, flip=False, image=None):
         """
@@ -138,10 +202,10 @@ class CameraCalibrationService:
             except Exception as e:
                 print(f"⚠️ Could not delete {file_path}: {e}")
 
-    def run(self, image, debug=True):
+    def run(self, image, debug=True) -> CameraCalibrationServiceResult:
         """
         Main calibration workflow with perspective correction support.
-        Returns (success, calibrationData, perspectiveMatrix, message)
+        Returns CameraCalibrationServiceResult containing all calibration data.
         """
         message = ""
         
@@ -152,7 +216,10 @@ class CameraCalibrationService:
             message = "No calibration images provided"
             self.publish(message)
             print(message)
-            return False, [], [], message
+            return CameraCalibrationServiceResult(
+                success=False,
+                message=message
+            )
         
         # Track if perspective correction was applied
         perspective_matrix_for_vision = None
@@ -258,7 +325,10 @@ class CameraCalibrationService:
             message = f"Insufficient valid images for calibration. Found {valid_images}, need at least 1."
             print(f"❌ {message}")
             self.publish(message)
-            return False, None, None, message
+            return CameraCalibrationServiceResult(
+                success=False,
+                message=message
+            )
 
         # Perform camera calibration
         print(f"🔧 Performing calibration with {valid_images} valid images...")
@@ -309,57 +379,33 @@ class CameraCalibrationService:
 
                 message = f"Calibration successful with {valid_images} images"
                 self.publish(message)
-                return True, [dist_coeffs,camera_matrix], perspective_matrix_for_vision, message
+                return CameraCalibrationServiceResult(
+                    success=True,
+                    message=message,
+                    camera_matrix=camera_matrix,
+                    distortion_coefficients=dist_coeffs,
+                    perspective_matrix=perspective_matrix_for_vision,
+                )
             else:
                 message = "Camera calibration failed during cv2.calibrateCamera"
                 print(f"❌ {message}")
                 self.publish(message)
-                return False, None, None, message
+                return CameraCalibrationServiceResult(
+                    success=False,
+                    message=message
+                )
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             message = f"Exception during calibration: {str(e)}"
             self.publish(message)
-            print(f"❌ {message}")
-            return False, None, None, message
+            return CameraCalibrationServiceResult(
+                success=False,
+                message=message
+            )
 
     def publish(self,message):
         if self.message_publisher is None:
             return
         self.message_publisher.publish_calibration_feedback(message)
-    #
-    # def getWorkAreaMatrix(self, dst_points, src_points):
-    #     """
-    #     Computes and saves the perspective transform matrix.
-    #     """
-    #     print("Computing perspective transform matrix...")
-    #     perspectiveMatrix, _ = cv2.findHomography(src_points, dst_points)
-    #     print("Perspective transform matrix computed.")
-    #     print("Saving perspective matrix...")
-    #     np.save(self.PERSPECTIVE_MATRIX_PATH, perspectiveMatrix)
-    #     print("Saving perspective")
-    #     return perspectiveMatrix
-    #
-    # def sortCorners(self, corners):
-    #     """
-    #     Sorts corners to identify bottomLeft, bottomRight, topLeft, topRight.
-    #     """
-    #     points = np.squeeze(corners)
-    #     topLeft = min(points, key=lambda p: p[0] + p[1])
-    #     topRight = max(points, key=lambda p: p[0] - p[1])
-    #     bottomLeft = min(points, key=lambda p: p[0] - p[1])
-    #     bottomRight = max(points, key=lambda p: p[0] + p[1])
-    #     return bottomLeft, bottomRight, topLeft, topRight
-    #
-    # def computeCameraToRobotTransformationMatrix(self, camera_pts, robot_pts):
-    #     """
-    #     Computes the homography transformation matrix from camera coordinates to robot coordinates.
-    #     """
-    #     camera_pts = np.array(camera_pts, dtype=np.float32)
-    #     robot_pts = np.array(robot_pts, dtype=np.float32)
-    #     homography_matrix, _ = cv2.findHomography(camera_pts, robot_pts)
-    #     return homography_matrix
-    #
-    # def __displayDebugImage(self, image):
-    #     cv2.imshow("Debug", image)
-    #     cv2.waitKey(0)
-    #     cv2.destroyAllWindows()

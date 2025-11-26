@@ -20,7 +20,7 @@ def capture_calibration_image(vision_system,log_enabled,logger):
                    broadcast_to_ui=False)
     return True, "Calibration image captured successfully"
 
-def calibrate_camera(vision_system,log_enabled,logger) -> tuple[bool, str]:
+def calibrate_camera(vision_system,log_enabled,logger,storage_path) -> tuple[bool, str]:
     """
     Calibrates the camera using the CameraCalibrationService.
     """
@@ -34,12 +34,16 @@ def calibrate_camera(vision_system,log_enabled,logger) -> tuple[bool, str]:
         squareSizeMM=vision_system.camera_settings.get_square_size_mm(),
         skipFrames=vision_system.camera_settings.get_calibration_skip_frames(),
         message_publisher = vision_system.message_publisher,
+        storagePath=storage_path
     )
 
     cameraCalibrationService.calibrationImages = vision_system.calibrationImages
 
-    result, calibrationData, perspectiveMatrix, message = cameraCalibrationService.run(vision_system.rawImage)
-
+    result = cameraCalibrationService.run(vision_system.rawImage)
+    # result, calibrationData, perspectiveMatrix, message = cameraCalibrationService.run(vision_system.rawImage)
+    calibrationData = [result.distortion_coefficients, result.camera_matrix]
+    perspectiveMatrix = result.perspective_matrix
+    message = result.message
     # Clear calibration images after each calibration attempt (success or failure)
     vision_system.calibrationImages.clear()
     log_if_enabled(enabled=log_enabled,
@@ -48,7 +52,7 @@ def calibrate_camera(vision_system,log_enabled,logger) -> tuple[bool, str]:
                    message=f"Cleared {len(vision_system.calibrationImages)} calibration images from memory",
                    broadcast_to_ui=False)
 
-    if result:
+    if result.success:
         vision_system.cameraMatrix = calibrationData[1]
         vision_system.cameraDist = calibrationData[0]
         vision_system.perspectiveMatrix = perspectiveMatrix
@@ -75,4 +79,5 @@ def calibrate_camera(vision_system,log_enabled,logger) -> tuple[bool, str]:
 
     if enableContourDrawingAfterCalibration:
         vision_system.camera_settings.set_draw_contours(True)
-    return result, message
+
+    return result.success, message

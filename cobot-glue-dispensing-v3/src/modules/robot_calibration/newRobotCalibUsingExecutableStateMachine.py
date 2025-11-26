@@ -11,7 +11,7 @@ import cv2
 import numpy as np
 
 from modules.utils.custom_logging import log_warning_message, log_info_message, log_debug_message, LoggerContext
-from modules.VisionSystem.data_loading import CAMERA_TO_ROBOT_MATRIX_PATH
+
 from modules.robot_calibration import metrics
 from modules.robot_calibration.CalibrationVision import CalibrationVision
 from modules.robot_calibration.config_helpers import (
@@ -339,10 +339,10 @@ class RefactoredRobotCalibrationPipeline:
 
         # Save or warn based on error
         if average_error_camera_center <= 1:
-            np.save(CAMERA_TO_ROBOT_MATRIX_PATH, H_camera_center)
+            np.save(context.system.camera_to_robot_matrix_path, H_camera_center)
             log_info_message(
                 context.logger_context, 
-                f"Saved homography matrix to {CAMERA_TO_ROBOT_MATRIX_PATH}"
+                f"Saved homography matrix to {context.system.camera_to_robot_matrix_path}"
             )
         else:
             log_warning_message(
@@ -366,7 +366,7 @@ class RefactoredRobotCalibrationPipeline:
             H_camera_center=H_camera_center,
             status=status,
             average_error_camera_center=average_error_camera_center,
-            matrix_path=CAMERA_TO_ROBOT_MATRIX_PATH,
+            matrix_path=context.system.camera_to_robot_matrix_path,
             total_calibration_time=total_calibration_time
         )
         log_debug_message(context.logger_context, completion_log)

@@ -240,7 +240,7 @@ class BaseRobotApplication(ABC):
         Default implementation - can be overridden by specific applications.
         """
         try:
-            result = calibrate_robot(self)
+            result,message = calibrate_robot(self)
             return {
                 "success": True,
                 "message": "Robot calibration completed",
@@ -253,24 +253,25 @@ class BaseRobotApplication(ABC):
                 "error": str(e)
             }
     
-    def calibrate_camera(self) -> Dict[str, Any]:
+    def calibrate_camera(self) -> OperationResult:
         """
         Calibrate the camera system.
         Default implementation - can be overridden by specific applications.
         """
         try:
-            result = calibrate_camera(self)
-            return {
-                "success": True,
-                "message": "Camera calibration completed",
-                "data": result
-            }
+            result,message = calibrate_camera(self)
+            return OperationResult(
+                success=result,
+                message=message
+            )
+
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"Camera calibration failed: {e}",
-                "error": str(e)
-            }
+            return OperationResult(
+                success=False,
+                message=f"Camera calibration failed: {e}",
+                error=str(e)
+            )
+
 
     def home_robot(self):
         """Move robot to home position"""

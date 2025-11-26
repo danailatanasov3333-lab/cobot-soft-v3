@@ -105,6 +105,47 @@ class ApplicationContext:
         )
         
         return workpiece_path
+
+    def get_users_storage_path(self, create_if_missing: bool = False) -> Optional[str]:
+        """
+        Get the path to the users storage directory for the current application.
+
+        Args:
+            create_if_missing: Whether to create directories if they don't exist
+        Returns:
+            str or None: Full path to the users storage directory, or None if no application is set
+        """
+        current_app = self.get_current_application()
+        if current_app is None:
+            print(f"ApplicationContext: No current application set, cannot get users storage path")
+            return None
+
+        users_path = self._storage_resolver.get_users_storage_path(
+            current_app, create_if_missing
+        )
+
+        return users_path
+
+    def get_calibration_storage_path(self, create_if_missing: bool = False) -> Optional[str]:
+        """
+        Get the path to the calibration storage directory for the current application.
+        
+        Args:
+            create_if_missing: Whether to create directories if they don't exist
+            
+        Returns:
+            str or None: Full path to the calibration storage directory, or None if no application is set
+        """
+        current_app = self.get_current_application()
+        if current_app is None:
+            print(f"ApplicationContext: No current application set, cannot get calibration storage path")
+            return None
+        
+        calibration_path = self._storage_resolver.get_calibration_storage_path(
+            current_app, create_if_missing
+        )
+        
+        return calibration_path
     
     def is_application_set(self) -> bool:
         """
@@ -187,6 +228,31 @@ def get_workpiece_storage_path(create_if_missing: bool = False) -> Optional[str]
     """
     context = ApplicationContextSingleton.get_instance()
     return context.get_workpiece_storage_path(create_if_missing)
+
+def get_users_storage_path(create_if_missing: bool = False) -> Optional[str]:
+    """
+    Get the path to the users storage directory for the current application.
+
+    Args:
+        create_if_missing: Whether to create directories if they don't exist
+    Returns:
+        str or None: Full path to the users storage directory
+    """
+    context = ApplicationContextSingleton.get_instance()
+    return context.get_users_storage_path(create_if_missing)
+
+def get_calibration_storage_path(create_if_missing: bool = False) -> Optional[str]:
+    """
+    Get the path to the calibration storage directory for the current application.
+    
+    Args:
+        create_if_missing: Whether to create directories if they don't exist
+        
+    Returns:
+        str or None: Full path to the calibration storage directory
+    """
+    context = ApplicationContextSingleton.get_instance()
+    return context.get_calibration_storage_path(create_if_missing)
 
 
 def is_application_context_set() -> bool:

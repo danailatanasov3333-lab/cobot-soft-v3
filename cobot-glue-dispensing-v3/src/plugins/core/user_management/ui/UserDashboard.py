@@ -33,14 +33,6 @@ class UserTableModel:
     def get_user_data(self, user):
         """Convert user object to list for table display"""
         try:
-            # # Debug: Print user attributes
-            # print(f"User object: {user}")
-            # print(f"User type: {type(user)}")
-            # print(f"User id: {getattr(user, 'id', 'NO ID')}")
-            # print(f"User firstName: {getattr(user, 'firstName', 'NO FIRSTNAME')}")
-            # print(f"User lastName: {getattr(user, 'lastName', 'NO LASTNAME')}")
-            # print(f"User password: {getattr(user, 'password', 'NO PASSWORD')}")
-            # print(f"User role: {getattr(user, 'role', 'NO ROLE')}")
 
             role_display = "Unknown"
             if hasattr(user, 'role'):
@@ -57,10 +49,10 @@ class UserTableModel:
                 role_display,
                 str(getattr(user, 'email', ''))
             ]
-            # print(f"Converted user data: {data}")
+
             return data
         except Exception as e:
-            # print(f"Error in get_user_data: {e}")
+
             return ["Error", "Error", "Error", "Error", "Error", "Error"]
 
     def update_users(self, users):

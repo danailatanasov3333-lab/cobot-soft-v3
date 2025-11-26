@@ -1,3 +1,4 @@
+import os
 import threading
 
 import cv2
@@ -26,6 +27,7 @@ from modules.VisionSystem.handlers.contour_detection_handler import handle_conto
 
 # External or domain-specific image processing
 from libs.plvision.PLVision import ImageProcessing
+from modules.shared.tools.GlueCell import log_if_enabled
 
 # Conditional logging import
 from modules.utils.custom_logging import (
@@ -35,11 +37,23 @@ from modules.utils.custom_logging import (
 ENABLE_LOGGING = True  # Enable or disable logging
 vision_system_logger = setup_logger("VisionSystem") if ENABLE_LOGGING else None
 
+# Base storage folder
+DEFAULT_STORAGE_PATH = os.path.join(
+    os.path.dirname(__file__),
+    'calibration', 'cameraCalibration', 'storage'
+)
 
 class VisionSystem:
-    def __init__(self, configFilePath=None, camera_settings=None):
+    def __init__(self, configFilePath=None, camera_settings=None,storage_path=None):
+
         self.logger_context = LoggerContext(ENABLE_LOGGING, vision_system_logger)
-        self.data_manager = DataManager(self, ENABLE_LOGGING, vision_system_logger)
+
+        if storage_path is None:
+            self.storage_path = DEFAULT_STORAGE_PATH
+        else:
+            self.storage_path = storage_path
+        log_debug_message(self.logger_context,message=f"VisionSystem initialized with storage path: {self.storage_path}")
+        self.data_manager = DataManager(self, ENABLE_LOGGING, vision_system_logger, storage_path=self.storage_path)
         self.settings_manager = SettingsManager()
         self.service_id = "vision_system"
         self.message_publisher = MessagePublisher()
@@ -123,6 +137,9 @@ class VisionSystem:
         self.current_skip_frames = 0
         self.data_manager.print_focal_length()
 
+    @property
+    def camera_to_robot_matrix_path(self):
+        return self.data_manager.camera_to_robot_matrix_path
 
     @property
     def cameraToRobotMatrix(self):
@@ -235,7 +252,8 @@ class VisionSystem:
     def calibrateCamera(self):
         return calibrate_camera(vision_system=self,
                          log_enabled=ENABLE_LOGGING,
-                         logger=vision_system_logger)
+                         logger=vision_system_logger,
+                                storage_path=self.storage_path)
 
     def captureImage(self):
         """

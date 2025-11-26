@@ -449,7 +449,7 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         return super().calibrate_robot()
 
     @override
-    def calibrate_camera(self) -> Dict[str, Any]:
+    def calibrate_camera(self) -> OperationResult:
         """Calibrate the camera system"""
         # CALLING THE SUPER CALIBRATE CAMERA METHOD AND KEEPING THIS FOR CLARITY AND POSSIBLE CHANGES
         return super().calibrate_camera()

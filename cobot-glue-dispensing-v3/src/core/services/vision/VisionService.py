@@ -11,9 +11,7 @@ import threading
 from pathlib import Path
 from modules.shared.MessageBroker import MessageBroker
 
-PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'VisionSystem',
-                                                       'calibration', 'cameraCalibration', 'storage',
-                                                       'calibration_result', 'pickupCamToRobotMatrix.npy')
+
 
 
 class _VisionService(VisionSystem):
@@ -30,7 +28,7 @@ class _VisionService(VisionSystem):
         workAreaCorners (dict): Coordinates defining the workpieces pickup area.
         filteredContours (list): Contours that are filtered based on the work area.
         drawOverlay (bool): Flag to determine whether to draw overlays on the frame.
-        pickupCamToRobotMatrix (numpy.ndarray): Matrix to transform camera points to robot coordinates.
+
 
     """
 
@@ -45,9 +43,11 @@ class _VisionService(VisionSystem):
                 None
             """
         from core.application.ApplicationContext import get_core_settings_path
+        from core.application.ApplicationContext import get_calibration_storage_path
 
         # Get camera settings path from application context
         config_file_path = get_core_settings_path("camera_settings.json", create_if_missing=True)
+        storage_path = get_calibration_storage_path()
         if config_file_path is None:
             # Fallback to hardcoded path for backward compatibility
             config_file_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend', 'system', 'storage',
@@ -61,7 +61,7 @@ class _VisionService(VisionSystem):
             if not self._create_default_camera_settings(config_file_path):
                 raise RuntimeError(f"Failed to create default camera settings at {config_file_path}")
 
-        super().__init__(configFilePath=config_file_path)
+        super().__init__(configFilePath=config_file_path, storage_path=storage_path)
 
         self.MAX_QUEUE_SIZE = 100  # Maximum number of frames to store in the queue
         self.frameQueue = queue.Queue(maxsize=self.MAX_QUEUE_SIZE)
@@ -72,7 +72,7 @@ class _VisionService(VisionSystem):
         self.contours = None
         self.workAreaCorners = None
         self.filteredContours = None
-        self.pickupCamToRobotMatrix = self._loadPickupCamToRobotMatrix()
+
         broker = MessageBroker()
         broker.subscribe(VisionTopics.TRANSFORM_TO_CAMERA_POINT, self.transformRobotPointToCamera)
 
@@ -157,28 +157,6 @@ class _VisionService(VisionSystem):
             print(f"VisionService: Error creating default camera settings: {e}")
             return False
 
-    def _loadPickupCamToRobotMatrix(self):
-        """
-             Loads the camera-to-robot transformation matrix from a predefined file.
-
-             The matrix is required for transforming the camera coordinates to the robot's coordinate system.
-
-             Returns:
-                 numpy.ndarray or None: The transformation matrix if successful, otherwise None.
-             """
-        if not os.path.exists(PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH):
-            print(f"Error: Matrix file not found at {PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH}")
-            self.pickupCamToRobotMatrix = None
-            # return None
-
-        try:
-            self.pickupCamToRobotMatrix = np.load(PICKUP_AREA_CAMERA_TO_ROBOT_MATRIX_PATH)
-            # print("Matrix loaded:", self.pickupCamToRobotMatrix)
-        except Exception as e:
-            print(f"Error loading matrix: {e}")
-            self.pickupCamToRobotMatrix = None
-
-        return self.pickupCamToRobotMatrix
 
     def run(self):
         """

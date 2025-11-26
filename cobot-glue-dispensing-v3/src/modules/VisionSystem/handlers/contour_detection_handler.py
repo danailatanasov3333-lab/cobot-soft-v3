@@ -146,7 +146,12 @@ def handle_contour_detection(vision_system,sort=False):
     contours_inside_spray_area = []
     for cnt in filtered_contours:
 
-        if all_inside_spray_area(vision_system, cnt):
+        if vision_system.data_manager.sprayAreaPoints is None:
+            print(f"[WARNING] [handle_contour_detection] Spray area points not defined, skipping spray area check.")
+            contours_inside_spray_area.append(cnt)
+            continue
+
+        if all_inside_spray_area(vision_system, cnt) :
             contours_inside_spray_area.append(cnt)
 
     if not contours_inside_spray_area:
