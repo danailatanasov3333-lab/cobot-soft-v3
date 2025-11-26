@@ -912,8 +912,22 @@ class MovementGroupsTab(QWidget):
     def handle_execute_trajectory(self, group_name: str):
         """Handle execute trajectory request"""
         # TODO: Execute trajectory for group
-        QMessageBox.information(self, "Execute Trajectory", f"Execute trajectory for {group_name}")
-    
+        print(f"[movement_groups] Execute trajectory for group: {group_name}")
+        if group_name == "NOZZLE CLEAN":
+            result = self.controller_service.robot.clean_nozzle()
+            if not result.success:
+                QMessageBox.warning(self, "Error", f"Failed to execute nozzle clean trajectory: {result.message}")
+                return
+        elif group_name == "TOOL CHANGER":
+            print(f"Executing tool changer trajectory for group: {group_name}")
+        elif group_name in ["SLOT 0 PICKUP", "SLOT 0 DROPOFF",
+                            "SLOT 1 PICKUP", "SLOT 1 DROPOFF",
+                            "SLOT 4 PICKUP", "SLOT 4 DROPOFF"]:
+            print(f"Executing slot trajectory for group: {group_name}")
+        else:
+            QMessageBox.warning(self, "Error", f"Execute trajectory not supported for group '{group_name}'")
+            return
+
     def update_values(self, robot_settings):
         """Update all movement group values from robot settings"""
         for group_name, group_data in robot_settings.movement_groups.items():
