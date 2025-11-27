@@ -1,5 +1,5 @@
 from applications.glue_dispensing_application.pick_and_place_process.logging_utils import log_workpiece_dimensions, \
-    log_calculated_drop_position, log_moving_to_next_row
+    log_calculated_drop_position, log_moving_to_next_row, log_placement_calculations
 from modules.shared.core.ContourStandartized import Contour
 from modules.shared.tools.enums.Gripper import Gripper
 from modules.utils.custom_logging import log_info_message, LoggingLevel, log_info_message
@@ -61,17 +61,10 @@ def calculate_drop_off_position(match, centroid, orientation, plane, pickup_heig
         plane.tallestContour = height
 
     targetPointX, targetPointY = calculate_target_drop_position(plane, width, height)
-    log_calculated_drop_position(logger_context, targetPointX, targetPointY, plane)
+    log_calculated_drop_position(logger_context, targetPointX, targetPointY, width,height,plane)
 
-    # === LOGGING ===
-    log_info_message(logger_context,
-                     f"Updated tallest contour: {previous_tallest:.1f} → {height:.1f} mm" if height > previous_tallest else "")
-    log_info_message(logger_context, f"PLACEMENT CALCULATION:")
-    log_info_message(logger_context, f"  ├─ Current offset: ({plane.xOffset:.1f}, {plane.yOffset:.1f}) mm")
-    log_info_message(logger_context, f"  ├─ Target point:  ({targetPointX:.1f}, {targetPointY:.1f}) mm")
-    log_info_message(logger_context, f"  └─ Plane bounds:  ({plane.xMin}-{plane.xMax}, {plane.yMin}-{plane.yMax}) mm")
+    log_placement_calculations(logger_context,previous_tallest,height,plane,targetPointX,targetPointY)
 
-    # === FUNCTIONALITY ===
     # Handle row overflow - move to next row if needed
     if targetPointX + (width / 2) > plane.xMax:
         # === FUNCTIONALITY ===
