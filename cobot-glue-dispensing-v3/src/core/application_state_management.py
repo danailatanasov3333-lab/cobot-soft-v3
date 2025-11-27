@@ -100,7 +100,7 @@ class ApplicationStateManager:
         else:
             self.system_state = message  # already raw enum
 
-        print(f"[ApplicationStateManager] Received system state → {self.system_state}")
+        # print(f"[ApplicationStateManager] Received system state → {self.system_state}")
         self._update_application_state()
 
     def on_operation_state_update(self, state: OperationState):

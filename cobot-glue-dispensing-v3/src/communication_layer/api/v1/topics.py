@@ -79,7 +79,13 @@ class VisionTopics(TopicCategory):
     AUTO_BRIGHTNESS_STOP = "vison-auto-brightness"
     TRANSFORM_TO_CAMERA_POINT = "vision-system/transform-to-camera-point"
 
-
+class PickAndPlaceTopics(TopicCategory):
+    """Pick and Place specific topics"""
+    # Pick and place process control
+    PICK_AND_PLACE_START = "pick-and-place/start"
+    PICK_AND_PLACE_STOP = "pick-and-place/stop"
+    PICK_AND_PLACE_LOG = "pick-and-place/log"
+    PICK_AND_PLACE_STATE = "pick-and-place/state"
 
 class GlueTopics(TopicCategory):
     """Glue dispensing specific topics"""

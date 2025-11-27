@@ -147,7 +147,8 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
 
         return spraying_handler.start_spraying(self, workpieces, debug)
 
-    def move_to_nesting_capture_position(self, z_offset=0):
+    def move_to_nesting_capture_position(self):
+        z_offset = self.settingsManager.get_camera_settings().get_capture_pos_offset()
         ret = self.robot_service.moveToStartPosition(z_offset=z_offset)
 
         if ret != 0:
@@ -158,7 +159,8 @@ class GlueSprayingApplication(BaseRobotApplication, RobotApplicationInterface):
         self.robot_service._waitForRobotToReachPosition(target_pose, 1, 0.1)
         return ret
 
-    def move_to_spray_capture_position(self, z_offset=0):
+    def move_to_spray_capture_position(self):
+        z_offset = self.settingsManager.get_camera_settings().get_capture_pos_offset()
         ret = self.robot_service.move_to_calibration_position(z_offset=z_offset)
 
         if ret != 0:

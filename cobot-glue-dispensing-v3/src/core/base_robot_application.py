@@ -130,7 +130,7 @@ class BaseRobotApplication(ABC):
         self.state_manager = ApplicationStateManager(self.message_publisher)
         self.state_manager.start_state_publisher_thread()
         self.toolChanger = ToolChanger()
-        self.tool_manager = ToolManager(self.toolChanger, self.robotService)
+        self.tool_manager = ToolManager(self.toolChanger, self)
         self.pump = VacuumPump()
         self.laser = Laser()
         self.tool_manager.add_tool("laser", self.laser)

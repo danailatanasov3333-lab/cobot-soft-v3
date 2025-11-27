@@ -18,6 +18,14 @@ class ToolManager:
         self._lock = threading.Lock()
         self.tools = {}
 
+    @property
+    def pump(self):
+        return self.tools.get("vacuum_pump")
+
+    @property
+    def laser(self):
+        return self.tools.get("laser")
+
     def add_tool(self,name,tool):
         self.tools[name] = tool
 

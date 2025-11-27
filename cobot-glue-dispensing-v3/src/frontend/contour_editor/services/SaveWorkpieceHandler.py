@@ -76,14 +76,10 @@ class SaveWorkpieceHandler:
             print("SaveWorkpieceHandler: Sending to controller...")
             # from pl_ui.Endpoints import SAVE_WORKPIECE
             # result = controller.handle(SAVE_WORKPIECE, complete_data)
-            result = controller.save_workpiece(complete_data)
-            if result:
-                if isinstance(result, tuple):
-                    success, message = result
-                    return success, message
-                return True, "Workpiece saved successfully"
-            else:
-                return False, "No response from controller"
+            success, message = controller.save_workpiece(complete_data)
+
+            return success, message
+
 
         except Exception as e:
             error_msg = f"SaveWorkpieceHandler error: {str(e)}"

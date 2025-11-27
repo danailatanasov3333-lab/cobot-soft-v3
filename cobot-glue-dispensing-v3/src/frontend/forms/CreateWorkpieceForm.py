@@ -35,11 +35,11 @@ RESOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resourc
 # Configuration file path
 CONFIG_FILE = "settings/workpiece_form_config.json"
 DEFAULT_FIELD_CONFIG = {
-    GlueWorkpieceField.WORKPIECE_ID.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.WORKPIECE_ID.value: {"visible": True, "mandatory": True},
     GlueWorkpieceField.NAME.value: {"visible": True, "mandatory": False},
     GlueWorkpieceField.DESCRIPTION.value: {"visible": True, "mandatory": False},
     GlueWorkpieceField.OFFSET.value: {"visible": True, "mandatory": False},
-    GlueWorkpieceField.HEIGHT.value: {"visible": True, "mandatory": False},
+    GlueWorkpieceField.HEIGHT.value: {"visible": True, "mandatory": True},
     GlueWorkpieceField.GLUE_QTY.value: {"visible": True, "mandatory": False},
     GlueWorkpieceField.SPRAY_WIDTH.value: {"visible": True, "mandatory": False},
     GlueWorkpieceField.TOOL_ID.value: {"visible": True, "mandatory": False},
@@ -559,7 +559,7 @@ class CreateWorkpieceForm(Drawer,QFrame):
                 f"The following mandatory fields are empty:\n\n" + "\n".join(
                     f"• {field}" for field in validation_errors)
             )
-            return
+            return False
 
         # Collect data from visible fields only
         data = {}
@@ -614,6 +614,7 @@ class CreateWorkpieceForm(Drawer,QFrame):
         self.data_submitted.emit(data)
 
         self.close()
+        return True  # Form submission successful
 
 
     def onCancel(self):

@@ -536,13 +536,17 @@ class MainApplicationFrame(QFrame):
 
         # Call the workpiece form's submit method and show confirmation
         try:
-            self.createWorkpieceForm.onSubmit()
+            success = self.createWorkpieceForm.onSubmit()
+            if success:
+                QMessageBox.information(self, "Saved", "Workpiece saved successfully.")
+                print("Workpiece saved!")
+            else:
+                # Error already shown by form validation, just return
+                print("Workpiece form validation failed")
+                return
         except Exception as e:
             QMessageBox.critical(self, "Save Failed", f"Failed to save workpiece: {e}")
             return
-
-        QMessageBox.information(self, "Saved", "Workpiece saved successfully.")
-        print("Workpiece saved!")
 
         # Optionally, you could reset back to point manager or keep the form
         # For now, we'll keep the create workpiece form visible

@@ -393,8 +393,6 @@ class GlueDispensingOperation(IOperation):
                 on_exit=lambda ctx, s=state_enum: self._write_context_debug(f"{s.name}_EXIT")
             ))
 
-
-
         # Build the executable state machine
         transition_rules = GlueProcessTransitionRules.get_glue_transition_rules()
         state_machine = (

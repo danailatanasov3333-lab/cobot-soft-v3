@@ -164,12 +164,15 @@ class GlueWorkpieceJsonRepository:
                 with open(file_path, "w") as file:
                     file.write(serialized_data)
                 # Append or replace in-memory list
+                print(f"Workpiece saved to new file: {file_path}")
                 if existing_index is not None:
                     self.data[existing_index] = workpiece
                 else:
                     self.data.append(workpiece)
                 return True, "Workpiece saved successfully"
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return False, f"Error saving workpiece: {e}"
 
     def deleteWorkpiece(self, workpieceId):
