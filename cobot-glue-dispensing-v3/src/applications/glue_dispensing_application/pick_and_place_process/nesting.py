@@ -360,9 +360,8 @@ def start_nesting(application, visionService, robotService: RobotService, presel
                                                           plane,
                                                           pickup_height,
                                                           gripper,
-                                                          logger_context,
-                                                          RZ_ORIENTATION,
-                                                          ROTATION_OFFSET_BETWEEN_PICKUP_AND_DROP_PLACE)
+                                                          logger_context,)
+
 
 
             log_info_message(logger_context, "Calculating drop-off position...")
@@ -374,8 +373,10 @@ def start_nesting(application, visionService, robotService: RobotService, presel
                 plane.isFull = True
                 break
 
-            drop_off_position1, drop_off_position2, width, height, plane, placed_contour = drop_off_result
-
+            drop_off_position1, drop_off_position2, width, height, placed_contour = drop_off_result
+            log_info_message(logger_context,
+                             f"  └─ Rotation: {drop_off_position1[2]}° ({RZ_ORIENTATION}° - {ROTATION_OFFSET_BETWEEN_PICKUP_AND_DROP_PLACE}°)")
+            log_info_message(logger_context, f"Updated X offset for next piece: {plane.xOffset:.1f} mm")
             # apply gripper offsets to drop-off position
             apply_offsets_based_on_gripper(gripper, drop_off_position1, drop_off_position2)
 

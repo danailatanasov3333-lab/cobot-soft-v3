@@ -59,3 +59,19 @@ def log_workpiece_dimensions(logger_context, width, height, bboxCenter, minRect,
 def log_calculated_drop_position(logger_context, targetPointX, targetPointY, width, height, plane):
     log_info_message(logger_context, f"Calculated target X position: {targetPointX:.1f} = {plane.xOffset} + {plane.xMin}+{width / 2} mm")
     log_info_message(logger_context, f"Calculated target Y position: {targetPointY:.1f} = {plane.yOffset} + {plane.yMax}+{height / 2} mm")
+
+def log_moving_to_next_row(logger_context,targetPointX,targetPointY,width,plane):
+    log_info_message(logger_context, f"⚠️  Width exceeded, moving to next row")
+    log_info_message(logger_context, f"Exceeded by: {(targetPointX + width / 2) - plane.xMax:.1f} mm")
+
+    log_info_message(logger_context, f"NEW ROW {plane.rowCount}:")
+    log_info_message(logger_context, f"  ├─ Reset to: ({targetPointX:.1f}, {targetPointY:.1f}) mm")
+    log_info_message(logger_context, f"  └─ Row spacing: {plane.tallestContour + 50:.1f} mm")
+
+def log_placement_calculations(logger_context,previous_tallest,height,plane,targetPointX,targetPointY):
+    log_info_message(logger_context,
+                     f"Updated tallest contour: {previous_tallest:.1f} → {height:.1f} mm" if height > previous_tallest else "")
+    log_info_message(logger_context, f"PLACEMENT CALCULATION:")
+    log_info_message(logger_context, f"  ├─ Current offset: ({plane.xOffset:.1f}, {plane.yOffset:.1f}) mm")
+    log_info_message(logger_context, f"  ├─ Target point:  ({targetPointX:.1f}, {targetPointY:.1f}) mm")
+    log_info_message(logger_context, f"  └─ Plane bounds:  ({plane.xMin}-{plane.xMax}, {plane.yMin}-{plane.yMax}) mm")

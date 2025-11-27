@@ -24,8 +24,13 @@ def calculate_target_drop_position(plane, width, height):
     return targetPointX, targetPointY
 
 
-def calculate_drop_off_position(match, centroid, orientation, plane, pickup_height, gripper, logger_context,
-                                rz_orientation, rotation_offset_between_pickup_and_drop_place):
+def calculate_drop_off_position(match,
+                                centroid,
+                                orientation,
+                                plane,
+                                pickup_height,
+                                gripper,
+                                logger_context):
     """
     Calculate the drop-off position for a workpiece on the placement plane.
 
@@ -44,7 +49,6 @@ def calculate_drop_off_position(match, centroid, orientation, plane, pickup_heig
     log_info_message(logger_context, f"Starting drop-off calculation for orientation: {orientation:.2f}°")
     log_info_message(logger_context, f"Input: centroid={centroid}, pickup_height={pickup_height}mm")
 
-    # === FUNCTIONALITY ===
     # Get and rotate contour
     cnt = match.get_main_contour()
     cntObject = Contour(cnt)
@@ -54,7 +58,6 @@ def calculate_drop_off_position(match, centroid, orientation, plane, pickup_heig
     width, height, bboxCenter, minRect = calculate_workpiece_dimensions(cntObject)
     log_workpiece_dimensions(logger_context, width, height, bboxCenter, minRect, orientation)
 
-    # === FUNCTIONALITY ===
     # Update the tallest contour for row spacing
     previous_tallest = plane.tallestContour
     if height > plane.tallestContour:
@@ -67,7 +70,7 @@ def calculate_drop_off_position(match, centroid, orientation, plane, pickup_heig
 
     # Handle row overflow - move to next row if needed
     if targetPointX + (width / 2) > plane.xMax:
-        # === FUNCTIONALITY ===
+
         plane.rowCount += 1
         plane.xOffset = 0
         plane.yOffset += plane.tallestContour + 50
@@ -75,20 +78,17 @@ def calculate_drop_off_position(match, centroid, orientation, plane, pickup_heig
         targetPointY = plane.yMax - plane.yOffset
         plane.tallestContour = height  # Reset for new row
 
-        # === LOGGING ===
         log_moving_to_next_row(logger_context,targetPointX,targetPointY,width,plane)
 
-        # === FUNCTIONALITY ===
         # Check vertical bounds
         if targetPointY - (height / 2) < plane.yMin:
-            # === LOGGING ===
+
             log_info_message(logger_context, "❌ PLANE FULL: Cannot fit more workpieces vertically")
 
-            # === FUNCTIONALITY ===
+
             plane.isFull = True
             return None, width, height, plane
 
-    # === FUNCTIONALITY ===
     # Position the contour at target location
     translation_x = targetPointX - bboxCenter[0]
     translation_y = targetPointY - bboxCenter[1]
@@ -99,8 +99,8 @@ def calculate_drop_off_position(match, centroid, orientation, plane, pickup_heig
     if gripper == Gripper.DOUBLE:
         drop_off_rz = -90
     else:
-
         drop_off_rz = 0
+
     drop_off_position1 = [newCentroid[0], newCentroid[1], pickup_height + 50, 180, 0, drop_off_rz]
     drop_off_position2 = [newCentroid[0], newCentroid[1], pickup_height + 20, 180, 0, drop_off_rz]
 
@@ -112,8 +112,5 @@ def calculate_drop_off_position(match, centroid, orientation, plane, pickup_heig
     log_info_message(logger_context, f"FINAL DROP-OFF:")
     log_info_message(logger_context, f"  ├─ Translated centroid: ({newCentroid[0]:.2f}, {newCentroid[1]:.2f}) mm")
     log_info_message(logger_context, f"  ├─ Drop height: {pickup_height + 10} mm")
-    log_info_message(logger_context,
-                     f"  └─ Rotation: {drop_off_rz}° ({rz_orientation}° - {rotation_offset_between_pickup_and_drop_place}°)")
-    log_info_message(logger_context, f"Updated X offset for next piece: {plane.xOffset:.1f} mm")
 
-    return drop_off_position1, drop_off_position2, width, height, plane, cntObject.get()
+    return drop_off_position1, drop_off_position2, width, height, cntObject.get()
