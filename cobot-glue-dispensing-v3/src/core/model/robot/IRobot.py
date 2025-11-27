@@ -1,7 +1,14 @@
 from abc import abstractmethod, ABC
+from enum import IntEnum
 
 from core.model.robot.enums.axis import RobotAxis, Direction
 
+class FeedbackCode(IntEnum):
+    SUCCESS = 0                 # Command completed
+    FAIL = 1                    # Generic failure
+    INVALID_ARGUMENT = 2        # Bad or missing parameters
+    ROBOT_NOT_READY = 3         # Disabled, estop, or not initialized
+    MOTION_ERROR = 4            # Motion could not be completed
 
 class IRobot(ABC):
 
