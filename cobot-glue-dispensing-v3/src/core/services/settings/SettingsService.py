@@ -122,8 +122,34 @@ class SettingsService:
 
                 # Update with new data (handles nested keys and case conversion)
                 for key, value in settings_data.items():
+                    # Handle nested keys for robot_calibration_settings
+                    if settings_type == "robot_calibration_settings":
+                        # Check if this is an adaptive movement config setting
+                        adaptive_movement_keys = [
+                            "min_step_mm", "max_step_mm", "target_error_mm", 
+                            "max_error_ref", "k", "derivative_scaling"
+                        ]
+                        
+                        if key in adaptive_movement_keys:
+                            # Ensure adaptive_movement_config dict exists
+                            if "adaptive_movement_config" not in current_dict:
+                                current_dict["adaptive_movement_config"] = {}
+                            
+                            # Update nested value under adaptive_movement_config
+                            current_dict["adaptive_movement_config"][key] = value
+                        else:
+                            # Handle key mappings for robot calibration settings
+                            if key == "required_marker_ids":
+                                # Map to the expected model key
+                                actual_key = "required_ids"
+                            else:
+                                actual_key = key
+                            
+                            # Direct assignment for z_target, required_ids, etc.
+                            current_dict[actual_key] = value
+                    
                     # Handle nested keys for robot_config
-                    if settings_type == "robot_config" and '.' in key:
+                    elif settings_type == "robot_config" and '.' in key:
                         # Handle nested keys properly
                         parts = key.split('.')
                         

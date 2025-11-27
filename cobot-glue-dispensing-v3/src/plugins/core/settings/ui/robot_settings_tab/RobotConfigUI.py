@@ -19,6 +19,7 @@ from plugins.core.settings.ui.robot_settings_tab.sub_tabs.general_settings impor
     GeneralSettings
 from plugins.core.settings.ui.robot_settings_tab.sub_tabs.movement_groups import get_movement_groups_sub_tab
 from plugins.core.settings.ui.robot_settings_tab.sub_tabs.safety import SafetySettingsTab
+from plugins.core.settings.ui.robot_settings_tab.sub_tabs.robot_calibration import RobotCalibrationTabLayout
 
 # Main UI Class
 class RobotConfigUI(BaseSettingsTabLayout, QWidget):
@@ -76,7 +77,14 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
         get_movement_groups_sub_tab(self)
         self.tab_widget.addTab(QWidget(), "Movement Groups")
         self.tab_widget.widget(2).setLayout(self.movement_group_tab_layout)
-        self.tab_widget.addTab(QWidget(),"Calibration")
+        
+        # Create calibration tab with proper layout
+        self.calibration_tab_widget = QWidget()
+        self.calibration_tab_layout = RobotCalibrationTabLayout(self.calibration_tab_widget)
+        self.calibration_tab_layout.value_changed_signal.connect(
+            lambda k, v, c: self.value_changed_signal.emit(k, v, c))
+        self.calibration_tab_widget.setLayout(self.calibration_tab_layout)
+        self.tab_widget.addTab(self.calibration_tab_widget, "Calibration")
 
         scroll_layout.addWidget(self.tab_widget)
 

@@ -184,7 +184,13 @@ class SettingsController(BaseController):
 
         try:
             print(f"SettingsController._handleSet: resource={resource}, data={data}")
-            self.settingsService.updateSettings(data)
+            
+            # Handle robot calibration settings using the new method
+            if resource == "robot_calibration_settings":
+                self.settingsService.update_settings("robot_calibration_settings", data)
+            else:
+                # Use legacy method for other settings that have headers
+                self.settingsService.updateSettings(data)
 
             # Update camera settings separately
             if resource == "camera":

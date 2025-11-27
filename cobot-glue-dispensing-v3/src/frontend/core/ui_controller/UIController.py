@@ -11,6 +11,7 @@ from core.model.settings.robotConfig.robotConfigModel import RobotConfig
 from frontend.legacy_ui.controller.RequestWorker import RequestWorker
 from frontend.feedback.FeedbackProvider import FeedbackProvider
 import logging
+import json
 
 from plugins.core.settings.ui.CameraSettingsTabLayout import CameraSettingsTabLayout
 from plugins.core.wight_cells_settings_plugin.ui.GlueSettingsTabLayout import GlueSettingsTabLayout
@@ -69,6 +70,17 @@ class UIController:
             robot_endpoints.ROBOT_UPDATE_CONFIG: self.handleRobotUpdateConfig,
             robot_endpoints.ROBOT_GET_CURRENT_POSITION: self.handle_get_robot_current_position,
             robot_endpoints.ROBOT_MOVE_TO_POSITION: self.handle_move_robot_to_position,
+            robot_endpoints.ROBOT_SLOT_0_PICKUP: self.handle_pickup_gripper_0,
+            robot_endpoints.ROBOT_SLOT_0_DROP: self.handle_drop_gripper_0,
+            robot_endpoints.ROBOT_SLOT_1_DROP: self.handle_drop_gripper_1,
+            robot_endpoints.ROBOT_SLOT_1_PICKUP: self.handle_pickup_gripper_1,
+            robot_endpoints.ROBOT_SLOT_2_DROP : self.handle_drop_gripper_2,
+            robot_endpoints.ROBOT_SLOT_2_PICKUP : self.handle_pickup_gripper_2,
+            robot_endpoints.ROBOT_SLOT_3_DROP : self.handle_drop_gripper_3,
+            robot_endpoints.ROBOT_SLOT_3_PICKUP : self.handle_pickup_gripper_3,
+            robot_endpoints.ROBOT_SLOT_4_DROP : self.handle_pickup_gripper_4,
+            robot_endpoints.ROBOT_SLOT_4_PICKUP : self.handle_drop_gripper_4,
+
 
             # Workpiece endpoints
             workpiece_endpoints.WORKPIECE_SAVE: self.save_workpiece,
@@ -80,7 +92,65 @@ class UIController:
             "executeFromGallery": self.handleExecuteFromGallery,
         }
 
-    import json
+    def handle_drop_gripper_4(self):
+        request = robot_endpoints.ROBOT_SLOT_4_DROP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_drop_gripper_4] Response: {response}")
+
+    def handle_pickup_gripper_4(self):
+        request = robot_endpoints.ROBOT_SLOT_4_PICKUP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_pickup_gripper_4] Response: {response}")
+
+    def handle_pickup_gripper_3(self):
+        request = robot_endpoints.ROBOT_SLOT_3_PICKUP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_pickup_gripper_3] Response: {response}")
+
+    def handle_drop_gripper_3(self):
+        request = robot_endpoints.ROBOT_SLOT_3_DROP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_drop_gripper_3] Response: {response}")
+
+    def handle_pickup_gripper_2(self):
+        request = robot_endpoints.ROBOT_SLOT_2_PICKUP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_pickup_gripper_2] Response: {response}")
+
+    def handle_drop_gripper_2(self):
+        request = robot_endpoints.ROBOT_SLOT_2_DROP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_drop_gripper_2] Response: {response}")
+
+    def handle_pickup_gripper_1(self):
+        request = robot_endpoints.ROBOT_SLOT_1_PICKUP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_pickup_gripper_1] Response: {response}")
+
+    def handle_drop_gripper_1(self):
+        request = robot_endpoints.ROBOT_SLOT_1_DROP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_drop_gripper_1] Response: {response}")
+
+    def handle_pickup_gripper_0(self):
+        request = robot_endpoints.ROBOT_SLOT_0_PICKUP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_pickup_gripper_0] Response: {response}")
+
+    def handle_drop_gripper_0(self):
+        request = robot_endpoints.ROBOT_SLOT_0_DROP
+        response_dict = self.requestSender.send_request(request)
+        response = Response.from_dict(response_dict)
+        print(f"[handle_drop_gripper_0] Response: {response}")
 
     def handle_move_robot_to_position(self, position, vel, acc):
         print("RAW position:", position, type(position))
@@ -460,9 +530,15 @@ class UIController:
             request = glue_endpoints.SETTINGS_GLUE_SET
 
         elif className == RobotConfigUI.__module__:
-            print("Updating Settings Robot", key, value)
-            resource = Constants.REQUEST_RESOURCE_ROBOT
-            request = settings_endpoints.SETTINGS_ROBOT_SET
+            # Check if this is a robot calibration setting
+            if self._is_robot_calibration_setting(key):
+                print(f"🔧 Setting change signal received: {className}.{key} = {value}")
+                print("Routing to robot calibration settings handler")
+                return self.handle_update_robot_calibration_settings(key, value)
+            else:
+                print("Updating Settings Robot", key, value)
+                resource = Constants.REQUEST_RESOURCE_ROBOT
+                request = settings_endpoints.SETTINGS_ROBOT_SET
         else:
             self.logger.error(f"{self.logTag}] Updating Unknown Settings {className} : {key} {value}")
             return
@@ -471,6 +547,18 @@ class UIController:
                 key: value}
 
         self.requestSender.send_request(request, data)
+    
+    def _is_robot_calibration_setting(self, key):
+        """Check if the setting key belongs to robot calibration settings"""
+        try:
+            # Import robot calibration setting keys for detection
+            from plugins.core.settings.enums.RobotCalibrationSettingKeys import RobotCalibrationSettingKeys
+            # Check if the key is a valid robot calibration setting
+            calibration_keys = [setting.value for setting in RobotCalibrationSettingKeys]
+            return key in calibration_keys
+        except Exception as e:
+            print(f"Error checking robot calibration setting key: {e}")
+            return False
 
     """ REFACTORED METHODS BELOW """
 

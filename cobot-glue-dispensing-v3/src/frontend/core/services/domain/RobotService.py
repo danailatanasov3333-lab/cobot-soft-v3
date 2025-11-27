@@ -11,6 +11,7 @@ from enum import Enum
 
 from communication_layer.api.v1 import Constants
 from communication_layer.api.v1.endpoints import robot_endpoints
+from communication_layer.api.v1.endpoints.robot_endpoints import ROBOT_SLOT_0_PICKUP
 from ..types.ServiceResult import ServiceResult
 
 # Import endpoint constants
@@ -270,3 +271,39 @@ class RobotService:
             error_msg = f"Failed to move to position: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return ServiceResult.error_result(error_msg)
+
+    def pickup_gripper(self,slot_id:int)-> ServiceResult:
+        print(f"[Frontend/RobotService.py] Sending pickup command for slot {slot_id}")
+        return ServiceResult.success_result(f"Pickup command sent for slot {slot_id}")
+        if slot_id == 0:
+            self.controller.handle(ROBOT_SLOT_0_PICKUP)
+        elif slot_id == 1:
+            self.controller.handle(robot_endpoints.ROBOT_SLOT_1_PICKUP)
+        elif slot_id == 2:
+            self.controller.handle(robot_endpoints.ROBOT_SLOT_2_PICKUP)
+        elif slot_id == 3:
+            self.controller.handle(robot_endpoints.ROBOT_SLOT_3_PICKUP)
+        elif slot_id == 4:
+            self.controller.handle(robot_endpoints.ROBOT_SLOT_4_PICKUP)
+        else:
+            raise ValueError(f"Invalid slot ID: {slot_id}")
+
+        return ServiceResult.success_result(f"Pickup command sent for slot {slot_id}")
+
+    def drop_gripper(self,slot_id:int)-> ServiceResult:
+        print(f"[Frontend/RobotService.py] Sending drop command for slot {slot_id}")
+        return ServiceResult.success_result(f"Drop command sent for slot {slot_id}")
+        if slot_id == 0:
+            self.controller.handle(robot_endpoints.ROBOT_SLOT_0_DROP)
+        elif slot_id == 1:
+            self.controller.handle(robot_endpoints.ROBOT_SLOT_1_DROP)
+        elif slot_id == 2:
+            self.controller.handle(robot_endpoints.ROBOT_SLOT_2_DROP)
+        elif slot_id == 3:
+            self.controller.handle(robot_endpoints.ROBOT_SLOT_3_DROP)
+        elif slot_id == 4:
+            self.controller.handle(robot_endpoints.ROBOT_SLOT_4_DROP)
+        else:
+            raise ValueError(f"Invalid slot ID: {slot_id}")
+
+        return ServiceResult.success_result(f"Drop command sent for slot {slot_id}")

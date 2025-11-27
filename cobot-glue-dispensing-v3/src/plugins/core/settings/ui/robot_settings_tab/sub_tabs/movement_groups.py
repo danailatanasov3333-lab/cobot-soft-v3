@@ -923,7 +923,19 @@ class MovementGroupsTab(QWidget):
         elif group_name in ["SLOT 0 PICKUP", "SLOT 0 DROPOFF",
                             "SLOT 1 PICKUP", "SLOT 1 DROPOFF",
                             "SLOT 4 PICKUP", "SLOT 4 DROPOFF"]:
-            print(f"Executing slot trajectory for group: {group_name}")
+            # split the group name by space to get slot number and action
+            parts = group_name.split(" ")
+            if len(parts) != 3:
+                raise ValueError(f"Invalid slot trajectory group name: {group_name}")
+
+            slot_number = int(parts[1])
+            action = parts[2]  # PICKUP or DROPOFF
+            if action == "PICKUP":
+                result = self.controller_service.robot.pickup_gripper(slot_number)
+            elif action == "DROPOFF":
+                result = self.controller_service.robot.drop_gripper(slot_number)
+            else:
+                raise ValueError(f"Invalid slot action: {action}")
         else:
             QMessageBox.warning(self, "Error", f"Execute trajectory not supported for group '{group_name}'")
             return
