@@ -31,16 +31,13 @@ class ToolManager:
             if self.current_gripper == gripper_id:
                 return False, f"Gripper {gripper_id} is already picked"
 
-            slot_id = self.tool_changer.getSlotIdByGrippedId(gripper_id)
-            self.tool_changer.setSlotAvailable(slot_id)
-
             positions, config = self._get_pickup_positions_and_config(gripper_id)
             if positions is None or config is None:
                 return False, f"Unsupported gripper ID: {gripper_id}"
 
             try:
                 for pos in positions:
-                    self.robot_service.robot.moveL(
+                    self.robot_service.robot.move_cartesian(
                         position=pos,
                         tool=self.robot_service.robot_config.robot_tool,
                         user=self.robot_service.robot_config.robot_user,
@@ -48,6 +45,9 @@ class ToolManager:
                         acc=config.acceleration,
                         blendR=1
                     )
+
+                slot_id = self.tool_changer.getSlotIdByGrippedId(gripper_id)
+                self.tool_changer.setSlotAvailable(slot_id)
             except Exception as e:
                 import traceback
                 traceback.print_exc()
@@ -67,15 +67,13 @@ class ToolManager:
             if self.tool_changer.isSlotOccupied(slot_id):
                 return False, f"Slot {slot_id} is already occupied"
 
-            self.tool_changer.setSlotNotAvailable(slot_id)
-
             positions, config = self._get_dropoff_positions_and_config(gripper_id)
             if positions is None or config is None:
                 return False, f"Unsupported gripper ID: {gripper_id}"
 
             try:
                 for pos in positions:
-                    self.robot_service.robot.moveL(
+                    self.robot_service.robot.move_cartesian(
                         position=pos,
                         tool=self.robot_service.robot_config.robot_tool,
                         user=self.robot_service.robot_config.robot_user,
@@ -83,6 +81,8 @@ class ToolManager:
                         acc=config.acceleration,
                         blendR=1
                     )
+
+                self.tool_changer.setSlotNotAvailable(slot_id)
             except Exception as e:
                 import traceback
                 traceback.print_exc()

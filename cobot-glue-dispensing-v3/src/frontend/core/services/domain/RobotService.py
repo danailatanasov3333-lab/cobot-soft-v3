@@ -274,7 +274,7 @@ class RobotService:
 
     def pickup_gripper(self,slot_id:int)-> ServiceResult:
         print(f"[Frontend/RobotService.py] Sending pickup command for slot {slot_id}")
-        return ServiceResult.success_result(f"Pickup command sent for slot {slot_id}")
+        # return ServiceResult.success_result(f"Pickup command sent for slot {slot_id}")
         if slot_id == 0:
             self.controller.handle(ROBOT_SLOT_0_PICKUP)
         elif slot_id == 1:
@@ -292,7 +292,7 @@ class RobotService:
 
     def drop_gripper(self,slot_id:int)-> ServiceResult:
         print(f"[Frontend/RobotService.py] Sending drop command for slot {slot_id}")
-        return ServiceResult.success_result(f"Drop command sent for slot {slot_id}")
+        # return ServiceResult.success_result(f"Drop command sent for slot {slot_id}")
         if slot_id == 0:
             self.controller.handle(robot_endpoints.ROBOT_SLOT_0_DROP)
         elif slot_id == 1:

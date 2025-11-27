@@ -78,8 +78,8 @@ class UIController:
             robot_endpoints.ROBOT_SLOT_2_PICKUP : self.handle_pickup_gripper_2,
             robot_endpoints.ROBOT_SLOT_3_DROP : self.handle_drop_gripper_3,
             robot_endpoints.ROBOT_SLOT_3_PICKUP : self.handle_pickup_gripper_3,
-            robot_endpoints.ROBOT_SLOT_4_DROP : self.handle_pickup_gripper_4,
-            robot_endpoints.ROBOT_SLOT_4_PICKUP : self.handle_drop_gripper_4,
+            robot_endpoints.ROBOT_SLOT_4_DROP : self.handle_drop_gripper_4,
+            robot_endpoints.ROBOT_SLOT_4_PICKUP : self.handle_pickup_gripper_4,
 
 
             # Workpiece endpoints

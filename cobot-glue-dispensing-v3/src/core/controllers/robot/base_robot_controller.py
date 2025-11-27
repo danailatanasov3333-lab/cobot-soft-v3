@@ -54,6 +54,18 @@ class BaseRobotController(BaseController):
 
         # SLOT OPERATIONS
         self.register_handler("slot_operation", lambda request,parts: self._handleSlotOperation(request,parts))
+        
+        # Register specific slot endpoints
+        self.register_handler(robot_endpoints.ROBOT_SLOT_0_PICKUP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_0_PICKUP, ["slots", "0", "pickup"]))
+        self.register_handler(robot_endpoints.ROBOT_SLOT_0_DROP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_0_DROP, ["slots", "0", "drop"]))
+        self.register_handler(robot_endpoints.ROBOT_SLOT_1_PICKUP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_1_PICKUP, ["slots", "1", "pickup"]))
+        self.register_handler(robot_endpoints.ROBOT_SLOT_1_DROP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_1_DROP, ["slots", "1", "drop"]))
+        self.register_handler(robot_endpoints.ROBOT_SLOT_2_PICKUP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_2_PICKUP, ["slots", "2", "pickup"]))
+        self.register_handler(robot_endpoints.ROBOT_SLOT_2_DROP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_2_DROP, ["slots", "2", "drop"]))
+        self.register_handler(robot_endpoints.ROBOT_SLOT_3_PICKUP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_3_PICKUP, ["slots", "3", "pickup"]))
+        self.register_handler(robot_endpoints.ROBOT_SLOT_3_DROP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_3_DROP, ["slots", "3", "drop"]))
+        self.register_handler(robot_endpoints.ROBOT_SLOT_4_PICKUP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_4_PICKUP, ["slots", "4", "pickup"]))
+        self.register_handler(robot_endpoints.ROBOT_SLOT_4_DROP, lambda data=None: self._handleSlotOperation(robot_endpoints.ROBOT_SLOT_4_DROP, ["slots", "4", "drop"]))
 
     def _resolve_dynamic_handler(self, request):
         if request.startswith("robot/jog"):
@@ -154,6 +166,8 @@ class BaseRobotController(BaseController):
         return self._moveSuccess(ret, "Failed JOG", "Success JOG")
 
     def _handleSlotOperation(self, request,parts):
+        print(f"[RobotController]: Handling slot operation for request: {request} with parts: {parts}")
+         # Expected parts: ['slots', '<slot_number>', 'pickup'/'drop']
         try:
             slot_number = int(parts[-2])
             action = parts[-1]

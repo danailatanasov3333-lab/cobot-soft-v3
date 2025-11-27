@@ -9,7 +9,6 @@ from core.model.settings.robotConfig.SafetyLimits import SafetyLimits
 from core.model.settings.robotConfig.robotConfigModel import RobotConfig
 from frontend.core.utils.localization import get_app_translator
 from frontend.virtualKeyboard.VirtualKeyboard import FocusLineEdit
-from frontend.widgets.robotManualControl.RobotJogWidget import RobotJogWidget
 from plugins.core.settings.ui.BaseSettingsTabLayout import BaseSettingsTabLayout
 from plugins.core.settings.ui.robot_settings_tab.robot_config_groups.global_motion import GlobalMotionSettings
 from plugins.core.settings.ui.robot_settings_tab.robot_config_groups.robot_info import RobotInfo
@@ -50,10 +49,10 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
         translate(self)
 
     def init_ui(self):
-        # Main horizontal layout
+        # Main layout - just the scrollable configuration panel (full width)
         main_layout = QHBoxLayout()
 
-        # Left side - Scrollable Configuration panel (2/3 width)
+        # Scrollable Configuration panel (full width)
         config_scroll = QScrollArea()
         config_scroll.setWidgetResizable(True)
         config_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -91,33 +90,10 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
         # Set the scroll content and add to main scroll area
         scroll_content.setLayout(scroll_layout)
         config_scroll.setWidget(scroll_content)
-        main_layout.addWidget(config_scroll, 2)  # 2/3 width
-
-        # Right side - Jog control panel (1/3 width)
-        jog_panel = QWidget()
-        jog_layout = QVBoxLayout()
-
-        jog_title = QLabel("Robot Jog Control") # TODO TRANSLATE
-        jog_title.setStyleSheet("""
-            font-size: 16px;
-            font-weight: bold;
-            color: #333333;
-            margin-bottom: 10px;
-            padding: 10px;
-            background-color: #F0F0F0;
-            border-radius: 4px;
-        """)
-        jog_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        jog_layout.addWidget(jog_title)
-
-        self.jog_widget = RobotJogWidget()
-        jog_layout.addWidget(self.jog_widget)
-        jog_layout.addStretch()
-
-        jog_panel.setLayout(jog_layout)
-        main_layout.addWidget(jog_panel, 1)  # 1/3 width
+        main_layout.addWidget(config_scroll, 1)  # Full width
 
         self.setLayout(main_layout)
+
 
     def on_settings_changed(self, k, v):
         """Emit value_changed_signal when settings change"""
@@ -377,11 +353,6 @@ class RobotConfigUI(BaseSettingsTabLayout, QWidget):
             )
         )
 
-        # Connect jog widget signals
-        self.jog_widget.jogRequested.connect(self.signals.jog_requested.emit)
-        self.jog_widget.jogStarted.connect(self.signals.jog_started.emit)
-        self.jog_widget.jogStopped.connect(self.signals.jog_stopped.emit)
-        self.jog_widget.save_point_requested.connect(self.on_jog_save_point)
 
         # Connect nozzle clean iterations signal
         if hasattr(self, 'nozzle_clean_iterations'):
