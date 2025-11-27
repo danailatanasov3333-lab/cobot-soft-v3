@@ -1,5 +1,5 @@
 from applications.glue_dispensing_application.pick_and_place_process.logging_utils import log_workpiece_dimensions, \
-    log_calculated_drop_position
+    log_calculated_drop_position, log_moving_to_next_row
 from modules.shared.core.ContourStandartized import Contour
 from modules.shared.tools.enums.Gripper import Gripper
 from modules.utils.custom_logging import log_info_message, LoggingLevel, log_info_message
@@ -83,12 +83,7 @@ def calculate_drop_off_position(match, centroid, orientation, plane, pickup_heig
         plane.tallestContour = height  # Reset for new row
 
         # === LOGGING ===
-        log_info_message(logger_context, f"⚠️  Width exceeded, moving to next row")
-        log_info_message(logger_context, f"Exceeded by: {(targetPointX + width / 2) - plane.xMax:.1f} mm")
-
-        log_info_message(logger_context, f"NEW ROW {plane.rowCount}:")
-        log_info_message(logger_context, f"  ├─ Reset to: ({targetPointX:.1f}, {targetPointY:.1f}) mm")
-        log_info_message(logger_context, f"  └─ Row spacing: {plane.tallestContour + 50:.1f} mm")
+        log_moving_to_next_row(logger_context,targetPointX,targetPointY,width,plane)
 
         # === FUNCTIONALITY ===
         # Check vertical bounds
