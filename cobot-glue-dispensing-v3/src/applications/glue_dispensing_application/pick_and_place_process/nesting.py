@@ -142,6 +142,8 @@ def pickup_gripper(robotService: RobotService, target_gripper_id: int, laser) ->
         laser.turnOff()
         return NestingResult(success=False, message=f"Failed to pick up gripper {target_gripper_id}: {message}")
 
+    return NestingResult(success=True, message="Gripper picked up successfully")
+
 def change_gripper_if_needed(robotService: RobotService, target_gripper_id: int, laser) -> NestingResult:
     # if different, drop the current gripper (if any) and pick up the new one
     if robotService.current_tool is not None:
@@ -336,10 +338,10 @@ def start_nesting(application, visionService, robotService: RobotService, presel
             gripper = match.gripperID
             centroid = determine_pickup_point(match, cnt_obj)
 
-
             # Apply homography transformation
             centroid_for_height_measure,flat_centroid = transform_centroids(visionService, centroid)
             log_match_details(logger_context,match_height,gripper,centroid,flat_centroid,orientations,match_i)
+
             # Calculate pickup and drop-off positions
             pickup_positions, height_measure_position, pickup_height = calculate_pickup_positions(flat_centroid,
                                                                                                   match_height,
@@ -358,8 +360,7 @@ def start_nesting(application, visionService, robotService: RobotService, presel
                                                           plane,
                                                           pickup_height,
                                                           gripper,
-                                                          ENABLE_LOGGING,
-                                                          nesting_logger,
+                                                          logger_context,
                                                           RZ_ORIENTATION,
                                                           ROTATION_OFFSET_BETWEEN_PICKUP_AND_DROP_PLACE)
 

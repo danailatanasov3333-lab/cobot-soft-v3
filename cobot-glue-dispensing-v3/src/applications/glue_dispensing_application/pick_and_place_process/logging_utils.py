@@ -46,3 +46,16 @@ def log_drop_pos_calculated(logger_context,drop_off_position1,width,height):
     log_info_message(logger_context, f"📍 DROP-OFF: Position calculated at {drop_off_position1[:2]} mm (Z: {drop_off_position1[2]} mm)")
     log_info_message(logger_context, f"Drop-off position: {drop_off_position1}")
     log_info_message(logger_context,f"Workpiece dimensions: {width:.1f} x {height:.1f} mm")
+
+def log_workpiece_dimensions(logger_context, width, height, bboxCenter, minRect, orientation):
+    # === LOGGING ===
+    log_info_message(logger_context,f"Rotating contour by {-orientation:.2f}° to align with X-axis")
+    log_info_message(logger_context,    "Swapped width/height to ensure width >= height" if width != minRect[1][0] else "")
+    log_info_message(logger_context, f"WORKPIECE DIMENSIONS:")
+    log_info_message(logger_context, f"  ├─ Width:  {width:.2f} mm")
+    log_info_message(logger_context, f"  ├─ Height: {height:.2f} mm")
+    log_info_message(logger_context, f"  └─ Bbox center: ({bboxCenter[0]:.2f}, {bboxCenter[1]:.2f})")
+
+def log_calculated_drop_position(logger_context, targetPointX, targetPointY, width, height, plane):
+    log_info_message(logger_context, f"Calculated target X position: {targetPointX:.1f} = {plane.xOffset} + {plane.xMin}+{width / 2} mm")
+    log_info_message(logger_context, f"Calculated target Y position: {targetPointY:.1f} = {plane.yOffset} + {plane.yMax}+{height / 2} mm")
