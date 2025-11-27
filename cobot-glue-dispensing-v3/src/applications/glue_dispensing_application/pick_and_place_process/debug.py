@@ -8,14 +8,13 @@ from matplotlib import pyplot as plt, patches
 from modules.utils.custom_logging import log_if_enabled, LoggingLevel
 
 
-def __save_nesting_debug_plot(plane, placed_contours, cycle_number, match_index):
+def save_nesting_debug_plot(plane, placed_contours, match_index):
     """
     Save a debug plot showing the nested contours after drop position calculation.
 
     Args:
         plane: The placement plane object with bounds and current state
         placed_contours: List of contours that have been placed so far
-        cycle_number: Current nesting cycle number
         match_index: Current match index within the cycle
     """
 
@@ -85,7 +84,7 @@ def __save_nesting_debug_plot(plane, placed_contours, cycle_number, match_index)
     ax.grid(True, alpha=0.3)
     ax.set_xlabel('X (mm)', fontsize=12)
     ax.set_ylabel('Y (mm)', fontsize=12)
-    ax.set_title(f'Nesting Debug - Cycle {cycle_number}, Match {match_index}\n'
+    ax.set_title(f'Nesting Debug -  Match {match_index}\n'
                  f'Placed: {len(placed_contours)} workpieces, Row: {plane.rowCount}',
                  fontsize=14, fontweight='bold')
 
@@ -105,7 +104,7 @@ def __save_nesting_debug_plot(plane, placed_contours, cycle_number, match_index)
 
     # Save plot
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"nesting_debug_cycle{cycle_number:02d}_match{match_index:02d}_{timestamp}.png"
+    filename = f"nesting_debug_cycle_match{match_index:02d}_{timestamp}.png"
 
     # Create debug directory if it doesn't exist
     debug_dir = "nesting_visualizations"

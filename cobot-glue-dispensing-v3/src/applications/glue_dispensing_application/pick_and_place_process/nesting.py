@@ -4,11 +4,18 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 
+from applications.glue_dispensing_application.pick_and_place_process.calculate_drop_off_position import \
+    calculate_drop_off_position
 from applications.glue_dispensing_application.pick_and_place_process.calculate_pickup_positions import \
     calculate_pickup_positions
+from applications.glue_dispensing_application.pick_and_place_process.debug import save_nesting_debug_plot
 from applications.glue_dispensing_application.pick_and_place_process.execute_pick_and_place_sequence import \
     execute_pick_and_place_sequence
-from applications.glue_dispensing_application.pick_and_place_process.measure_height import measure_height_at_position
+from applications.glue_dispensing_application.pick_and_place_process.logging_utils import log_match_details, \
+    log_drop_pos_calculated
+from applications.glue_dispensing_application.pick_and_place_process.measure_height import measure_height_at_position, \
+    HeightMeasureContext
+from applications.glue_dispensing_application.pick_and_place_process.utils import rotate_offsets
 from communication_layer.api.v1.topics import VisionTopics
 from core.services.robot_service.impl.base_robot_service import RobotService
 from modules.VisionSystem.heightMeasuring.LaserTracker import LaserTrackService
@@ -19,12 +26,8 @@ from modules.shared.localization.enums.Message import Message
 from modules.shared.tools.enums.Gripper import Gripper
 from modules.utils import utils
 from modules.utils.contours import is_contour_inside_polygon
-
-from modules.utils.custom_logging import LoggingLevel, log_if_enabled, \
-    setup_logger
-
+from modules.utils.custom_logging import setup_logger, LoggerContext, log_info_message
 import time
-
 # import logging
 import cv2
 import numpy as np
@@ -61,6 +64,7 @@ if ENABLE_LOGGING:
 else:
     nesting_logger = None
 
+logger_context = LoggerContext(enabled=ENABLE_LOGGING, logger=nesting_logger)
 
 @dataclass
 class NestingResult:
@@ -68,263 +72,232 @@ class NestingResult:
     message: str
 
 
-def calculate_drop_off_position(match, centroid, orientation, plane, pickup_height, gripper):
+def move_to_nesting_capture_position(application,laser) -> int:
+    ret = application.move_to_nesting_capture_position()
+    if ret != 0:
+        laser.turnOff()
+        return False
+
+    broker = MessageBroker()
+    broker.publish(VisionTopics.THRESHOLD_REGION, {"region": "pickup"})
+
+    time.sleep(DELAY_BETWEEN_CAPTURING_NEW_IMAGE)
+    return True
+
+def get_contours_with_retries(visionService, logger_context, max_retries=10, retry_delay=1) -> tuple[bool,any]:
     """
-    Calculate the drop-off position for a workpiece on the placement plane.
+    Try multiple times to get contours from the vision system.
+    Returns:
+        contours (list) or None if no contours found after retries.
+    """
+    for attempt in range(1, max_retries + 1):
+        contours = visionService.contours
+
+        # SUCCESS: contours available
+        if contours and len(contours) > 0:
+            return True,contours
+
+        # Not found yet → attempt retry
+        if attempt < max_retries:
+            log_info_message(logger_context, f"No contours detected (attempt {attempt}/{max_retries}), retrying...")
+            time.sleep(retry_delay)
+
+    # FAILED after all retries
+    return False,None
+
+def close_contours(newContours):
+    # add first point to the end to close the contour
+    for i, cnt in enumerate(newContours):
+        if len(cnt) > 0:
+            # Close the contour by adding first point to the end using numpy concatenation
+            # Ensure dimensions match: cnt is (n, 1, 2), so reshape first point to (1, 1, 2)
+            first_point = cnt[0].reshape(1, 1, 2)
+            newContours[i] = np.vstack([cnt, first_point])
+
+def filter_contours_in_pickup_area(pickup_area,newContours):
+    if pickup_area is not None and len(pickup_area) >= 4:
+        initial_count = len(newContours)
+        filtered_contours = []
+        for contour in newContours:
+            if is_contour_inside_polygon(contour, pickup_area[0], pickup_area[1], pickup_area[2], pickup_area[3]):
+                filtered_contours.append(contour)
+        newContours = filtered_contours
+        return newContours
+    return None
+
+
+def match_contours_to_workpieces(workpieces, newContours):
+    try:
+        matches_data, noMatches, _ = CompareContours.findMatchingWorkpieces(workpieces, newContours)
+        return matches_data,noMatches
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return None,None
+
+def pickup_gripper(robotService: RobotService, target_gripper_id: int, laser) -> NestingResult:
+    success, message = robotService.pickupGripper(target_gripper_id)
+    if not success:
+        log_info_message(logger_context, f"Failed to pick up gripper {target_gripper_id}: {message}")
+        laser.turnOff()
+        return NestingResult(success=False, message=f"Failed to pick up gripper {target_gripper_id}: {message}")
+
+def change_gripper_if_needed(robotService: RobotService, target_gripper_id: int, laser) -> NestingResult:
+    # if different, drop the current gripper (if any) and pick up the new one
+    if robotService.current_tool is not None:
+        log_info_message(logger_context, f"Dropping off current gripper: {robotService.current_tool}")
+        success, message = robotService.dropOffGripper(robotService.current_tool)
+        if not success:
+            log_info_message(logger_context, f"Failed to drop off gripper {robotService.current_tool}: {message}")
+            laser.turnOff()
+            return NestingResult(success=False, message=f"Failed to drop off gripper {robotService.current_tool}: {message}")
+
+    result = pickup_gripper(robotService, target_gripper_id, laser)
+    if not result.success:
+        return result
+
+    result = robotService.tool_manager.verify_gripper_change(target_gripper_id)
+    if not result:
+        laser.turnOff()
+        return NestingResult(success=False,
+                             message=f"Gripper change verification failed. Expected: {target_gripper_id}, Current: {robotService.current_tool}")
+
+    log_info_message(logger_context, f"Successfully switched to gripper: {target_gripper_id}")
+
+    return NestingResult(success=True, message="Gripper changed successfully")
+
+
+def finish_nesting(robotService, laser, workpiece_found: bool,
+                   message_success: str, message_failure: str,
+                   move_before_finish=False, application=None) -> NestingResult:
+    """
+    Handles ending the nesting operation based on whether workpieces were found before.
 
     Args:
-        match: The matched workpiece object
-        centroid: Original centroid coordinates
-        orientation: Object orientation in degrees
-        plane: Plane object for placement calculations
-        pickup_height: Height at which the workpiece was picked up
+        robotService: Robot service instance
+        laser: Laser tool instance
+        workpiece_found: True if some workpieces were processed before
+        message_success: Message to return on successful nesting completion
+        message_failure: Message to return if no workpieces were ever found
+        move_before_finish: If True, move robot to capture position before finishing
+        application: Application instance (required if move_before_finish is True)
 
     Returns:
-        tuple: (drop_off_position, width, height, plane_updated)
+        NestingResult with appropriate success flag and message
     """
-
-    # === LOGGING ===
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"Starting drop-off calculation for orientation: {orientation:.2f}°")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                   f"Input: centroid={centroid}, pickup_height={pickup_height}mm")
-
-    # === FUNCTIONALITY ===
-    # Get and rotate contour
-    cnt = match.get_main_contour()
-    cntObject = Contour(cnt)
-    cntObject.rotate(-orientation, centroid)  # Align with X-axis
-
-    # Calculate workpiece dimensions
-    minRect = cntObject.getMinAreaRect()
-    bboxCenter = (minRect[0][0], minRect[0][1])
-    width = minRect[1][0]
-    height = minRect[1][1]
-    if width < height:
-        width, height = height, width
-
-    # === LOGGING ===
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                   f"Rotating contour by {-orientation:.2f}° to align with X-axis")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                   "Swapped width/height to ensure width >= height" if width != minRect[1][0] else "")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"WORKPIECE DIMENSIONS:")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"  ├─ Width:  {width:.2f} mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"  ├─ Height: {height:.2f} mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  └─ Bbox center: ({bboxCenter[0]:.2f}, {bboxCenter[1]:.2f})")
-
-    # === FUNCTIONALITY ===
-    # Update the tallest contour for row spacing
-    previous_tallest = plane.tallestContour
-    if height > plane.tallestContour:
-        plane.tallestContour = height
-
-    # Calculate target placement position
-    targetPointX = plane.xOffset + plane.xMin + (width / 2)
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                   f"Calculated target X position: {targetPointX:.1f} = {plane.xOffset} + {plane.xMin}+{width / 2} mm")
-    targetPointY = plane.yMax - plane.yOffset - (height / 2)
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                   f"Calculated target Y position: {targetPointY:.1f} = {plane.yOffset} + {plane.yMax}+{height / 2} mm")
-
-    # === LOGGING ===
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                   f"Updated tallest contour: {previous_tallest:.1f} → {height:.1f} mm" if height > previous_tallest else "")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"PLACEMENT CALCULATION:")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  ├─ Current offset: ({plane.xOffset:.1f}, {plane.yOffset:.1f}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  ├─ Target point:  ({targetPointX:.1f}, {targetPointY:.1f}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  └─ Plane bounds:  ({plane.xMin}-{plane.xMax}, {plane.yMin}-{plane.yMax}) mm")
-
-    # === FUNCTIONALITY ===
-    # Handle row overflow - move to next row if needed
-    if targetPointX + (width / 2) > plane.xMax:
-        # === LOGGING ===
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.WARNING, f"⚠️  Width exceeded, moving to next row")
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                       f"Exceeded by: {(targetPointX + width / 2) - plane.xMax:.1f} mm")
-
-        # === FUNCTIONALITY ===
-        plane.rowCount += 1
-        plane.xOffset = 0
-        plane.yOffset += plane.tallestContour + 50
-        targetPointX = plane.xMin + (width / 2)
-        targetPointY = plane.yMax - plane.yOffset
-        plane.tallestContour = height  # Reset for new row
-
-        # === LOGGING ===
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"NEW ROW {plane.rowCount}:")
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                       f"  ├─ Reset to: ({targetPointX:.1f}, {targetPointY:.1f}) mm")
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                       f"  └─ Row spacing: {plane.tallestContour + 50:.1f} mm")
-
-        # === FUNCTIONALITY ===
-        # Check vertical bounds
-        if targetPointY - (height / 2) < plane.yMin:
-            # === LOGGING ===
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.ERROR,
-                           "❌ PLANE FULL: Cannot fit more workpieces vertically")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                           f"Needed: {targetPointY - height / 2:.1f}, Available: {plane.yMin}")
-
-            # === FUNCTIONALITY ===
-            plane.isFull = True
-            return None, width, height, plane
-
-    # === FUNCTIONALITY ===
-    # Position the contour at target location
-    translation_x = targetPointX - bboxCenter[0]
-    translation_y = targetPointY - bboxCenter[1]
-    cntObject.translate(translation_x, translation_y)
-    newCentroid = cntObject.getCentroid()
-
-    # Calculate final drop-off position
-    if gripper == Gripper.DOUBLE:
-        drop_off_rz = -90
+    if workpiece_found:
+        log_info_message(logger_context, "No more workpieces detected, completing nesting.")
+        robotService.dropOffGripper(robotService.current_tool)
+        if move_before_finish and application is not None:
+            ret = application.move_to_nesting_capture_position()
+            if ret != 0:
+                laser.turnOff()
+                return NestingResult(success=False, message="Failed to move to start position")
+        laser.turnOff()
+        return NestingResult(success=True, message=message_success)
     else:
+        laser.turnOff()
+        return NestingResult(success=False, message=message_failure)
 
-        drop_off_rz = 0
-    drop_off_position1 = [newCentroid[0], newCentroid[1], pickup_height + 50, 180, 0, drop_off_rz]
-    drop_off_position2 = [newCentroid[0], newCentroid[1], pickup_height + 20, 180, 0, drop_off_rz]
 
-    # Update offset for next contour
-    plane.xOffset += width + plane.spacing
+def determine_pickup_point(match, cnt_obj):
+    if match.pickupPoint is not None:
+        centroid = match.pickupPoint
+        log_info_message(logger_context, f"Using predefined pickup point: {centroid}")
+    else:
+        centroid = cnt_obj.getCentroid()
+        log_info_message(logger_context, f"No predefined pickup point, using contour centroid: {centroid}")
 
-    # === LOGGING ===
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                   f"Translating contour by: ({translation_x:.2f}, {translation_y:.2f}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"FINAL DROP-OFF:")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  ├─ Translated centroid: ({newCentroid[0]:.2f}, {newCentroid[1]:.2f}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"  ├─ Drop height: {pickup_height + 10} mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  └─ Rotation: {drop_off_rz}° ({RZ_ORIENTATION}° - {ROTATION_OFFSET_BETWEEN_PICKUP_AND_DROP_PLACE}°)")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                   f"Updated X offset for next piece: {plane.xOffset:.1f} mm")
+def transform_centroids(visionService, centroid):
+    transformed_centroid = utils.applyTransformation(visionService.cameraToRobotMatrix, [centroid])
+    centroid_for_height_measure = utils.applyTransformation(visionService.cameraToRobotMatrix, [centroid],
+                                                            apply_transducer_offset=False)
+    flat_centroid = transformed_centroid
+    while isinstance(flat_centroid, (list, tuple)) and len(flat_centroid) == 1:
+        flat_centroid = flat_centroid[0]
 
-    return drop_off_position1, drop_off_position2, width, height, plane, cntObject.get()
+    return centroid_for_height_measure, flat_centroid
 
+def apply_offsets_based_on_gripper(gripper, drop_off_position1, drop_off_position2):
+    if gripper == Gripper.DOUBLE:
+        # rotate the offsets by -90 degrees and apply them
+        orientation_radians = math.radians(-90)
+        rotated_x, rotated_y = rotate_offsets(GRIPPER_X_OFFSET, GRIPPER_Y_OFFSET, orientation_radians)
+        # handle pos 1
+        drop_off_position1[0] += rotated_x
+        drop_off_position1[1] += rotated_y
+
+        # handle pos 2
+        drop_off_position2[0] += rotated_x
+        drop_off_position2[1] += rotated_y
+    else:
+        # apply standard gripper offsets
+        # handle pos 2
+        drop_off_position1[0] += GRIPPER_X_OFFSET
+        drop_off_position1[1] += GRIPPER_Y_OFFSET
+
+        # handle pos 2
+        drop_off_position2[0] += GRIPPER_X_OFFSET
+        drop_off_position2[1] += GRIPPER_Y_OFFSET
 
 def start_nesting(application, visionService, robotService: RobotService, preselected_workpiece) -> NestingResult:
-    # === LOGGING ===
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, "=" * 80)
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, "🤖 STARTING NESTING OPERATION")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, "=" * 80)
+    log_info_message(logger_context, "🤖 Starting Nesting Operation")
 
-    # === FUNCTIONALITY ===
     workpieces = preselected_workpiece
 
-    plane = Plane()
-    count = 0
-    workpiece_found = False
+    plane = Plane() # Initialize empty plane for nesting
+    count = 0 # Count of placed workpieces
+    workpiece_found = False # Track if any workpiece was found in any iteration
     placed_contours = []  # Track placed contours for debug plotting
-    cycle_number = 0  # Track cycle number for debug plotting
+    max_retries = 10 # maximum number of retries for contour detection
+    retry_delay = 1  # seconds between retries
+    measurement_height = 350  # initial height for measurement
+    laser = robotService.tool_manager.get_tool("laser") # get laser tool
+    laserTrackingService = LaserTrackService() # initialize laser tracking service
 
-    # === LOGGING ===
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"Loaded {len(workpieces)} workpiece templates")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                   f"Plane configuration: {plane.xMin}-{plane.xMax} x {plane.yMin}-{plane.yMax}")
+    height_measure_context= HeightMeasureContext(
+                robot_service=robotService,
+                vision_service=visionService,
+                laser_tracking_service=laserTrackingService,
+                laser=laser
+            )
 
-    laser = robotService.tool_manager.get_tool("laser")
-    laserTrackingService = LaserTrackService()
-
-    # === FUNCTIONALITY ===
     while True:
-        cycle_number += 1  # Increment cycle counter for debug plotting
-        # === LOGGING ===
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                       f"\n🔄 CYCLE {cycle_number}: Starting new detection cycle")
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, "Moving robot to start position (home)")
-
-        # === FUNCTIONALITY ===
-        # Move robot and capture new image
-        ret = application.move_to_nesting_capture_position()
-        if ret != 0:
-            laser.turnOff()
+        success = move_to_nesting_capture_position(application,laser)
+        if not success:
             return NestingResult(success=False, message="Failed to move to start position")
 
-        broker = MessageBroker()
-        broker.publish(VisionTopics.THRESHOLD_REGION, {"region": "pickup"})
+        success,newContours = get_contours_with_retries(visionService, logger_context, max_retries, retry_delay)
 
-        time.sleep(DELAY_BETWEEN_CAPTURING_NEW_IMAGE)
+        if not success:
+            # NO CONTOURS FOUND
+            log_info_message(logger_context, "Max retries reached, no contours found.")
+            return finish_nesting(
+                robotService,
+                laser,
+                workpiece_found,
+                message_success="Nesting complete, no more workpieces to pick",
+                message_failure="No contours found after retries",
+                move_before_finish=False,
+                application=None
+            )
 
-        max_retries = 10
-        retry_delay = 1  # seconds between retries
+        close_contours(newContours)
 
-        newContours = None
-        for attempt in range(1, max_retries + 1):
-            newContours = visionService.contours
-            print(f"Attempt {attempt}: Retrieved {len(newContours) if newContours else 0} contours")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                           f"Robot positioned, waiting {DELAY_BETWEEN_CAPTURING_NEW_IMAGE}s for image capture")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                           f"Attempt {attempt}/{max_retries}: Retrieved contours from vision system: {len(newContours) if newContours else 0}")
+        log_info_message(logger_context,f"Image captured, processing contours...")
 
-            if newContours is not None and len(newContours) > 0:
-                break
-
-            if attempt < max_retries:
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                               f"No contours detected, retrying in {retry_delay}s...")
-                time.sleep(retry_delay)
+        newContours = filter_contours_in_pickup_area(visionService.getPickupAreaPoints(),newContours)
+        if newContours is None:
+            log_info_message(logger_context, "No pickup area defined, processing all contours")
         else:
-            # === LOGGING ===
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.WARNING,
-                           "❌ NO CONTOURS FOUND: Vision system detected no objects after retries")
-            # === FUNCTIONALITY ===
-            if workpiece_found:
-                # Drop off gripper before completing nesting
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                               "✅ NESTING COMPLETE: Dropping off gripper")
-                robotService.dropOffGripper(robotService.current_tool)
-                laser.turnOff()
-                return NestingResult(success=True, message="Nesting complete, no more workpieces to pick")
-            laser.turnOff()
-            return NestingResult(success=False, message="No contours found after retries")
+            log_info_message(logger_context, f"Pickup area defined, filtering contours...")
 
-        # add first point to the end to close the contour
-        for i, cnt in enumerate(newContours):
-            if len(cnt) > 0:
-                # Close the contour by adding first point to the end using numpy concatenation
-                # Ensure dimensions match: cnt is (n, 1, 2), so reshape first point to (1, 1, 2)
-                first_point = cnt[0].reshape(1, 1, 2)
-                newContours[i] = np.vstack([cnt, first_point])
-
-        # === LOGGING ===
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                       f"📷 VISION: Detected {len(newContours)} contours")
-
-        # === FUNCTIONALITY ===
-        # Filter contours by pickup area
-        pickup_area = visionService.getPickupAreaPoints()
-
-        if pickup_area is not None and len(pickup_area) >= 4:
-            initial_count = len(newContours)
-            filtered_contours = []
-            for contour in newContours:
-                if is_contour_inside_polygon(contour, pickup_area[0], pickup_area[1], pickup_area[2], pickup_area[3]):
-                    filtered_contours.append(contour)
-            newContours = filtered_contours
-
-            # === LOGGING ===
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                           f"🎯 FILTERING: {initial_count} → {len(newContours)} contours inside pickup area")
-        else:
-            # === LOGGING ===
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.WARNING,
-                           "⚠️  No pickup area defined, processing all contours")
-
-        # === FUNCTIONALITY ===
         # Match workpieces with detected contours
-        try:
-            matches_data, noMatches, _ = CompareContours.findMatchingWorkpieces(workpieces, newContours)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
+        matches_data, noMatches = match_contours_to_workpieces(workpieces, newContours)
+        if matches_data is None:
+            log_info_message(logger_context,"Error during contour matching.")
+            laser.turnOff()
+            return NestingResult(success=False, message="Error during contour matching")
 
         orientations = matches_data["orientations"]
         matches = matches_data["workpieces"]
@@ -332,99 +305,41 @@ def start_nesting(application, visionService, robotService: RobotService, presel
         if matches is not None and len(matches) > 0:
             workpiece_found = True
         else:
+            return finish_nesting(
+                robotService,
+                laser,
+                workpiece_found,
+                message_success="Nesting complete, no more workpieces to pick",
+                message_failure="No workpieces matched detected contours",
+                move_before_finish=True,
+                application=application
+            )
 
-            if workpiece_found:
-                # === LOGGING ===
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                               "✅ NESTING COMPLETE: No more workpieces detected")
-                # === FUNCTIONALITY ===
-                robotService.dropOffGripper(robotService.current_tool)
+        log_info_message(logger_context,f"Found {len(matches)} matching workpieces, processing each match...")
 
-                ret = application.move_to_nesting_capture_position()
-                if ret != 0:
-                    laser.turnOff()
-                    return NestingResult(success=False, message="Failed to move to start position")
-                return NestingResult(success=True, message="Nesting complete, no more workpieces to pick")
-            else:
-                # === LOGGING ===
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.WARNING,
-                               "❌ NO MATCHES: No workpieces matched detected contours")
-                # === FUNCTIONALITY ===
-                return NestingResult(success=False, message="No workpieces matched detected contours")
-
-        # === LOGGING ===
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, "Starting workpiece matching process...")
-
-        # === FUNCTIONALITY ===
         if not matches:
-            # === LOGGING ===
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.WARNING,
-                           "❌ MATCHING: No matching workpieces found!")
-            # === FUNCTIONALITY ===
-
+            log_info_message(logger_context,"No matching workpieces found, ending nesting operation.")
             laser.turnOff()
             return NestingResult(success=False, message=Message.NO_WORKPIECE_DETECTED.value)
 
-        # === LOGGING ===
-        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                       f"✅ MATCHING: Found {len(matches)} workpiece matches")
+        log_info_message(logger_context,f"Processing {len(matches)} matched workpieces...")
 
-        # === FUNCTIONALITY ===
         # Process each matched workpiece
         for match_i, match in enumerate(matches):
-            ret = application.move_to_nesting_capture_position()
-            # === LOGGING ===
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                           f"\n🎯 PROCESSING MATCH {match_i + 1}/{len(matches)}")
+            success = move_to_nesting_capture_position(application, laser)
+            if not success:
+                return NestingResult(success=False, message="Failed to move to start position")
 
-            # === FUNCTIONALITY ===
             contour = match.get_main_contour()
             cnt_obj = Contour(contour)
             match_height = 3
             gripper = match.gripperID
+            centroid = determine_pickup_point(match, cnt_obj)
 
-            if match.pickupPoint is not None:
-                # Parse pickup point string "x,y" and convert to tuple (x, y)
-                if isinstance(match.pickupPoint, str):
-                    try:
-                        x_str, y_str = match.pickupPoint.split(',')
-                        centroid = (int(float(x_str)), int(float(y_str)))
-                        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                                       f"Using pickup point: {centroid}")
-                    except (ValueError, AttributeError) as e:
-                        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.WARNING,
-                                       f"Invalid pickup point format '{match.pickupPoint}', using centroid instead: {e}")
-                        centroid = cnt_obj.getCentroid()
-                else:
-                    # Assume it's already in correct format (tuple/list)
-                    centroid = match.pickupPoint
-                    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"Using pickup point: {centroid}")
-            else:
-                centroid = cnt_obj.getCentroid()
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"Using centroid: {centroid}")
 
             # Apply homography transformation
-            transformed_centroid = utils.applyTransformation(visionService.cameraToRobotMatrix, [centroid])
-            centroid_for_height_measure = utils.applyTransformation(visionService.cameraToRobotMatrix, [centroid],
-                                                                    apply_transducer_offset=False)
-            flat_centroid = transformed_centroid
-            while isinstance(flat_centroid, (list, tuple)) and len(flat_centroid) == 1:
-                flat_centroid = flat_centroid[0]
-
-            # === LOGGING ===
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                           f"Match details: height={match_height}mm, gripper={gripper}")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, "Applying homography transformation...")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"HOMOGRAPHY TRANSFORMATION:")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                           f"  ├─ Camera coordinates: {centroid} pixels")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                           f"  ├─ Robot coordinates:  {flat_centroid} mm")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                           f"  ├─ Object orientation: {orientations[match_i]:.2f}°")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"  └─ Assigned gripper:   {gripper}")
-
-            # === FUNCTIONALITY ===
+            centroid_for_height_measure,flat_centroid = transform_centroids(visionService, centroid)
+            log_match_details(logger_context,match_height,gripper,centroid,flat_centroid,orientations,match_i)
             # Calculate pickup and drop-off positions
             pickup_positions, height_measure_position, pickup_height = calculate_pickup_positions(flat_centroid,
                                                                                                   match_height,
@@ -442,37 +357,26 @@ def start_nesting(application, visionService, robotService: RobotService, presel
                                                           orientations[match_i],
                                                           plane,
                                                           pickup_height,
-                                                          gripper)
+                                                          gripper,
+                                                          ENABLE_LOGGING,
+                                                          nesting_logger,
+                                                          RZ_ORIENTATION,
+                                                          ROTATION_OFFSET_BETWEEN_PICKUP_AND_DROP_PLACE)
 
-            # === LOGGING ===
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, "Calculating drop-off position...")
 
-            # === FUNCTIONALITY ===
+            log_info_message(logger_context, "Calculating drop-off position...")
+
+
             if drop_off_result[0] is None:  # Plane is full
-                # === LOGGING ===
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.WARNING,
-                               "⚠️  PLANE FULL: Cannot place more workpieces")
-                # === FUNCTIONALITY ===
+
+                log_info_message(logger_context,"⚠️  PLANE FULL: Cannot place more workpieces")
                 plane.isFull = True
                 break
 
             drop_off_position1, drop_off_position2, width, height, plane, placed_contour = drop_off_result
-            # apply gripper offsets to drop-off position
 
-            if gripper == Gripper.DOUBLE:
-                # rotate the offsets by -90 degrees and apply them
-                orientation_radians = math.radians(-90)
-                rotated_x, rotated_y = __rotate_offsets(GRIPPER_X_OFFSET, GRIPPER_Y_OFFSET, orientation_radians)
-                drop_off_position1[0] += rotated_x
-                drop_off_position1[1] += rotated_y
-                drop_off_position2[0] += rotated_x
-                drop_off_position2[1] += rotated_y
-            else:
-                # apply standard gripper offsets
-                drop_off_position1[0] += GRIPPER_X_OFFSET
-                drop_off_position1[1] += GRIPPER_Y_OFFSET
-                drop_off_position2[0] += GRIPPER_X_OFFSET
-                drop_off_position2[1] += GRIPPER_Y_OFFSET
+            # apply gripper offsets to drop-off position
+            apply_offsets_based_on_gripper(gripper, drop_off_position1, drop_off_position2)
 
             count += 1
 
@@ -481,74 +385,20 @@ def start_nesting(application, visionService, robotService: RobotService, presel
                 'contour': placed_contour,
                 'drop_position': drop_off_position1,
                 'dimensions': (width, height),
-                'cycle': cycle_number,
                 'match_index': match_i + 1
             })
 
-            # === LOGGING ===
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                           f"📍 DROP-OFF: Position calculated at {drop_off_position1[:2]} mm (Z: {drop_off_position1[2]} mm)")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                           f"Drop-off position: {drop_off_position1}")
-            log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                           f"Workpiece dimensions: {width:.1f} x {height:.1f} mm")
+            log_drop_pos_calculated(logger_context,drop_off_position1,width,height)
+            save_nesting_debug_plot(plane, placed_contours, match_i + 1)
 
-            # === DEBUG PLOTTING ===
-            # Save debug plot after drop position is calculated
-            __save_nesting_debug_plot(plane, placed_contours, cycle_number, match_i + 1)
-
-            # === FUNCTIONALITY ===
-            # Execute pickup sequence
-
-            # check if the workpiece gripper is different then the currently attached one
-            try:
-                target_gripper_id = int(gripper.value)
-            except (ValueError, AttributeError) as e:
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.ERROR,
-                               f"Invalid gripper value: {gripper.value}. Error: {e}")
-                laser.turnOff()
-                return NestingResult(success=False, message=f"Invalid gripper value: {gripper.value}")
-
+            target_gripper_id = int(gripper.value)
             if robotService.current_tool != target_gripper_id:
-                # if different, drop the current gripper (if any) and pick up the new one
-                if robotService.current_tool is not None:
-                    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                                   f"Dropping off current gripper: {robotService.current_tool}")
-                    success, message = robotService.dropOffGripper(robotService.current_tool)
-                    if not success:
-                        log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.ERROR,
-                                       f"Failed to drop off gripper {robotService.current_tool}: {message}")
-                        laser.turnOff()
-                        return NestingResult(success=False,
-                                             message=f"Failed to drop off gripper {robotService.current_tool}: {message}")
-
-                # pick up the new gripper
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                               f"Picking up gripper: {target_gripper_id}")
-                success, message = robotService.pickupGripper(target_gripper_id)
-                if not success:
-                    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.ERROR,
-                                   f"Failed to pick up gripper {target_gripper_id}: {message}")
-                    laser.turnOff()
-                    return NestingResult(success=False,
-                                         message=f"Failed to pick up gripper {target_gripper_id}: {message}")
-
-                # Verify the gripper change was successful
-                if robotService.current_tool != target_gripper_id:
-                    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.ERROR,
-                                   f"Gripper change verification failed. Expected: {target_gripper_id}, Current: {robotService.current_tool}")
-                    return NestingResult(success=False,
-                                         message=f"Gripper change verification failed. Expected: {target_gripper_id}, Current: {robotService.current_tool}")
-
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                               f"Successfully switched to gripper: {target_gripper_id}")
+               result = change_gripper_if_needed(robotService, target_gripper_id, laser)
+               if not result.success:
+                   return result
             else:
-                log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG,
-                               f"Gripper {target_gripper_id} already attached, no change needed")
+                log_info_message(logger_context,f"Gripper {target_gripper_id} already attached, no change needed")
 
-            height_measure_pos = height_measure_position  # already calculated
-            print(f"Height measure position before adjustment: {height_measure_pos}")
-            print(f"Centroid for height measure: {centroid_for_height_measure}")
             # Extract raw centroid coordinates
             cx = centroid_for_height_measure[0][0][0][0]
             cy = centroid_for_height_measure[0][0][0][1]
@@ -558,28 +408,22 @@ def start_nesting(application, visionService, robotService: RobotService, presel
             rotated_cy = cx
 
             # Assign rotated coordinates to height measure position
-            height_measure_pos[0] = rotated_cx
-            height_measure_pos[1] = rotated_cy
+            height_measure_position[0] = rotated_cx
+            height_measure_position[1] = rotated_cy
 
-            height_measure_pos[2] = 350  # set a safe height for measurement
-            height_measure_pos[5] = RZ_ORIENTATION
+            height_measure_position[2] = measurement_height  # set a safe height for measurement
+            height_measure_position[5] = RZ_ORIENTATION
 
-            result, measured_height, value_in_pixels = measure_height_at_position(robotService,
-                                                                                  visionService,
-                                                                                  laserTrackingService,
-                                                                                  height_measure_pos,
-                                                                                  laser)
+
+            result, measured_height, value_in_pixels = measure_height_at_position(height_measure_context,height_measure_position)
 
             if not result:
                 laser.turnOff()
                 return NestingResult(success=False, message="Failed to measure height.")
 
-            measured_height = measured_height + 2  # temp add 1 mm
+            measured_height = measured_height + 2  # temp add 2 mm
 
-            log_if_enabled(enabled=ENABLE_LOGGING,
-                           logger=nesting_logger,
-                           level=LoggingLevel.INFO,
-                           message=f"Measured workpiece height: result={result} {value_in_pixels} mm")
+            log_info_message(logger_context,message=f"Measured workpiece height: result={result} {value_in_pixels} mm")
 
             # robotService.pump.turnOn(robotService.robot)
             # 3. Execute pick and place sequence
@@ -591,59 +435,3 @@ def start_nesting(application, visionService, robotService: RobotService, presel
                 robotService.tool_manager.pump.turnOff(robotService.robot)
                 laser.turnOff()
                 return NestingResult(success=False, message="Failed during pick and place sequence")
-
-
-
-
-def __rotate_offsets(x_offset, y_offset, orientation_radians):
-    """
-    Rotate x,y offsets by given orientation angle
-
-    Args:
-        x_offset: Original X offset
-        y_offset: Original Y offset
-        orientation_radians: Rotation angle in radians
-
-    Returns:
-        tuple: (rotated_x_offset, rotated_y_offset)
-    """
-    cos_theta = math.cos(orientation_radians)
-    sin_theta = math.sin(orientation_radians)
-
-    # 2D rotation matrix transformation
-    rotated_x = x_offset * cos_theta - y_offset * sin_theta
-    rotated_y = x_offset * sin_theta + y_offset * cos_theta
-
-    return rotated_x, rotated_y
-
-
-""" LOGGING FUNCTIONS """
-
-
-def log_pickup_position_calculation_result(params):
-    flat_centroid, pickup_x_rotated, pickup_y_rotated, orientation_radians, gripper_x_offset_rotated, gripper_y_offset_rotated, final_pickup_x, final_pickup_y, z_min, descent_height, pickup_height, pickup_positions = params
-    # === LOGGING ===
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"COORDINATE TRANSFORMATION:")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  ├─ Before 90° rotation: ({flat_centroid[0]:.2f}, {flat_centroid[1]:.2f}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  └─ After 90° rotation:  ({pickup_x_rotated:.2f}, {pickup_y_rotated:.2f}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"GRIPPER OFFSET TRANSFORMATION:")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  ├─ Original offsets: ({GRIPPER_X_OFFSET}, {GRIPPER_Y_OFFSET}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  └─ Rotated offsets:  ({gripper_x_offset_rotated:.2f}, {gripper_y_offset_rotated:.2f}) mm (rotated by {math.degrees(orientation_radians):.2f}°)")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO, f"FINAL PICKUP CALCULATION:")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  ├─ Rotated position: ({pickup_x_rotated:.2f}, {pickup_y_rotated:.2f}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  ├─ Applied offsets:  ({gripper_x_offset_rotated:.2f}, {gripper_y_offset_rotated:.2f}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"  └─ Final position:   ({final_pickup_x:.2f}, {final_pickup_y:.2f}) mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, f"HEIGHT CALCULATIONS:")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, f"  ├─ Z minimum:     {z_min} mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, f"  ├─ Descent height: {descent_height} mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, f"  └─ Pickup height:  {pickup_height} mm")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.INFO,
-                   f"Generated {len(pickup_positions)} pickup positions (descent → pickup → lift)")
-    log_if_enabled(ENABLE_LOGGING, nesting_logger, LoggingLevel.DEBUG, f"Pickup sequence: {pickup_positions}")
