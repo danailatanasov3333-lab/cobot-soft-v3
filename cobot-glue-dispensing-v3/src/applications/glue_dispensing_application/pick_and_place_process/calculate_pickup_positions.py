@@ -1,10 +1,20 @@
 import math
 
-from applications.glue_dispensing_application.pick_and_place_process.nesting import \
-    log_pickup_position_calculation_result, __rotate_offsets
+from applications.glue_dispensing_application.pick_and_place_process.logging_utils import \
+    log_pickup_position_calculation_result
+from applications.glue_dispensing_application.pick_and_place_process.utils import rotate_offsets
 from modules.shared.tools.enums.Gripper import Gripper
 from modules.utils.custom_logging import log_if_enabled, LoggingLevel
 
+def calculate_pickup_height_based_on_gripper(gripper,z_min,double_gripper_z_offset,single_gripper_z_offset,match_height):
+    if gripper == Gripper.DOUBLE:
+        pickup_height = z_min + double_gripper_z_offset + match_height
+    elif gripper == Gripper.SINGLE:
+        pickup_height = z_min + single_gripper_z_offset + match_height
+    else:
+        raise ValueError(f"Unknown gripper type: {gripper}")
+
+    return pickup_height
 
 def calculate_pickup_positions(flat_centroid,
                                match_height,
@@ -46,7 +56,7 @@ def calculate_pickup_positions(flat_centroid,
         rz = rz_orientation
 
     orientation_radians = math.radians(rz-orientation) # convert to radians
-    gripper_x_offset_rotated, gripper_y_offset_rotated = __rotate_offsets(
+    gripper_x_offset_rotated, gripper_y_offset_rotated = rotate_offsets(
         gripper_x_offset,
         gripper_y_offset,
         orientation_radians
@@ -60,12 +70,7 @@ def calculate_pickup_positions(flat_centroid,
     z_min = robotService.robot_config.safety_limits.z_min
     descent_height = z_min + 150  # Safe descent height above minimum
 
-    if gripper == Gripper.DOUBLE:
-        pickup_height = z_min + double_gripper_z_offset + match_height
-    elif gripper == Gripper.SINGLE:
-        pickup_height = z_min + single_gripper_z_offset + match_height
-    else:
-        raise ValueError(f"Unknown gripper type: {gripper}")
+    pickup_height = calculate_pickup_height_based_on_gripper(gripper,z_min,double_gripper_z_offset,single_gripper_z_offset,match_height)
 
 
     # Create pickup sequence: descent -> pickup -> lift
@@ -82,7 +87,6 @@ def calculate_pickup_positions(flat_centroid,
     angle1 = _norm_deg(angle1)
     angle2 = _norm_deg(angle2)
     angle_closer_to_zero = angle1 if abs(angle1) <= abs(angle2) else angle2
-    print(f"angle1: {angle1}, angle2: {angle2}, chosen angle: {angle_closer_to_zero}")
 
     height_measure_position = [pickup_x_rotated, pickup_y_rotated, descent_height, 180, 0, rz-orientation]
 
@@ -92,7 +96,7 @@ def calculate_pickup_positions(flat_centroid,
         [final_pickup_x, final_pickup_y, descent_height, 180, 0, rz-orientation] # Lift
     ]
     params = flat_centroid, pickup_x_rotated, pickup_y_rotated, orientation_radians, gripper_x_offset_rotated, gripper_y_offset_rotated, final_pickup_x, final_pickup_y, z_min, descent_height, pickup_height, pickup_positions
-    log_pickup_position_calculation_result(params)
+    # log_pickup_position_calculation_result(params)
 
     return pickup_positions, height_measure_position,pickup_height
 
