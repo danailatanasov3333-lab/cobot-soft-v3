@@ -16,6 +16,14 @@ def calculate_pickup_height_based_on_gripper(gripper,z_min,double_gripper_z_offs
 
     return pickup_height
 
+def determine_orientation_based_on_gripper(gripper,rz_orientation):
+    if gripper == Gripper.DOUBLE:
+        rz = rz_orientation - 90
+    else:
+        rz = rz_orientation
+
+    return rz
+
 def calculate_pickup_positions(flat_centroid,
                                match_height,
                                robotService,
@@ -50,10 +58,7 @@ def calculate_pickup_positions(flat_centroid,
     pickup_x_rotated = -flat_centroid[1]  # 90° rotation: x' = -y
     pickup_y_rotated = flat_centroid[0]  # 90° rotation: y' = x
 
-    if gripper == Gripper.DOUBLE:
-        rz = rz_orientation - 90
-    else:
-        rz = rz_orientation
+    rz = determine_orientation_based_on_gripper(gripper,rz_orientation)
 
     orientation_radians = math.radians(rz-orientation) # convert to radians
     gripper_x_offset_rotated, gripper_y_offset_rotated = rotate_offsets(
@@ -71,22 +76,7 @@ def calculate_pickup_positions(flat_centroid,
     descent_height = z_min + 150  # Safe descent height above minimum
 
     pickup_height = calculate_pickup_height_based_on_gripper(gripper,z_min,double_gripper_z_offset,single_gripper_z_offset,match_height)
-
-
     # Create pickup sequence: descent -> pickup -> lift
-
-    # choose angle
-    # compute candidate angles
-    angle1 = rz - orientation
-    angle2 = rz + orientation
-
-    # normalize to [-180, 180] then pick the one closer to 0
-    def _norm_deg(a):
-        return ((a + 180) % 360) - 180
-
-    angle1 = _norm_deg(angle1)
-    angle2 = _norm_deg(angle2)
-    angle_closer_to_zero = angle1 if abs(angle1) <= abs(angle2) else angle2
 
     height_measure_position = [pickup_x_rotated, pickup_y_rotated, descent_height, 180, 0, rz-orientation]
 
