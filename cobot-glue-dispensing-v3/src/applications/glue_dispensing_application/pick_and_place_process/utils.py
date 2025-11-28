@@ -1,5 +1,7 @@
 import math
 
+from modules.shared.tools.enums.Gripper import Gripper
+
 
 def rotate_offsets(x_offset, y_offset, orientation_radians):
     """
@@ -21,3 +23,14 @@ def rotate_offsets(x_offset, y_offset, orientation_radians):
     rotated_y = x_offset * sin_theta + y_offset * cos_theta
 
     return rotated_x, rotated_y
+
+def apply_90_degree_rotation(x, y):
+    return -y , x
+
+def determine_orientation_based_on_gripper(gripper,rz_orientation):
+    if gripper == Gripper.DOUBLE:
+        rz = rz_orientation - 90
+    else:
+        rz = rz_orientation
+
+    return rz

@@ -102,7 +102,7 @@ class RobotService(IRobotService):
             self.logger = None
         self.logger_context = LoggerContext(enabled=self.enable_logging,
                                             logger=self.logger)
-
+        log_info_message(self.logger_context, message=f"RobotService initialized with robot type {type(self.robot).__name__}.")
     @property
     def current_tool(self):
         return self.tool_manager.current_gripper

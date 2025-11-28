@@ -36,10 +36,10 @@ class ToolManager:
     def verify_gripper_change(self,target_gripper_id:int)->bool:
         """Verify if a gripper change is possible."""
         with self._lock:
-            if self.current_gripper == target_gripper_id:
-                return False
+            if int(self.current_gripper) == int(target_gripper_id):
+                return True
             else:
-                return  True
+                return  False
 
     def pickup_gripper(self, gripper_id: int) -> Tuple[bool, Optional[str]]:
         """Pick up a gripper/tool from its slot."""

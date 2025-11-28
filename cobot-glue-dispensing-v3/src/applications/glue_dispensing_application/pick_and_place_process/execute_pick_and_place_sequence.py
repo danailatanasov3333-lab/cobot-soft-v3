@@ -1,8 +1,13 @@
 from modules.shared.tools.enums.Gripper import Gripper
-from modules.utils.custom_logging import log_if_enabled, LoggingLevel
+from modules.utils.custom_logging import log_if_enabled, LoggingLevel, log_info_message
 
 
-def execute_pick_sequence(robot_service, pickup_positions, measured_height, gripper,enabled_logging,logger,double_gripper_z_offset,single_gripper_z_offset):
+def execute_pick_sequence(robot_service,
+        pickup_positions,
+        measured_height,
+        gripper,
+        logger_context,
+        grippers_config):
     ret = True
     for i, pos in enumerate(pickup_positions):
         # Create a copy to avoid modifying the original
@@ -12,12 +17,11 @@ def execute_pick_sequence(robot_service, pickup_positions, measured_height, grip
         if i == 1:  # Pickup position (descent=0, pickup=1, lift=2)
             z_min = robot_service.robot_config.safety_limits.z_min
             if gripper == Gripper.DOUBLE:
-                adjusted_pos[2] = z_min + double_gripper_z_offset + measured_height
+                adjusted_pos[2] = z_min + grippers_config.double_gripper_z_offset + measured_height
             elif gripper == Gripper.SINGLE:
-                adjusted_pos[2] = z_min + single_gripper_z_offset + measured_height
+                adjusted_pos[2] = z_min + grippers_config.single_gripper_z_offset + measured_height
 
-        log_if_enabled(enabled_logging, logger, LoggingLevel.DEBUG,
-                       f"Moving to pickup position {i}: {adjusted_pos} (original: {pos})")
+        log_info_message(logger_context,f"Moving to pickup position {i}: {adjusted_pos} (original: {pos})")
 
         ret = move_to(robot_service, adjusted_pos)
         if ret != 0:
@@ -43,9 +47,22 @@ def execute_place_sequence(robot_service, drop_off_position1, drop_off_position2
     return ret
 
 
-def execute_pick_and_place_sequence(robot_service, pickup_positions, drop_off_position1, drop_off_position2,
-                                    measured_height, gripper):
-    ret = execute_pick_sequence(robot_service, pickup_positions, measured_height, gripper)
+def execute_pick_and_place_sequence(robot_service,
+                                    pickup_positions,
+                                    drop_off_position1,
+                                    drop_off_position2,
+                                    measured_height,
+                                    gripper,
+                                    logger_context,
+                                    grippers_config):
+    ret = execute_pick_sequence(
+        robot_service,
+        pickup_positions,
+        measured_height,
+        gripper,
+        logger_context,
+        grippers_config
+    )
     if ret != 0:
         return ret
     ret = execute_place_sequence(robot_service, drop_off_position1, drop_off_position2)

@@ -53,6 +53,11 @@ class TestRobotWrapper(IRobot):
         return 0
 
     # --- State queries ---
+    def GetActualTCPPose(self):
+        # print("[MOCK] GetActualTCPPose called")
+        # Returning tuple to match expected structure (status, pose)
+        return (0, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
     def get_current_position(self):
         # print("[MOCK] GetActualTCPPose called")
         # Returning tuple to match expected structure (status, pose)
