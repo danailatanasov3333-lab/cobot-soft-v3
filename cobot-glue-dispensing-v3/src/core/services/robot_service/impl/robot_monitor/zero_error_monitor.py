@@ -17,7 +17,7 @@ class ZeroErrorRobotMonitor(BaseRobotMonitor):
     and reports results via a callback to the manager.
     """
     
-    def __init__(self, robot_ip, cycle_time=0.03):
+    def __init__(self, robot_ip, cycle_time=0.03,robot: ZeroErrRobot=None):
         """
         Initialize Zero Error robot monitor.
         
@@ -26,7 +26,9 @@ class ZeroErrorRobotMonitor(BaseRobotMonitor):
             cycle_time: Monitoring cycle time in seconds
         """
         super().__init__(cycle_time=cycle_time)
-        self.robot = ZeroErrRobot(robot_ip)
+        if robot is None:
+            raise ValueError("A ZeroErrRobot instance must be provided")
+        self.robot = robot
 
     def get_current_position(self):
         """Get current robot position from Zero Error robot"""

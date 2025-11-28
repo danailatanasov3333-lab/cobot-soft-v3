@@ -30,7 +30,7 @@ class RobotMonitorFactory:
     """
     
     @staticmethod
-    def create_monitor(robot_type: RobotType, robot_ip: str, cycle_time: float = 0.03, **kwargs) -> IRobotMonitor:
+    def create_monitor(robot_type: RobotType, robot_ip: str,robot, cycle_time: float = 0.03, **kwargs) -> IRobotMonitor:
         """
         Create a robot monitor instance based on the specified robot type.
         
@@ -53,7 +53,7 @@ class RobotMonitorFactory:
                 return FairinoRobotMonitor(robot_ip, cycle_time, **kwargs)
             
             elif robot_type == RobotType.ZERO_ERROR:
-                return ZeroErrorRobotMonitor(robot_ip, cycle_time, **kwargs)
+                return ZeroErrorRobotMonitor(robot_ip, cycle_time,robot, **kwargs)
             
             elif robot_type == RobotType.TEST:
                 # For test robots, we can create a mock monitor or return a basic one

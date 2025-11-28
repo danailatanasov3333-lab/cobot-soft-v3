@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from modules.VisionSystem.heightMeasuring.LaserTracker import LaserTrackService
 from modules.shared.localization.enums.Message import Message
 from modules.utils.custom_logging import setup_logger, LoggerContext, log_info_message
@@ -155,12 +155,12 @@ class NestingController:
             
             # Continue loop for more workpieces
     
-    def _process_matched_workpieces(self, matches: List, orientations: List) -> NestingResult:
+    def _process_matched_workpieces(self, matches: List, orientations: List) -> Optional[NestingResult]:
         """
         Process each matched workpiece.
         
         Returns:
-            NestingResult if operation should end, None to continue
+            NestingResult if operation should end, None to continue with next iteration
         """
         for match_i, match in enumerate(matches):
             # Move to capture position for each workpiece

@@ -368,7 +368,7 @@ class ApplicationFactory:
             robot = RobotFactory.create_robot(robot_type, robot_ip)
             
             # Create robot monitor using factory
-            robot_monitor = RobotMonitorFactory.create_monitor(robot_type, robot_ip, cycle_time=0.03)
+            robot_monitor = RobotMonitorFactory.create_monitor(robot_type, robot_ip,robot, cycle_time=0.03)
             
             # Create robot state manager
             robot_state_manager = RobotStateManager(robot_monitor=robot_monitor)
