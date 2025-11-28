@@ -50,10 +50,11 @@ except ImportError:
 # Global logger variable
 ENABLE_LOGGING = True  # Enable or disable logging
 
-GRIPPER_X_OFFSET = 100.429  # mm, between transducer and gripper tip measured at rz = 0
-GRIPPER_Y_OFFSET = 1.991  # mm, between transducer and gripper tip measured at rz = 0
-DOUBLE_GRIPPER_Z_OFFSET = 14  # mm, between transducer and gripper tip
-SINGLE_GRIPPER_Z_OFFSET = 19  # mm, between transducer and gripper tip
+# GRIPPER_X_OFFSET = 100.429  # mm, between transducer and gripper tip measured at rz = 0
+# GRIPPER_Y_OFFSET = 1.991  # mm, between transducer and gripper tip measured at rz = 0
+# DOUBLE_GRIPPER_Z_OFFSET = 14  # mm, between transducer and gripper tip
+# SINGLE_GRIPPER_Z_OFFSET = 19  # mm, between transducer and gripper tip
+
 RZ_ORIENTATION = 90  # degrees
 ROTATION_OFFSET_BETWEEN_PICKUP_AND_DROP_PLACE = 90  # degrees
 DELAY_BETWEEN_CAPTURING_NEW_IMAGE = 1  # seconds ensuring robot is stationary and camera is stable
@@ -67,10 +68,16 @@ else:
 logger_context = LoggerContext(enabled=ENABLE_LOGGING, logger=nesting_logger)
 
 @dataclass
+class GrippersConfig:
+    gripper_x_offset: float # mm, between transducer and gripper tip measured at rz = 0
+    gripper_y_offset: float  # mm, between transducer and gripper tip measured at rz = 0
+    double_gripper_z_offset:float  # mm, between transducer and gripper tip
+    single_gripper_z_offset:float  # mm, between transducer and gripper tip
+
+@dataclass
 class NestingResult:
     success: bool
     message: str
-
 
 def move_to_nesting_capture_position(application,laser) -> int:
     ret = application.move_to_nesting_capture_position()
@@ -220,11 +227,11 @@ def transform_centroids(visionService, centroid):
 
     return centroid_for_height_measure, flat_centroid
 
-def apply_offsets_based_on_gripper(gripper, drop_off_position1, drop_off_position2):
+def apply_offsets_based_on_gripper(grippers_config:GrippersConfig,gripper, drop_off_position1, drop_off_position2):
     if gripper == Gripper.DOUBLE:
         # rotate the offsets by -90 degrees and apply them
         orientation_radians = math.radians(-90)
-        rotated_x, rotated_y = rotate_offsets(GRIPPER_X_OFFSET, GRIPPER_Y_OFFSET, orientation_radians)
+        rotated_x, rotated_y = rotate_offsets(grippers_config.gripper_x_offset, grippers_config.gripper_y_offset, orientation_radians)
         # handle pos 1
         drop_off_position1[0] += rotated_x
         drop_off_position1[1] += rotated_y
@@ -235,15 +242,15 @@ def apply_offsets_based_on_gripper(gripper, drop_off_position1, drop_off_positio
     else:
         # apply standard gripper offsets
         # handle pos 2
-        drop_off_position1[0] += GRIPPER_X_OFFSET
-        drop_off_position1[1] += GRIPPER_Y_OFFSET
+        drop_off_position1[0] += grippers_config.gripper_x_offset
+        drop_off_position1[1] += grippers_config.gripper_y_offset
 
         # handle pos 2
-        drop_off_position2[0] += GRIPPER_X_OFFSET
-        drop_off_position2[1] += GRIPPER_Y_OFFSET
+        drop_off_position2[0] +=  grippers_config.gripper_x_offset
+        drop_off_position2[1] += grippers_config.gripper_y_offset
 
 def start_nesting(application, visionService, robotService: RobotService, preselected_workpiece) -> NestingResult:
-    log_info_message(logger_context, "🤖 Starting Nesting Operation")
+    log_info_message(logger_context, "Starting Nesting Operation")
 
     workpieces = preselected_workpiece
 
@@ -256,7 +263,12 @@ def start_nesting(application, visionService, robotService: RobotService, presel
     measurement_height = 350  # initial height for measurement
     laser = robotService.tool_manager.get_tool("laser") # get laser tool
     laserTrackingService = LaserTrackService() # initialize laser tracking service
-
+    grippers_config = GrippersConfig(
+        gripper_x_offset=100.429,
+        gripper_y_offset= 1.991,
+        double_gripper_z_offset= 14,
+        single_gripper_z_offset= 19
+    )
     height_measure_context= HeightMeasureContext(
                 robot_service=robotService,
                 vision_service=visionService,
@@ -348,11 +360,8 @@ def start_nesting(application, visionService, robotService: RobotService, presel
                                                                                                   robotService,
                                                                                                   orientations[match_i],
                                                                                                   gripper,ENABLE_LOGGING,nesting_logger,
-                                                                                                  GRIPPER_X_OFFSET,
-                                                                                                  GRIPPER_Y_OFFSET,
                                                                                                   RZ_ORIENTATION,
-                                                                                                  DOUBLE_GRIPPER_Z_OFFSET,
-                                                                                                  SINGLE_GRIPPER_Z_OFFSET)
+                                                                                                  grippers_config)
 
             drop_off_result = calculate_drop_off_position(match,
                                                           centroid,
@@ -378,7 +387,7 @@ def start_nesting(application, visionService, robotService: RobotService, presel
                              f"  └─ Rotation: {drop_off_position1[2]}° ({RZ_ORIENTATION}° - {ROTATION_OFFSET_BETWEEN_PICKUP_AND_DROP_PLACE}°)")
             log_info_message(logger_context, f"Updated X offset for next piece: {plane.xOffset:.1f} mm")
             # apply gripper offsets to drop-off position
-            apply_offsets_based_on_gripper(gripper, drop_off_position1, drop_off_position2)
+            apply_offsets_based_on_gripper(grippers_config,gripper, drop_off_position1, drop_off_position2)
 
             count += 1
 

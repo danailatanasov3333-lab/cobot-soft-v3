@@ -31,11 +31,8 @@ def calculate_pickup_positions(flat_centroid,
                                gripper,
                                logging_enabled,
                                logger,
-                               gripper_x_offset,
-                               gripper_y_offset,
                                rz_orientation,
-                               double_gripper_z_offset,
-                               single_gripper_z_offset):
+                               grippers_config):
     """
     Calculate pickup positions with coordinate transformation and gripper offsets.
 
@@ -52,6 +49,10 @@ def calculate_pickup_positions(flat_centroid,
     # === LOGGING ===
     log_if_enabled(logging_enabled,logger,LoggingLevel.INFO, f"Starting pickup position calculation for centroid: {flat_centroid}")
     log_if_enabled(logging_enabled,logger,LoggingLevel.DEBUG, f"Input parameters: match_height={match_height}mm")
+    gripper_x_offset = grippers_config.gripper_x_offset
+    gripper_y_offset = grippers_config.gripper_y_offset
+    double_gripper_z_offset = grippers_config.double_gripper_z_offset
+    single_gripper_z_offset = grippers_config.single_gripper_z_offset
 
     # === FUNCTIONALITY ===
     # Apply 90° coordinate transformation
